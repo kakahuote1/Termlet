@@ -21,33 +21,80 @@
       "types": "./src/index.d.ts",
       "import": "./src/index.mjs"
     },
-    "./factory": "./src/factory.mjs",
-    "./shell": "./src/shell.mjs",
-    "./vfs": "./src/vfs.mjs",
-    "./plugins/basic": "./src/plugins/basic-commands.mjs",
-    "./plugins/system": "./src/plugins/system-commands.mjs",
-    "./plugins/effects": "./src/plugins/effect-events.mjs",
-    "./plugins/windows": "./src/plugins/windows-commands.mjs",
-    "./plugins/hugo": "./src/plugins/hugo-adapter.mjs",
-    "./presets/blog-sandbox": "./src/presets/blog-sandbox.mjs",
-    "./adapters/static-site": "./src/adapters/static-site.mjs",
-    "./adapters/feed": "./src/adapters/feed.mjs",
-    "./adapters/hugo": "./src/adapters/hugo.mjs",
-    "./adapters/persistence": "./src/adapters/persistence.mjs",
-    "./renderers/dom": "./src/renderers/dom-renderer.mjs",
-    "./dist": "./dist/index.mjs",
+    "./factory": {
+      "types": "./src/index.d.ts",
+      "import": "./src/factory.mjs"
+    },
+    "./shell": {
+      "types": "./src/index.d.ts",
+      "import": "./src/shell.mjs"
+    },
+    "./vfs": {
+      "types": "./src/index.d.ts",
+      "import": "./src/vfs.mjs"
+    },
+    "./plugins/basic": {
+      "types": "./src/index.d.ts",
+      "import": "./src/plugins/basic-commands.mjs"
+    },
+    "./plugins/system": {
+      "types": "./src/index.d.ts",
+      "import": "./src/plugins/system-commands.mjs"
+    },
+    "./plugins/effects": {
+      "types": "./src/index.d.ts",
+      "import": "./src/plugins/effect-events.mjs"
+    },
+    "./plugins/windows": {
+      "types": "./src/index.d.ts",
+      "import": "./src/plugins/windows-commands.mjs"
+    },
+    "./plugins/hugo": {
+      "types": "./src/index.d.ts",
+      "import": "./src/plugins/hugo-adapter.mjs"
+    },
+    "./presets/blog-sandbox": {
+      "types": "./src/index.d.ts",
+      "import": "./src/presets/blog-sandbox.mjs"
+    },
+    "./adapters/static-site": {
+      "types": "./src/index.d.ts",
+      "import": "./src/adapters/static-site.mjs"
+    },
+    "./adapters/feed": {
+      "types": "./src/index.d.ts",
+      "import": "./src/adapters/feed.mjs"
+    },
+    "./adapters/hugo": {
+      "types": "./src/index.d.ts",
+      "import": "./src/adapters/hugo.mjs"
+    },
+    "./adapters/persistence": {
+      "types": "./src/index.d.ts",
+      "import": "./src/adapters/persistence.mjs"
+    },
+    "./renderers/dom": {
+      "types": "./src/index.d.ts",
+      "import": "./src/renderers/dom-renderer.mjs"
+    },
+    "./dist": {
+      "types": "./src/index.d.ts",
+      "import": "./dist/index.mjs"
+    },
     "./styles.css": "./dist/termlet.css"
   },
   "scripts": {
     "build": "node scripts/build.mjs",
     "site:build": "npm run build && node scripts/build-site.mjs",
+    "api:smoke": "node scripts/api-smoke.mjs",
     "check": "node scripts/check.mjs",
     "bench": "node scripts/bench.mjs",
     "docs:smoke": "node scripts/docs-smoke.mjs",
+    "package:smoke": "node scripts/package-smoke.mjs",
     "security:scan": "node scripts/security-scan.mjs",
     "site:smoke": "node scripts/site-smoke.mjs",
     "test": "node --test test/core.test.mjs",
-    "verify": "npm run check && npm test && npm run bench && npm run docs:smoke && npm run security:scan && npm run site:build && npm run site:smoke"
+    "verify": "npm run check && npm test && npm run bench && npm run docs:smoke && npm run security:scan && npm run site:build && npm run api:smoke && npm run site:smoke && npm run package:smoke"
   },
   "files": [
     "src",

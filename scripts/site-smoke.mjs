@@ -20,9 +20,16 @@ const app = readText(appPath);
 
 assert(index.includes('Content-Security-Policy'), 'missing CSP meta tag');
 assert(index.includes("default-src 'self'"), 'CSP should default to self');
+assert(index.includes('<html lang="zh-CN">'), 'demo should declare page language');
+assert(index.includes('<meta name="description"'), 'demo should include a meta description');
 assert(index.includes('./termlet/termlet.css'), 'demo should use external termlet.css');
 assert(index.includes('./app.mjs'), 'demo should load app.mjs as module');
 assert(!/\sstyle\s*=/.test(index), 'demo HTML should avoid inline style attributes');
+assert((index.match(/<h1\b/g) || []).length === 1, 'demo should have exactly one h1');
+assert(index.includes('aria-label="站点导航"'), 'navigation should have an aria label');
+assert(index.includes('aria-label="快速命令"'), 'quick command group should have an aria label');
+assert(index.includes('aria-label="交互式终端演示"'), 'terminal shell should have an aria label');
+assert(!/<button(?![^>]*\btype=)/.test(index), 'all buttons should declare type');
 assert(!app.includes('injectDefaultStyles'), 'strict demo should not inject inline styles');
 assert(app.includes('./termlet/index.mjs'), 'demo app should import built Termlet entry');
 assert(app.includes('docs/integrations.md'), 'demo app should surface integration docs');
@@ -34,7 +41,7 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log('site smoke passed (CSP, assets, strict style path)');
+console.log('site smoke passed (CSP, assets, accessibility, strict style path)');
 
 function assert(condition, message) {
   if (!condition) failures.push(message);

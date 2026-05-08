@@ -207,6 +207,7 @@ Termlet 是一个安全的前端模拟层，不是真实 Shell。
 - [博客系统适配](docs/integrations.md)
 - [主题与外观](docs/theming.md)
 - [渲染器契约](docs/renderer-contract.md)
+- [质量门禁](docs/quality-gates.md)
 - [部署](docs/deployment.md)
 - [GitHub Pages 演示站](docs/github-pages.md)
 - [安全模型](docs/security-model.md)
@@ -220,7 +221,7 @@ npm run verify
 npm pack --dry-run
 ```
 
-`npm run verify` 会执行语法检查、单元测试、性能基线、安全扫描、GitHub Pages demo 构建和站点 smoke 检查。
+`npm run verify` 会执行语法检查、单元测试、性能基线、文档断链检查、安全扫描、GitHub Pages demo 构建、API/导出 smoke、站点 smoke 和发布包 smoke。
 
 ## License
 

@@ -10,6 +10,8 @@ npm run verify
 
 `verify` runs syntax checks, unit tests, the performance benchmark, Markdown link smoke, the focused security scan, the dist build, and the GitHub Pages demo smoke. The core has no runtime dependencies.
 
+See `docs/quality-gates.md` for the full gate list and when to extend each check.
+
 ## Project Rules
 
 - Keep terminal input as data. Do not introduce real shell, PTY, subprocess, or arbitrary JavaScript execution.
