@@ -3,7 +3,8 @@ import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = dirname(fileURLToPath(new URL('../package.json', import.meta.url)));
-const sourceFiles = listFiles(join(root, 'src'), file => file.endsWith('.mjs'));
+const scanRoots = ['src', 'site-src', 'examples'];
+const sourceFiles = scanRoots.flatMap(name => listFiles(join(root, name), file => /\.(mjs|js|html)$/.test(file)));
 
 const banned = [
   { name: 'eval', pattern: /\beval\s*\(/ },
@@ -39,7 +40,7 @@ if (findings.length) {
   process.exit(1);
 }
 
-console.log(`security scan passed (${sourceFiles.length} source files)`);
+console.log(`security scan passed (${sourceFiles.length} runtime/demo files)`);
 
 function listFiles(dir, predicate) {
   return readdirSync(dir).flatMap(name => {

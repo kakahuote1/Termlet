@@ -2,11 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   createBlogTerminal,
+  createFeedTerminal,
   createWindowsTerminal,
   createTerminal,
   blogSandboxPreset,
   effectEventsPlugin,
   hugoPostsPlugin,
+  parseFeedPosts,
+  discoverFeedUrl,
   memoryPersistenceAdapter,
 } from '../src/index.mjs';
 
@@ -79,6 +82,14 @@ test('exposes generic factory aliases for non-blog users', async () => {
   assert.equal((await terminal.execute('echo portable')).stdout, 'portable\n');
 });
 
+test('feed adapter creates a generic blog terminal from posts', async () => {
+  const terminal = await createFeedTerminal({
+    posts: [{ title: 'Feed Adapter', content: '# Adapter\n' }],
+  });
+
+  assert.match((await terminal.execute('ls /home/guest/blog')).stdout, /Feed_Adapter\.md/);
+});
+
 test('effect plugin emits data events for custom renderers', async () => {
   const terminal = createTerminal({
     plugins: [effectEventsPlugin],
@@ -87,6 +98,46 @@ test('effect plugin emits data events for custom renderers', async () => {
   const result = await terminal.execute('cmatrix --fast');
   assert.equal(result.status, 0);
   assert.deepEqual(result.events, [{ type: 'effect', name: 'cmatrix', args: ['--fast'] }]);
+});
+
+test('feed parser handles RSS namespaces and Atom without DOMParser dependency', () => {
+  const rss = `<?xml version="1.0"?>
+  <rss><channel><item>
+    <title>RSS Post</title>
+    <link>https://example.test/rss-post</link>
+    <pubDate>Sat, 09 May 2026 01:00:00 GMT</pubDate>
+    <content:encoded><![CDATA[# RSS body]]></content:encoded>
+  </item></channel></rss>`;
+  const atom = `<?xml version="1.0"?>
+  <feed><entry>
+    <title>Atom Post</title>
+    <link rel="alternate" href="https://example.test/atom-post" />
+    <updated>2026-05-09T01:00:00Z</updated>
+    <summary>Atom body</summary>
+  </entry></feed>`;
+
+  assert.deepEqual(parseFeedPosts(rss), [{
+    title: 'RSS Post',
+    link: 'https://example.test/rss-post',
+    date: 'Sat, 09 May 2026 01:00:00 GMT',
+    content: '# RSS body',
+  }]);
+  assert.deepEqual(parseFeedPosts(atom), [{
+    title: 'Atom Post',
+    link: 'https://example.test/atom-post',
+    date: '2026-05-09T01:00:00Z',
+    content: 'Atom body',
+  }]);
+
+  const doc = {
+    querySelectorAll() {
+      return [
+        { getAttribute: name => ({ type: 'text/html', href: '/not-feed.html' })[name] || '' },
+        { getAttribute: name => ({ type: 'application/atom+xml', href: '/atom.xml' })[name] || '' },
+      ];
+    },
+  };
+  assert.equal(discoverFeedUrl(doc, 'https://example.test/blog/'), 'https://example.test/atom.xml');
 });
 
 test('core exposes command and path completion for renderers', () => {
@@ -148,6 +199,29 @@ test('core caps oversized output and times out async commands', async () => {
   const slow = await terminal.execute('slow');
   assert.equal(slow.status, 124);
   assert.match(slow.stderr, /timed out/);
+});
+
+test('core lets renderers interrupt async commands with AbortSignal', async () => {
+  const terminal = createTerminal();
+  let receivedSignal = false;
+  let markStarted;
+  const started = new Promise(resolve => {
+    markStarted = resolve;
+  });
+  terminal.register('wait', ({ signal }) => {
+    receivedSignal = signal instanceof AbortSignal;
+    markStarted();
+    return new Promise(resolve => setTimeout(() => resolve({ status: 0, stdout: 'late\n' }), 80));
+  });
+  const controller = new AbortController();
+  const running = terminal.execute('wait', { signal: controller.signal });
+  await started;
+  controller.abort();
+
+  const result = await running;
+  assert.equal(receivedSignal, true);
+  assert.equal(result.status, 130);
+  assert.match(result.stderr, /interrupted/);
 });
 
 test('windows terminal profile supports cmd and powershell style commands', async () => {

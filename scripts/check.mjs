@@ -4,10 +4,10 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const root = dirname(fileURLToPath(new URL('../package.json', import.meta.url)));
-const targets = ['src', 'scripts', 'site-src', 'test'];
+const targets = ['src', 'scripts', 'site-src', 'test', 'examples'];
 const files = targets.flatMap(target => {
   const dir = join(root, target);
-  return existsSync(dir) ? listMjs(dir) : [];
+  return existsSync(dir) ? listJavaScript(dir) : [];
 }).sort();
 let failed = false;
 
@@ -20,13 +20,13 @@ for (const file of files) {
 }
 
 if (failed) process.exit(1);
-console.log(`checked ${files.length} JavaScript modules`);
+console.log(`checked ${files.length} JavaScript files`);
 
-function listMjs(dir) {
+function listJavaScript(dir) {
   return readdirSync(dir).flatMap(name => {
     const path = join(dir, name);
     const stat = statSync(path);
-    if (stat.isDirectory()) return listMjs(path);
-    return path.endsWith('.mjs') ? [path] : [];
+    if (stat.isDirectory()) return listJavaScript(path);
+    return /\.(mjs|js)$/.test(path) ? [path] : [];
   });
 }

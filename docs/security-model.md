@@ -51,8 +51,9 @@ The core exposes defensive limits:
 - `maxCommandSubstitutionLength` caps `$(...)`;
 - `maxOutputBytes` caps `stdout` and `stderr`;
 - `commandTimeoutMs` can time out asynchronous command handlers.
+- `AbortSignal` can interrupt a running asynchronous command from the renderer.
 
-These limits protect the host page from accidental huge output and slow async plugins. They do not interrupt a malicious synchronous infinite loop inside a third-party plugin, so plugin code must still be reviewed like any other frontend dependency.
+These limits protect the host page from accidental huge output and slow async plugins. `AbortSignal` and timeout protection do not interrupt a malicious synchronous infinite loop inside a third-party plugin, so plugin code must still be reviewed like any other frontend dependency.
 
 ## Command Author Checklist
 

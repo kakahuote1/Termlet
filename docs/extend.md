@@ -96,7 +96,7 @@ new DomTerminalRenderer(terminal, {
 自定义渲染器只需要做四件事：
 
 1. 收集用户输入的一行命令。
-2. 调用 `await terminal.execute(line)`。
+2. 调用 `await terminal.execute(line)`，必要时传入 `AbortSignal` 支持 Ctrl+C。
 3. 把 `stdout` 和 `stderr` 当作文本渲染。
 4. 根据 `events` 做受控 UI 效果。
 
@@ -112,6 +112,25 @@ async function run(line) {
 ```
 
 不要把命令输出写入 `innerHTML`。
+
+如果你的渲染器支持中断：
+
+```js
+let running = null;
+
+async function run(line) {
+  running = new AbortController();
+  const result = await terminal.execute(line, {
+    signal: running.signal,
+  });
+  running = null;
+  return result;
+}
+
+function interrupt() {
+  running?.abort();
+}
+```
 
 ## 5. 做一个博客彩蛋
 

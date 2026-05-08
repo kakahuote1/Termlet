@@ -16,6 +16,7 @@ export interface CommandContext {
   name: string;
   args: string[];
   stdin: string;
+  signal: AbortSignal | null;
   terminal: TerminalCore;
   fs: MemoryFileSystem;
   user: string;
@@ -84,7 +85,7 @@ export class TerminalCore {
   completePath(token: string): string[];
   envSnapshot(): Record<string, string>;
   resolve(path: string): string;
-  execute(line: string): Promise<CommandResult>;
+  execute(line: string, options?: { signal?: AbortSignal | null }): Promise<CommandResult>;
   snapshot(): Record<string, unknown>;
   restore(state?: Record<string, unknown>): this;
   persist(): void;
@@ -160,6 +161,7 @@ export class DomTerminalRenderer {
   print(text: string, cls?: string): void;
   printBlock(text: string, cls?: string): void;
   handleEvents(events?: TerminalEvent[]): void;
+  abortRunning(): boolean;
 }
 
 export function ok(stdout?: string, extra?: Partial<CommandResult>): CommandResult;
@@ -178,12 +180,16 @@ export function toWindowsPath(path: string, drive?: string): string;
 export function fromWindowsPath(path: string): string;
 export function feedPostsPlugin(posts?: Array<Record<string, string>>, options?: Record<string, unknown>): TerminalPlugin;
 export function fetchFeedPosts(feedUrl?: string, fetchImpl?: typeof fetch): Promise<Array<Record<string, string>>>;
+export function fetchDiscoveredFeedPosts(options?: { feedUrl?: string; fetch?: typeof fetch; fetchImpl?: typeof fetch; document?: Document; baseUrl?: string }): Promise<Array<Record<string, string>>>;
 export function parseFeedPosts(text: string): Array<Record<string, string>>;
+export function discoverFeedUrl(doc?: Document, baseUrl?: string): string | null;
 export function hugoPostsPlugin(posts?: Array<Record<string, string>>, options?: Record<string, unknown>): TerminalPlugin;
 export function fetchHugoPosts(feedUrl?: string, fetchImpl?: typeof fetch): Promise<Array<Record<string, string>>>;
 export function blogSandboxPreset(options?: Record<string, unknown>): TerminalPlugin;
 export function injectDefaultStyles(doc?: Document): void;
 export function mountStaticTerminal(options?: Record<string, unknown>): Promise<{ terminal: TerminalCore; renderer: DomTerminalRenderer }>;
+export function createFeedTerminal(options?: Record<string, unknown>): Promise<TerminalCore>;
+export function mountFeedTerminal(options?: Record<string, unknown>): Promise<{ terminal: TerminalCore; renderer: DomTerminalRenderer }>;
 export function createHugoTerminal(options?: Record<string, unknown>): Promise<TerminalCore>;
 export function mountHugoTerminal(options?: Record<string, unknown>): Promise<{ terminal: TerminalCore; renderer: DomTerminalRenderer }>;
 export function createStorageAdapter(options?: Record<string, unknown>): PersistenceAdapter;

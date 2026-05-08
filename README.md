@@ -116,6 +116,14 @@ const terminal = createTerminal({
 });
 ```
 
+如果站点 `<head>` 已声明 RSS/Atom，也可以自动发现：
+
+```js
+import { fetchDiscoveredFeedPosts } from 'termlet';
+
+const posts = await fetchDiscoveredFeedPosts();
+```
+
 Hugo：
 
 ```js
@@ -124,6 +132,17 @@ import { mountHugoTerminal } from 'termlet';
 await mountHugoTerminal({
   mount: '#terminal',
   feedUrl: '/index.xml',
+});
+```
+
+其他静态博客可以直接用通用 feed 适配器：
+
+```js
+import { mountFeedTerminal } from 'termlet';
+
+await mountFeedTerminal({
+  mount: '#terminal',
+  feedUrl: '/feed.xml',
 });
 ```
 
@@ -166,6 +185,7 @@ Termlet 是一个安全的前端模拟层，不是真实 Shell。
 - `sudo`、`su`、`passwd` 和特权操作默认都是模拟行为。
 - `rm /`、`sudo rm -rf /`、`Remove-Item C:\` 会被阻止。
 - 命令输出有大小上限，异步命令可配置超时，防止页面被异常输出拖垮。
+- 渲染器可以通过 `AbortSignal` 中断异步命令，默认 DOM renderer 支持运行中 Ctrl+C。
 - 默认 DOM 渲染器使用 `textContent` 输出文本，避免把命令输出当作 HTML 注入。
 
 如果你需要真实远程 Shell、容器执行或多人终端，请使用后端沙箱、WebTTY、ttyd 或容器隔离方案。
@@ -185,6 +205,7 @@ Termlet 是一个安全的前端模拟层，不是真实 Shell。
 - [扩展指南](docs/extend.md)
 - [插件开发](docs/plugins.md)
 - [博客系统适配](docs/integrations.md)
+- [主题与外观](docs/theming.md)
 - [渲染器契约](docs/renderer-contract.md)
 - [部署](docs/deployment.md)
 - [GitHub Pages 演示站](docs/github-pages.md)
@@ -199,7 +220,7 @@ npm run verify
 npm pack --dry-run
 ```
 
-`npm run verify` 会执行语法检查、单元测试、安全扫描，并构建 `dist/` 和 GitHub Pages demo。
+`npm run verify` 会执行语法检查、单元测试、性能基线、安全扫描、GitHub Pages demo 构建和站点 smoke 检查。
 
 ## License
 

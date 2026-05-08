@@ -14,3 +14,6 @@
 - Windows/CMD/PowerShell style command plugin and example.
 - Generic RSS/Atom feed post mapping.
 - Core output cap and async command timeout safeguards.
+- AbortSignal command interruption for renderer Ctrl+C flows.
+- Feed autodiscovery and namespace-aware RSS/Atom parsing.
+- Runtime/demo security scan coverage and GitHub Pages site smoke check.

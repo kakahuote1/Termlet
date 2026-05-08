@@ -8,7 +8,7 @@ Termlet is a browser-only terminal simulation. Contributions should keep the cor
 npm run verify
 ```
 
-`verify` runs syntax checks, unit tests, the focused security scan, and the dist build. The core has no runtime dependencies.
+`verify` runs syntax checks, unit tests, the performance benchmark, Markdown link smoke, the focused security scan, the dist build, and the GitHub Pages demo smoke. The core has no runtime dependencies.
 
 ## Project Rules
 
@@ -23,8 +23,9 @@ npm run verify
 1. Put generic Linux-like commands in `src/plugins/basic-commands.mjs` or `src/plugins/system-commands.mjs`.
 2. Put site/game/blog-specific commands in a new plugin or preset.
 3. Return `{ stdout, stderr, status, events }` through `ok()` or `fail()`.
-4. Use `ctx.fs` for file access and pass `{ cwd, home, user, groups }`.
-5. Add a test in `test/core.test.mjs`.
+4. Use `ctx.signal` for interruptible async work.
+5. Use `ctx.fs` for file access and pass `{ cwd, home, user, groups }`.
+6. Add a test in `test/core.test.mjs`.
 
 ## Release Checklist
 

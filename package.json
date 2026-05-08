@@ -31,6 +31,7 @@
     "./plugins/hugo": "./src/plugins/hugo-adapter.mjs",
     "./presets/blog-sandbox": "./src/presets/blog-sandbox.mjs",
     "./adapters/static-site": "./src/adapters/static-site.mjs",
+    "./adapters/feed": "./src/adapters/feed.mjs",
     "./adapters/hugo": "./src/adapters/hugo.mjs",
     "./adapters/persistence": "./src/adapters/persistence.mjs",
     "./renderers/dom": "./src/renderers/dom-renderer.mjs",
@@ -42,9 +43,11 @@
     "site:build": "npm run build && node scripts/build-site.mjs",
     "check": "node scripts/check.mjs",
     "bench": "node scripts/bench.mjs",
+    "docs:smoke": "node scripts/docs-smoke.mjs",
     "security:scan": "node scripts/security-scan.mjs",
+    "site:smoke": "node scripts/site-smoke.mjs",
     "test": "node --test test/core.test.mjs",
-    "verify": "npm run check && npm test && npm run bench && npm run security:scan && npm run site:build"
+    "verify": "npm run check && npm test && npm run bench && npm run docs:smoke && npm run security:scan && npm run site:build && npm run site:smoke"
   },
   "files": [
     "src",

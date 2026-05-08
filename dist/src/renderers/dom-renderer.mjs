@@ -1,12 +1,12 @@
 export const DEFAULT_TERMINAL_CSS = `
-.blog-terminal { background:#05080d; color:#c9fdd7; font:13px/1.45 ui-monospace, SFMono-Regular, Consolas, monospace; padding:12px; border:1px solid #1f3b2d; border-radius:8px; }
+.blog-terminal { --termlet-bg:#05080d; --termlet-fg:#c9fdd7; --termlet-border:#1f3b2d; --termlet-prompt:#2ea043; --termlet-error:#ff7b72; --termlet-muted:#7d8590; --termlet-focus:#58a6ff; background:var(--termlet-bg); color:var(--termlet-fg); font:13px/1.45 ui-monospace, SFMono-Regular, Consolas, monospace; padding:12px; border:1px solid var(--termlet-border); border-radius:8px; }
 .blog-terminal__output { min-height:320px; max-height:70vh; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; tab-size:2; }
-.blog-terminal__line.error { color:#ff7b72; }
-.blog-terminal__line.muted { color:#7d8590; }
+.blog-terminal__line.error { color:var(--termlet-error); }
+.blog-terminal__line.muted { color:var(--termlet-muted); }
 .blog-terminal__input-row { display:flex; gap:8px; align-items:baseline; min-width:0; }
-.blog-terminal__prompt { color:#2ea043; flex:none; }
+.blog-terminal__prompt { color:var(--termlet-prompt); flex:none; }
 .blog-terminal__input { flex:1; min-width:0; background:transparent; border:0; color:inherit; font:inherit; outline:0; }
-.blog-terminal__input:focus-visible { box-shadow:0 1px 0 #58a6ff; }
+.blog-terminal__input:focus-visible { box-shadow:0 1px 0 var(--termlet-focus); }
 .blog-terminal--closed { opacity:.72; }
 `;
 
@@ -30,6 +30,7 @@ export class DomTerminalRenderer {
     this.onResult = options.onResult || null;
     this.onError = options.onError || null;
     this.activeInput = null;
+    this.runningAbort = null;
     this.disposers = [];
     this.running = false;
   }
@@ -45,6 +46,15 @@ export class DomTerminalRenderer {
     const focusHandler = () => this.focus();
     this.mount.addEventListener('click', focusHandler);
     this.disposers.push(() => this.mount.removeEventListener('click', focusHandler));
+    if (!this.mount.hasAttribute('tabindex')) this.mount.tabIndex = 0;
+    const interruptHandler = event => {
+      if (this.running && event.ctrlKey && event.key.toLowerCase() === 'c') {
+        this.abortRunning();
+        event.preventDefault();
+      }
+    };
+    this.mount.addEventListener('keydown', interruptHandler);
+    this.disposers.push(() => this.mount.removeEventListener('keydown', interruptHandler));
     if (this.welcome) this.print(this.welcome, 'muted');
     this.newInput();
     return this;
@@ -97,7 +107,13 @@ export class DomTerminalRenderer {
   }
 
   async handleKey(event, input, row) {
-    if (this.running) return;
+    if (this.running) {
+      if (event.ctrlKey && event.key.toLowerCase() === 'c') {
+        this.abortRunning();
+        event.preventDefault();
+      }
+      return;
+    }
     if (event.key === 'Enter') {
       const command = input.value;
       this.freezeInput(row, command);
@@ -106,9 +122,11 @@ export class DomTerminalRenderer {
         this.historyIndex = this.history.length;
         input.disabled = true;
         this.running = true;
+        this.runningAbort = typeof AbortController === 'function' ? new AbortController() : null;
+        this.mount.focus();
         try {
           if (this.onCommand) this.onCommand(command, this.core);
-          const result = await this.core.execute(command);
+          const result = await this.core.execute(command, { signal: this.runningAbort?.signal || null });
           this.handleEvents(result.events);
           if (result.stdout) this.printBlock(result.stdout);
           if (result.stderr) this.printBlock(result.stderr, 'error');
@@ -118,6 +136,7 @@ export class DomTerminalRenderer {
           this.print(`terminal: ${error?.message || String(error)}`, 'error');
         } finally {
           this.running = false;
+          this.runningAbort = null;
         }
       }
       this.newInput();
@@ -165,6 +184,13 @@ export class DomTerminalRenderer {
       if (event.type === 'clear') this.output.textContent = '';
       if (event.type === 'exit') this.mount.classList.add(`${this.className}--closed`);
     });
+  }
+
+  abortRunning() {
+    if (!this.runningAbort || this.runningAbort.signal.aborted) return false;
+    this.runningAbort.abort();
+    this.print('^C', 'muted');
+    return true;
   }
 
   freezeInput(row, command) {

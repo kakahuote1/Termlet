@@ -53,6 +53,7 @@ Every adapter should test:
 - `Remove-Item C:\` remains blocked in Windows-style profiles;
 - huge command output is capped;
 - asynchronous command handlers respect configured timeout;
+- asynchronous command handlers can be interrupted with `AbortSignal`;
 - `python3 -c "..."` does not execute code;
 - `node -e "..."` does not execute code;
 - `curl http://...` does not fetch unless a site owner explicitly provides a safe adapter;
@@ -65,4 +66,4 @@ Run the focused local scan before release:
 npm run security:scan
 ```
 
-This scan checks the included source for dangerous primitives that should not appear in a browser-only pseudo-terminal core.
+This scan checks included runtime source, demo source, and examples for dangerous primitives that should not appear in a browser-only pseudo-terminal core.

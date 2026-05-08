@@ -42,6 +42,42 @@ const terminal = createTerminal({
 });
 ```
 
+如果博客模板已经在 `<head>` 里声明 feed：
+
+```html
+<link rel="alternate" type="application/rss+xml" href="/feed.xml">
+```
+
+可以让 Termlet 自动发现：
+
+```js
+import {
+  createTerminal,
+  feedPostsPlugin,
+  fetchDiscoveredFeedPosts,
+} from 'termlet';
+
+const posts = await fetchDiscoveredFeedPosts();
+
+const terminal = createTerminal({
+  plugins: [feedPostsPlugin(posts)],
+});
+```
+
+自动发现失败时会回退到 `/index.xml`，适合 Hugo；其他系统可以显式传入 `feedUrl`。
+
+如果只想直接挂载一个通用博客终端：
+
+```js
+import { mountFeedTerminal } from 'termlet';
+
+await mountFeedTerminal({
+  mount: '#terminal',
+  feedUrl: '/feed.xml',
+  injectStyles: false,
+});
+```
+
 Hugo 适配仍然保留：
 
 ```js

@@ -159,7 +159,7 @@ export class TerminalCore {
     return this.fs.normalize(path, { cwd: this.cwd, home: this.home });
   }
 
-  async execute(line) {
+  async execute(line, options = {}) {
     const input = String(line || '').trim();
     if (!input) return ok('');
     if (input.length > this.maxLineLength) {
@@ -171,7 +171,7 @@ export class TerminalCore {
     if (this.history.length > this.maxHistory) this.history.splice(0, this.history.length - this.maxHistory);
     let result;
     try {
-      result = await this.runControl(input);
+      result = await this.runControl(input, options);
     } catch (error) {
       result = fail(`bash: ${error.message || String(error)}\n`, 2);
     }
@@ -261,7 +261,7 @@ export class TerminalCore {
     }, {});
   }
 
-  async runControl(line) {
+  async runControl(line, options = {}) {
     const tokens = splitControlOperators(line, { backslashEscapes: this.backslashEscapes });
     let pending = ';';
     let last = ok('');
@@ -275,7 +275,7 @@ export class TerminalCore {
       }
       if (pending === '&&' && last.status !== 0) continue;
       if (pending === '||' && last.status === 0) continue;
-      last = await this.runRedirect(token.value);
+      last = await this.runRedirect(token.value, options);
       stdout += last.stdout;
       stderr += last.stderr;
       events = events.concat(last.events);
@@ -284,10 +284,10 @@ export class TerminalCore {
     return normalizeResult({ stdout, stderr, status: last.status, events });
   }
 
-  async runRedirect(line) {
+  async runRedirect(line, options = {}) {
     const redirect = extractRedirect(line, { backslashEscapes: this.backslashEscapes });
     const command = redirect ? redirect.command : line;
-    const result = await this.runPipeline(command);
+    const result = await this.runPipeline(command, options);
     if (!redirect) return result;
     try {
       this.fs.writeFile(redirect.target, result.stdout, {
@@ -303,7 +303,7 @@ export class TerminalCore {
     }
   }
 
-  async runPipeline(line) {
+  async runPipeline(line, options = {}) {
     const segments = splitTopLevel(line, '|', { backslashEscapes: this.backslashEscapes });
     let stdin = '';
     let status = 0;
@@ -312,7 +312,7 @@ export class TerminalCore {
     for (const segment of segments) {
       const words = await this.parseWordsAsync(segment);
       if (words.length === 0) return fail('bash: syntax error near unexpected token `|`\n', 2);
-      const result = await this.runCommand(words, stdin);
+      const result = await this.runCommand(words, stdin, options);
       stdin = result.stdout;
       stderr += result.stderr;
       events = events.concat(result.events);
@@ -322,7 +322,7 @@ export class TerminalCore {
     return normalizeResult({ stdout: stdin, stderr, status, events });
   }
 
-  async runCommand(words, stdin = '') {
+  async runCommand(words, stdin = '', options = {}) {
     const localAssignments = {};
     const mutable = [...words];
     while (mutable.length && /^[A-Za-z_][A-Za-z0-9_]*=.*/.test(mutable[0])) {
@@ -346,6 +346,7 @@ export class TerminalCore {
     const args = mutable.flatMap(arg => this.fs.glob(arg, { cwd: this.cwd, home: this.home }));
     const command = this.command(name);
     if (!command) return fail(`${name}: command not found\n`, 127);
+    if (options.signal?.aborted) return fail(`${name}: interrupted\n`, 130);
     const envBackup = { ...this.env };
     Object.assign(this.env, localAssignments);
     try {
@@ -353,10 +354,11 @@ export class TerminalCore {
         name,
         args,
         stdin,
+        signal: options.signal || null,
         ...this.context(),
       }));
       operation.catch(() => {});
-      const result = await this.raceCommandTimeout(name, operation);
+      const result = await this.raceCommandTimeout(name, operation, options.signal);
       return this.limitResult(normalizeResult(result));
     } catch (error) {
       if (error instanceof VfsError) return fail(`${name}: ${error.message}\n`, error.code === 'ENOENT' ? 1 : 1);
@@ -369,20 +371,31 @@ export class TerminalCore {
     }
   }
 
-  async raceCommandTimeout(name, operation) {
-    if (!this.commandTimeoutMs) return operation;
+  async raceCommandTimeout(name, operation, signal = null) {
+    if (!this.commandTimeoutMs && !signal) return operation;
+    if (signal?.aborted) return fail(`${name}: interrupted\n`, 130);
     let timer = null;
+    let cleanupAbort = null;
     try {
-      return await Promise.race([
-        operation,
-        new Promise(resolve => {
+      const racers = [operation];
+      if (this.commandTimeoutMs) {
+        racers.push(new Promise(resolve => {
           timer = setTimeout(() => {
             resolve(fail(`${name}: command timed out after ${this.commandTimeoutMs}ms\n`, 124));
           }, this.commandTimeoutMs);
-        }),
-      ]);
+        }));
+      }
+      if (signal) {
+        racers.push(new Promise(resolve => {
+          const onAbort = () => resolve(fail(`${name}: interrupted\n`, 130));
+          signal.addEventListener('abort', onAbort, { once: true });
+          cleanupAbort = () => signal.removeEventListener('abort', onAbort);
+        }));
+      }
+      return await Promise.race(racers);
     } finally {
       if (timer) clearTimeout(timer);
+      if (cleanupAbort) cleanupAbort();
     }
   }
 

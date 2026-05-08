@@ -29,7 +29,7 @@ Useful options:
 | `caseInsensitiveCommands` | Useful for CMD/PowerShell style terminals. |
 | `backslashEscapes` | Set `false` to preserve Windows paths such as `C:\Users\guest`. |
 
-## `terminal.execute(line)`
+## `terminal.execute(line, options?)`
 
 Runs one line and returns:
 
@@ -43,6 +43,28 @@ Runs one line and returns:
 ```
 
 Supported shell syntax includes quotes, `$VAR`, `${VAR}`, `$(cmd)`, pipes, `&&`, `||`, `;`, `>`, `>>`, and simple globs.
+
+Async renderers can pass an `AbortSignal` to interrupt a running command:
+
+```js
+const controller = new AbortController();
+const running = terminal.execute('long-task', {
+  signal: controller.signal,
+});
+
+controller.abort();
+const result = await running; // status 130
+```
+
+Command handlers receive the same signal:
+
+```js
+terminal.register('long-task', async ({ signal }) => {
+  if (signal?.aborted) return fail('long-task: interrupted\n', 130);
+  // For real async work, subscribe to signal.abort and stop waiting.
+  return ok('done\n');
+});
+```
 
 ## Command Plugins
 
@@ -60,7 +82,7 @@ export function toolsPlugin(terminal) {
 }
 ```
 
-Handlers receive command args, stdin, shell state, and the VFS through one context object.
+Handlers receive command args, stdin, shell state, `signal`, and the VFS through one context object.
 
 ## Filesystem
 
@@ -92,6 +114,7 @@ new DomTerminalRenderer(terminal, {
 ## Adapters
 
 - `mountStaticTerminal(options)` mounts a generic terminal.
+- `createFeedTerminal(options)` and `mountFeedTerminal(options)` read RSS/Atom posts for generic static blogs.
 - `mountHugoTerminal(options)` can read Hugo RSS and expose posts as files.
 - `createStorageAdapter(options)` persists session state in `localStorage`.
 - `memoryPersistenceAdapter(initialState)` is useful for tests.
@@ -105,6 +128,23 @@ const posts = await fetchFeedPosts('/feed.xml');
 
 const terminal = createTerminal({
   plugins: [feedPostsPlugin(posts)],
+});
+```
+
+For blogs that expose a feed link in `<head>`, use discovery:
+
+```js
+const posts = await fetchDiscoveredFeedPosts();
+```
+
+`parseFeedPosts()` supports RSS, Atom, and common namespace tags such as `content:encoded`. It also works in non-browser test environments without `DOMParser`.
+
+For a complete generic static-blog terminal:
+
+```js
+await mountFeedTerminal({
+  mount: '#terminal',
+  feedUrl: '/feed.xml',
 });
 ```
 
