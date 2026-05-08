@@ -4,6 +4,7 @@
   blogSandboxPreset,
   DomTerminalRenderer,
   effectEventsPlugin,
+  fail,
   ok,
 } from './termlet/index.mjs';
 
@@ -40,6 +41,14 @@ function demoPlugin(terminal) {
     'examples/windows-style PowerShell/CMD 示例',
     '',
   ].join('\n')));
+
+  terminal.register('slow', ({ signal }) => new Promise(resolve => {
+    const timer = setTimeout(() => resolve(ok('slow: done\n')), 4000);
+    signal?.addEventListener('abort', () => {
+      clearTimeout(timer);
+      resolve(fail('slow: interrupted\n', 130));
+    }, { once: true });
+  }));
 }
 
 const eventStatus = document.querySelector('#event-status');
@@ -57,7 +66,7 @@ const terminal = createTerminal({
 
 const renderer = new DomTerminalRenderer(terminal, {
   mount: '#terminal',
-  welcome: 'Try: about, docs, help, ls -al, tree ~/lab, sudo rm -rf /\\n',
+  welcome: 'Try: about, docs, help, ls -al, tree ~/lab, slow, sudo rm -rf /\\n',
   maxLines: 600,
   onEvent(event) {
     if (!eventStatus) return;

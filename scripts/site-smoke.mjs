@@ -26,6 +26,7 @@ assert(!/\sstyle\s*=/.test(index), 'demo HTML should avoid inline style attribut
 assert(!app.includes('injectDefaultStyles'), 'strict demo should not inject inline styles');
 assert(app.includes('./termlet/index.mjs'), 'demo app should import built Termlet entry');
 assert(app.includes('docs/integrations.md'), 'demo app should surface integration docs');
+assert(app.includes("terminal.register('slow'"), 'demo app should expose an interruptible slow command');
 
 if (failures.length) {
   console.error('site smoke failed:');
