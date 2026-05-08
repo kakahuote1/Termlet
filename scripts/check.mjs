@@ -1,11 +1,14 @@
 import { spawnSync } from 'node:child_process';
-import { readdirSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const root = dirname(fileURLToPath(new URL('../package.json', import.meta.url)));
-const targets = ['src', 'scripts', 'test'];
-const files = targets.flatMap(target => listMjs(join(root, target))).sort();
+const targets = ['src', 'scripts', 'site-src', 'test'];
+const files = targets.flatMap(target => {
+  const dir = join(root, target);
+  return existsSync(dir) ? listMjs(dir) : [];
+}).sort();
 let failed = false;
 
 for (const file of files) {

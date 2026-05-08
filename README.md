@@ -63,6 +63,19 @@ npm run build
 </script>
 ```
 
+## 在线演示
+
+不需要为演示站单独创建仓库。当前仓库已经内置 GitHub Pages workflow：
+
+- `.github/workflows/ci.yml`：推送和 PR 时运行 `npm run verify`。
+- `.github/workflows/pages.yml`：推送到 `main` 或 `master` 时构建 `site/` 并发布。
+- `site-src/`：在线演示站源码。
+- `npm run site:build`：本地生成 `site/`。
+
+首次推到 GitHub 后，在仓库 `Settings → Pages → Build and deployment` 中把 `Source` 设为 `GitHub Actions` 即可。
+
+详情见 [GitHub Pages 演示站](docs/github-pages.md)。
+
 ## Hugo 接入
 
 最简单的 Hugo 用法：
@@ -246,8 +259,10 @@ test/
 - [快速上手](docs/getting-started.md)
 - [API](docs/api.md)
 - [插件开发](docs/plugins.md)
+- [扩展指南](docs/extend.md)
 - [渲染器契约](docs/renderer-contract.md)
 - [部署](docs/deployment.md)
+- [GitHub Pages 演示站](docs/github-pages.md)
 - [安全模型](docs/security-model.md)
 - [加固清单](docs/hardening-checklist.md)
 - [从当前博客迁移](docs/migration-from-current-blog.md)

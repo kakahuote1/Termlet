@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Blog Easter Egg Terminal</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      background: #111418;
+      color: #e6edf3;
+      font-family: system-ui, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .welcome {
+      width: min(760px, 100%);
+      border: 1px solid #2b3442;
+      border-radius: 8px;
+      padding: 28px;
+      background: #171d25;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .welcome:focus-visible {
+      outline: 2px solid #69d7e6;
+      outline-offset: 3px;
+    }
+
+    .welcome h1 {
+      margin: 0 0 10px;
+      font-size: clamp(26px, 5vw, 44px);
+    }
+
+    .welcome p {
+      margin: 0;
+      color: #a9b4c0;
+      line-height: 1.7;
+    }
+
+    .terminal-modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(0, 0, 0, .72);
+    }
+
+    .terminal-modal.open {
+      display: grid;
+    }
+
+    .terminal-window {
+      width: min(980px, 100%);
+      max-height: min(760px, 92vh);
+      border: 1px solid #2b3442;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #070a0f;
+      box-shadow: 0 20px 70px rgba(0,0,0,.45);
+    }
+
+    .bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 46px;
+      padding: 0 12px;
+      border-bottom: 1px solid #2b3442;
+      background: #111722;
+      font: 13px ui-monospace, SFMono-Regular, Consolas, monospace;
+    }
+
+    .bar button {
+      min-width: 44px;
+      min-height: 36px;
+      border: 1px solid #2b3442;
+      border-radius: 6px;
+      background: #1d2430;
+      color: #e6edf3;
+      cursor: pointer;
+    }
+
+    .bar button:focus-visible {
+      outline: 2px solid #69d7e6;
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+  <section class="welcome" role="button" tabindex="0" aria-label="欢迎横幅，点击三次打开终端">
+    <h1>欢迎来到我的博客</h1>
+    <p>这个横幅是普通内容，也可以隐藏一个终端入口。连续点击三次打开。</p>
+  </section>
+
+  <div class="terminal-modal" id="modal" aria-hidden="true">
+    <div class="terminal-window" role="dialog" aria-label="隐藏终端">
+      <div class="bar">
+        <span>guest@blog:~</span>
+        <button type="button" id="close">close</button>
+      </div>
+      <div id="terminal"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import {
+      createStorageAdapter,
+      createTerminal,
+      blogSandboxPreset,
+      DomTerminalRenderer,
+      injectDefaultStyles,
+    } from '../../src/index.mjs';
+
+    injectDefaultStyles();
+
+    const terminal = createTerminal({
+      hostname: 'blog',
+      persistence: createStorageAdapter({ key: 'blog-easter-egg-terminal' }),
+      plugins: [blogSandboxPreset()],
+    });
+
+    let renderer = null;
+    let clicks = 0;
+    const welcome = document.querySelector('.welcome');
+    const modal = document.querySelector('#modal');
+    const close = document.querySelector('#close');
+
+    function openTerminal() {
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+      if (!renderer) {
+        renderer = new DomTerminalRenderer(terminal, {
+          mount: '#terminal',
+          welcome: 'Try: help, ls -al, cat /etc/os-release, session reset\\n',
+        }).attach();
+      }
+      renderer.focus();
+    }
+
+    function closeTerminal() {
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+      welcome.focus();
+    }
+
+    function hit() {
+      clicks += 1;
+      if (clicks >= 3) {
+        clicks = 0;
+        openTerminal();
+      }
+    }
+
+    welcome.addEventListener('click', hit);
+    welcome.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        hit();
+      }
+    });
+    close.addEventListener('click', closeTerminal);
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && modal.classList.contains('open')) closeTerminal();
+    });
+  </script>
+</body>
+</html>

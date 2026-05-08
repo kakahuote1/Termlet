@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Web Terminal Kit Demo</title>
+  <meta name="description" content="纯前端、可插拔、可扩展的网页伪终端基础库演示。">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Web Terminal Kit 首页">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>Web Terminal Kit</span>
+    </a>
+    <nav class="nav" aria-label="站点导航">
+      <a href="#demo">演示</a>
+      <a href="#extend">扩展</a>
+      <a href="#deploy">部署</a>
+      <a href="https://github.com/" data-repo-link>GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="workspace" id="demo" aria-labelledby="title">
+      <div class="intro">
+        <p class="eyebrow">Browser-only pseudo terminal</p>
+        <h1 id="title">给静态站点和博客使用的可插拔伪终端</h1>
+        <p class="lead">
+          Shell、VFS、命令插件、渲染器和持久化相互独立。你可以把它做成博客彩蛋、文档沙箱、CTF 练习环境或自己的站点终端。
+        </p>
+        <div class="command-strip" aria-label="快速命令">
+          <button type="button" data-run="about">about</button>
+          <button type="button" data-run="ls -al /home/guest">ls</button>
+          <button type="button" data-run="tree /home/guest/lab">tree</button>
+          <button type="button" data-run="cat ~/lab/readme.md">cat</button>
+          <button type="button" data-run="sudo rm -rf /">safe rm</button>
+        </div>
+      </div>
+
+      <div class="terminal-shell" aria-label="交互式终端演示">
+        <div class="terminal-titlebar">
+          <span class="window-dot red" aria-hidden="true"></span>
+          <span class="window-dot yellow" aria-hidden="true"></span>
+          <span class="window-dot green" aria-hidden="true"></span>
+          <span class="terminal-title">guest@demo:~/lab</span>
+          <span class="terminal-status" id="event-status">ready</span>
+        </div>
+        <div id="terminal"></div>
+      </div>
+    </section>
+
+    <section class="section" id="extend" aria-labelledby="extend-title">
+      <div class="section-head">
+        <p class="eyebrow">Extension model</p>
+        <h2 id="extend-title">扩展时只需要替换你关心的层</h2>
+      </div>
+      <div class="capability-grid">
+        <article>
+          <h3>加命令</h3>
+          <p>通过 `terminal.register()` 注册命令，返回 `stdout`、`stderr`、`status` 和 `events`。</p>
+        </article>
+        <article>
+          <h3>加文件系统</h3>
+          <p>用 VFS API 添加目录、文章、CTF 线索、配置文件和只读资料。</p>
+        </article>
+        <article>
+          <h3>换外观</h3>
+          <p>默认 DOM 渲染器可以直接用，也可以替换成浮窗、全屏、横幅或框架组件。</p>
+        </article>
+        <article>
+          <h3>控安全边界</h3>
+          <p>真实命令执行、网络访问和包安装默认关闭，危险命令在命令层和 VFS 层双重阻止。</p>
+        </article>
+      </div>
+
+      <pre class="code-sample"><code>import { createTerminal, ok } from 'web-terminal-kit';
+
+function myPlugin(terminal) {
+  terminal.register('hello', ({ user }) =&gt; ok(`hello ${user}\n`));
+}
+
+const terminal = createTerminal({
+  plugins: [myPlugin],
+});</code></pre>
+    </section>
+
+    <section class="section deploy" id="deploy" aria-labelledby="deploy-title">
+      <div class="section-head">
+        <p class="eyebrow">Deployment</p>
+        <h2 id="deploy-title">一个仓库就能托管文档和在线演示</h2>
+      </div>
+      <div class="steps">
+        <p><span>1</span> 推送当前仓库到 GitHub。</p>
+        <p><span>2</span> 在仓库 Settings → Pages 中选择 GitHub Actions。</p>
+        <p><span>3</span> 推送到 `main` 或 `master` 后，workflow 会构建 `site/` 并发布。</p>
+      </div>
+      <pre class="code-sample"><code>npm run verify
+npm run site:build</code></pre>
+    </section>
+  </main>
+
+  <script type="module" src="./app.mjs"></script>
+</body>
+</html>

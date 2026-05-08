@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Plugin Template</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      background: #101317;
+      color: #e6edf3;
+      font-family: system-ui, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    main {
+      width: min(960px, 100%);
+    }
+
+    h1 {
+      font-size: 20px;
+      margin: 0 0 14px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Plugin Template</h1>
+    <div id="terminal"></div>
+  </main>
+
+  <script type="module">
+    import {
+      createTerminal,
+      DomTerminalRenderer,
+      injectDefaultStyles,
+    } from '../../src/index.mjs';
+    import { myPlugin } from './my-plugin.mjs';
+
+    injectDefaultStyles();
+
+    const terminal = createTerminal({
+      hostname: 'template',
+      plugins: [myPlugin],
+    });
+
+    new DomTerminalRenderer(terminal, {
+      mount: '#terminal',
+      welcome: 'Try: hello, ls ~/workspace, cat ~/workspace/readme.txt\\n',
+    }).attach();
+  </script>
+</body>
+</html>

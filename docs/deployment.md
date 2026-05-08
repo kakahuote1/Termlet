@@ -94,3 +94,21 @@ A renderer only needs to:
 4. handle `events`.
 
 This keeps your design independent from the shell implementation.
+
+## GitHub Pages Demo
+
+This repository includes a Pages workflow and demo source:
+
+```text
+.github/workflows/pages.yml
+site-src/
+scripts/build-site.mjs
+```
+
+Run locally:
+
+```powershell
+npm run site:build
+```
+
+After pushing to GitHub, set repository `Settings -> Pages -> Source` to `GitHub Actions`.

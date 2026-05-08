@@ -67,6 +67,8 @@ Your renderer only needs to collect a command line, call `execute()`, render `st
 - Replace only the renderer CSS first.
 - Move to a custom renderer only when the default DOM renderer blocks your design.
 
+See `examples/plugin-template/` for a copyable starting point, and `examples/blog-easter-egg/` for a blog banner that opens a terminal after three clicks.
+
 ## Reset Path
 
 If you enable persistence, expose a reset path:

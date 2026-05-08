@@ -9,3 +9,5 @@
 - DOM reference renderer.
 - Optional persistence adapters.
 - Distribution build and TypeScript declarations.
+- GitHub Pages demo workflow and demo site source.
+- Copyable plugin template and blog easter egg examples.
