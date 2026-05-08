@@ -1,0 +1,9 @@
+{{- $terminal := resources.Get "js/terminal-entry.js" -}}
+{{- if $terminal -}}
+  {{- if eq hugo.Environment "production" -}}
+    {{- $terminal = $terminal | js.Build (dict "minify" true) | fingerprint -}}
+  {{- else -}}
+    {{- $terminal = $terminal | js.Build -}}
+  {{- end -}}
+  <script src="{{ $terminal.RelPermalink }}" {{ if eq hugo.Environment "production" }}integrity="{{ $terminal.Data.Integrity }}"{{ end }} defer></script>
+{{- end -}}

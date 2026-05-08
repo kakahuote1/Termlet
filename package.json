@@ -1,0 +1,39 @@
+{
+  "name": "web-terminal-kit",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Pure frontend, pluggable pseudo-terminal kit for static sites and blogs.",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.mjs",
+    "./factory": "./src/factory.mjs",
+    "./shell": "./src/shell.mjs",
+    "./vfs": "./src/vfs.mjs",
+    "./plugins/basic": "./src/plugins/basic-commands.mjs",
+    "./plugins/system": "./src/plugins/system-commands.mjs",
+    "./plugins/effects": "./src/plugins/effect-events.mjs",
+    "./plugins/hugo": "./src/plugins/hugo-adapter.mjs",
+    "./presets/blog-sandbox": "./src/presets/blog-sandbox.mjs",
+    "./adapters/static-site": "./src/adapters/static-site.mjs",
+    "./adapters/hugo": "./src/adapters/hugo.mjs",
+    "./adapters/persistence": "./src/adapters/persistence.mjs",
+    "./renderers/dom": "./src/renderers/dom-renderer.mjs"
+  },
+  "scripts": {
+    "check": "node --check src/index.mjs && node --check src/factory.mjs && node --check src/result.mjs && node --check src/shell.mjs && node --check src/vfs.mjs && node --check src/plugins/basic-commands.mjs && node --check src/plugins/system-commands.mjs && node --check src/plugins/effect-events.mjs && node --check src/plugins/hugo-adapter.mjs && node --check src/presets/blog-sandbox.mjs && node --check src/adapters/static-site.mjs && node --check src/adapters/hugo.mjs && node --check src/adapters/persistence.mjs && node --check src/renderers/dom-renderer.mjs",
+    "test": "node --test test/core.test.mjs"
+  },
+  "files": [
+    "src",
+    "docs",
+    "examples",
+    "README.md"
+  ],
+  "keywords": [
+    "terminal",
+    "browser",
+    "hugo",
+    "static-site",
+    "pseudo-terminal"
+  ]
+}
