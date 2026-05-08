@@ -24,6 +24,10 @@ Useful options:
 | `systemCommands: false` | Disable simulated system commands. |
 | `persistence` | `{ load, save, reset }` adapter for session state. |
 | `persistEnv` | `false`, `true`, or a list of env names to persist. |
+| `maxOutputBytes` | Caps command stdout/stderr to protect the page. |
+| `commandTimeoutMs` | Optional timeout for async command handlers. |
+| `caseInsensitiveCommands` | Useful for CMD/PowerShell style terminals. |
+| `backslashEscapes` | Set `false` to preserve Windows paths such as `C:\Users\guest`. |
 
 ## `terminal.execute(line)`
 
@@ -91,3 +95,25 @@ new DomTerminalRenderer(terminal, {
 - `mountHugoTerminal(options)` can read Hugo RSS and expose posts as files.
 - `createStorageAdapter(options)` persists session state in `localStorage`.
 - `memoryPersistenceAdapter(initialState)` is useful for tests.
+
+## Feed Posts
+
+Use `fetchFeedPosts()` and `feedPostsPlugin()` for RSS/Atom based blog systems:
+
+```js
+const posts = await fetchFeedPosts('/feed.xml');
+
+const terminal = createTerminal({
+  plugins: [feedPostsPlugin(posts)],
+});
+```
+
+## Windows Style Terminal
+
+```js
+const terminal = createWindowsTerminal({
+  shell: 'powershell',
+});
+```
+
+This installs Windows-style commands such as `dir`, `cls`, `cd`, `type`, `Get-Location`, `Set-Location`, `Get-Content`, `New-Item`, `Copy-Item`, `Move-Item`, and `Remove-Item`.

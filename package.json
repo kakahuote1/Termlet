@@ -27,6 +27,7 @@
     "./plugins/basic": "./src/plugins/basic-commands.mjs",
     "./plugins/system": "./src/plugins/system-commands.mjs",
     "./plugins/effects": "./src/plugins/effect-events.mjs",
+    "./plugins/windows": "./src/plugins/windows-commands.mjs",
     "./plugins/hugo": "./src/plugins/hugo-adapter.mjs",
     "./presets/blog-sandbox": "./src/presets/blog-sandbox.mjs",
     "./adapters/static-site": "./src/adapters/static-site.mjs",
@@ -40,9 +41,10 @@
     "build": "node scripts/build.mjs",
     "site:build": "npm run build && node scripts/build-site.mjs",
     "check": "node scripts/check.mjs",
+    "bench": "node scripts/bench.mjs",
     "security:scan": "node scripts/security-scan.mjs",
     "test": "node --test test/core.test.mjs",
-    "verify": "npm run check && npm test && npm run security:scan && npm run site:build"
+    "verify": "npm run check && npm test && npm run bench && npm run security:scan && npm run site:build"
   },
   "files": [
     "src",

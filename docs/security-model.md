@@ -30,6 +30,8 @@ The reference renderer uses `textContent` for command output. A custom renderer 
 - `events`: renderer-owned behavior, may create trusted UI;
 - file content: render as text unless a site-specific trusted viewer is used.
 
+For strict CSP sites, use the generated `dist/termlet.css` file instead of calling `injectDefaultStyles()`, because `injectDefaultStyles()` intentionally creates an inline `<style>` tag for simple copy-paste demos.
+
 ## Persistence Boundary
 
 Persistence is opt-in. A persistence adapter should only save serializable state and must provide `reset()`.
@@ -40,6 +42,17 @@ Do not persist:
 - a full-screen broken UI state;
 - hidden commands that cannot be reset;
 - unbounded output.
+
+## Resource Boundary
+
+The core exposes defensive limits:
+
+- `maxLineLength` caps a single command line;
+- `maxCommandSubstitutionLength` caps `$(...)`;
+- `maxOutputBytes` caps `stdout` and `stderr`;
+- `commandTimeoutMs` can time out asynchronous command handlers.
+
+These limits protect the host page from accidental huge output and slow async plugins. They do not interrupt a malicious synchronous infinite loop inside a third-party plugin, so plugin code must still be reviewed like any other frontend dependency.
 
 ## Command Author Checklist
 

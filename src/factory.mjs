@@ -2,6 +2,7 @@ import { TerminalCore } from './shell.mjs';
 import { createLinuxLikeFs } from './vfs.mjs';
 import { basicCommandsPlugin } from './plugins/basic-commands.mjs';
 import { systemCommandsPlugin } from './plugins/system-commands.mjs';
+import { windowsCommandsPlugin } from './plugins/windows-commands.mjs';
 
 export function createTerminal(options = {}) {
   const { plugins = [], ...coreOptions } = options;
@@ -29,4 +30,22 @@ export function createWebTerminal(options = {}) {
 
 export function createBlogTerminal(options = {}) {
   return createTerminal(options);
+}
+
+export function createWindowsTerminal(options = {}) {
+  const shell = options.shell || 'powershell';
+  return createTerminal({
+    hostname: options.hostname || (shell === 'cmd' ? 'DESKTOP' : 'termlet-win'),
+    caseInsensitiveCommands: true,
+    backslashEscapes: false,
+    env: {
+      USERPROFILE: 'C:\\Users\\guest',
+      ...(options.env || {}),
+    },
+    ...options,
+    plugins: [
+      [windowsCommandsPlugin, { shell, ...(options.windowsCommands || {}) }],
+      ...(options.plugins || []),
+    ],
+  });
 }

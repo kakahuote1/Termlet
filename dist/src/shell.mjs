@@ -1,4 +1,4 @@
-import { fail, normalizeResult, ok } from './result.mjs';
+import { fail, normalizeResult, ok, textByteLength } from './result.mjs';
 import { MemoryFileSystem, createLinuxLikeFs, VfsError } from './vfs.mjs';
 
 export class TerminalCore {
@@ -26,6 +26,12 @@ export class TerminalCore {
     };
     this.aliases = { ...(options.aliases || {}) };
     this.commands = new Map();
+    this.caseInsensitiveCommands = Boolean(options.caseInsensitiveCommands);
+    this.backslashEscapes = options.backslashEscapes !== false;
+    this.maxLineLength = Math.max(256, Number(options.maxLineLength || 8000));
+    this.maxCommandSubstitutionLength = Math.max(64, Number(options.maxCommandSubstitutionLength || 500));
+    this.maxOutputBytes = Math.max(1024, Number(options.maxOutputBytes || 256 * 1024));
+    this.commandTimeoutMs = Math.max(0, Number(options.commandTimeoutMs || 0));
     this.lastStatus = 0;
     this.history = [...(options.history || [])];
     this.maxHistory = options.maxHistory || 500;
@@ -51,8 +57,77 @@ export class TerminalCore {
     return this;
   }
 
+  command(name) {
+    if (this.commands.has(name)) return this.commands.get(name);
+    if (!this.caseInsensitiveCommands) return null;
+    const normalized = String(name).toLowerCase();
+    for (const [key, command] of this.commands) {
+      if (key.toLowerCase() === normalized) return command;
+    }
+    return null;
+  }
+
+  alias(name) {
+    if (Object.prototype.hasOwnProperty.call(this.aliases, name)) return this.aliases[name];
+    if (!this.caseInsensitiveCommands) return null;
+    const normalized = String(name).toLowerCase();
+    const key = Object.keys(this.aliases).find(item => item.toLowerCase() === normalized);
+    return key ? this.aliases[key] : null;
+  }
+
   commandNames() {
-    return [...new Set([...this.commands.keys(), ...Object.keys(this.aliases)])].sort();
+    const names = [...this.commands.keys(), ...Object.keys(this.aliases)];
+    if (!this.caseInsensitiveCommands) return [...new Set(names)].sort();
+    const seen = new Set();
+    return names.filter(name => {
+      const key = name.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).sort((a, b) => a.localeCompare(b));
+  }
+
+  complete(line) {
+    const input = String(line || '');
+    const tokenMatch = input.match(/(?:^|\s)(\S*)$/);
+    const token = tokenMatch ? tokenMatch[1] : '';
+    const prefix = input.slice(0, input.length - token.length);
+    const completingCommand = prefix.trim() === '';
+    const values = completingCommand ? this.completeCommand(token) : this.completePath(token);
+    return values.map(value => prefix + value);
+  }
+
+  completeCommand(token) {
+    return this.commandNames().filter(name => (
+      this.caseInsensitiveCommands
+        ? name.toLowerCase().startsWith(String(token).toLowerCase())
+        : name.startsWith(token)
+    ));
+  }
+
+  completePath(token) {
+    const raw = String(token || '');
+    const slash = Math.max(raw.lastIndexOf('/'), raw.lastIndexOf('\\'));
+    const dirToken = slash >= 0 ? raw.slice(0, slash + 1) : '';
+    const nameToken = slash >= 0 ? raw.slice(slash + 1) : raw;
+    const dirPath = dirToken ? dirToken.replace(/\\/g, '/') : '.';
+    let names = [];
+    try {
+      const dir = this.fs.normalize(dirPath.replace(/\/$/, '') || '/', { cwd: this.cwd, home: this.home });
+      names = this.fs.list(dir, { all: true, cwd: this.cwd, home: this.home }).map(name => {
+        const path = dir === '/' ? `/${name}` : `${dir}/${name}`;
+        const node = this.fs.stat(path);
+        return dirToken + name + (node?.type === 'dir' ? '/' : '');
+      });
+    } catch (_) {
+      return [];
+    }
+    return names.filter(name => {
+      const base = slash >= 0 ? name.slice(dirToken.length) : name;
+      return this.caseInsensitiveCommands
+        ? base.toLowerCase().startsWith(nameToken.toLowerCase())
+        : base.startsWith(nameToken);
+    });
   }
 
   context() {
@@ -87,6 +162,11 @@ export class TerminalCore {
   async execute(line) {
     const input = String(line || '').trim();
     if (!input) return ok('');
+    if (input.length > this.maxLineLength) {
+      const result = fail(`bash: command line too long (${input.length} > ${this.maxLineLength})\n`, 2);
+      this.lastStatus = result.status;
+      return result;
+    }
     this.history.push(input);
     if (this.history.length > this.maxHistory) this.history.splice(0, this.history.length - this.maxHistory);
     let result;
@@ -182,7 +262,7 @@ export class TerminalCore {
   }
 
   async runControl(line) {
-    const tokens = splitControlOperators(line);
+    const tokens = splitControlOperators(line, { backslashEscapes: this.backslashEscapes });
     let pending = ';';
     let last = ok('');
     let stdout = '';
@@ -205,7 +285,7 @@ export class TerminalCore {
   }
 
   async runRedirect(line) {
-    const redirect = extractRedirect(line);
+    const redirect = extractRedirect(line, { backslashEscapes: this.backslashEscapes });
     const command = redirect ? redirect.command : line;
     const result = await this.runPipeline(command);
     if (!redirect) return result;
@@ -224,7 +304,7 @@ export class TerminalCore {
   }
 
   async runPipeline(line) {
-    const segments = splitTopLevel(line, '|');
+    const segments = splitTopLevel(line, '|', { backslashEscapes: this.backslashEscapes });
     let stdin = '';
     let status = 0;
     let stderr = '';
@@ -256,25 +336,28 @@ export class TerminalCore {
     }
 
     let name = mutable.shift();
-    if (this.aliases[name]) {
-      const aliasWords = this.parseWords(this.aliases[name]);
+    const alias = this.alias(name);
+    if (alias) {
+      const aliasWords = this.parseWords(alias);
       name = aliasWords.shift() || name;
       mutable.unshift(...aliasWords);
     }
 
     const args = mutable.flatMap(arg => this.fs.glob(arg, { cwd: this.cwd, home: this.home }));
-    const command = this.commands.get(name);
+    const command = this.command(name);
     if (!command) return fail(`${name}: command not found\n`, 127);
     const envBackup = { ...this.env };
     Object.assign(this.env, localAssignments);
     try {
-      const result = await command.handler({
+      const operation = Promise.resolve().then(() => command.handler({
         name,
         args,
         stdin,
         ...this.context(),
-      });
-      return normalizeResult(result);
+      }));
+      operation.catch(() => {});
+      const result = await this.raceCommandTimeout(name, operation);
+      return this.limitResult(normalizeResult(result));
     } catch (error) {
       if (error instanceof VfsError) return fail(`${name}: ${error.message}\n`, error.code === 'ENOENT' ? 1 : 1);
       return fail(`${name}: ${error.message || String(error)}\n`, 1);
@@ -284,6 +367,38 @@ export class TerminalCore {
         else delete this.env[key];
       });
     }
+  }
+
+  async raceCommandTimeout(name, operation) {
+    if (!this.commandTimeoutMs) return operation;
+    let timer = null;
+    try {
+      return await Promise.race([
+        operation,
+        new Promise(resolve => {
+          timer = setTimeout(() => {
+            resolve(fail(`${name}: command timed out after ${this.commandTimeoutMs}ms\n`, 124));
+          }, this.commandTimeoutMs);
+        }),
+      ]);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
+
+  limitResult(result) {
+    const limited = { ...result };
+    let truncated = false;
+    if (textByteLength(limited.stdout) > this.maxOutputBytes) {
+      limited.stdout = truncateBytes(limited.stdout, this.maxOutputBytes) + '\n[output truncated]\n';
+      truncated = true;
+    }
+    if (textByteLength(limited.stderr) > this.maxOutputBytes) {
+      limited.stderr = truncateBytes(limited.stderr, this.maxOutputBytes) + '\n[stderr truncated]\n';
+      truncated = true;
+    }
+    if (truncated && limited.status === 0) limited.status = 0;
+    return limited;
   }
 
   parseWords(input) {
@@ -349,7 +464,7 @@ export class TerminalCore {
         buf += ch;
         continue;
       }
-      if (ch === '\\' && quote !== "'") {
+      if (this.backslashEscapes && ch === '\\' && quote !== "'") {
         started = true;
         escaped = true;
         escapeQuote = quote;
@@ -442,7 +557,7 @@ export class TerminalCore {
         }
         if (depth === 0) {
           const inner = input.slice(i + 2, j - 1).trim();
-          if (inner && inner.length <= 500) {
+          if (inner && inner.length <= this.maxCommandSubstitutionLength) {
             const result = await this.runPipeline(inner);
             output += result.stdout.trim().replace(/\s*\n\s*/g, ' ');
           }
@@ -456,7 +571,8 @@ export class TerminalCore {
   }
 }
 
-export function splitTopLevel(input, delimiter) {
+export function splitTopLevel(input, delimiter, options = {}) {
+  const backslashEscapes = options.backslashEscapes !== false;
   const chunks = [];
   let current = '';
   let quote = null;
@@ -470,7 +586,7 @@ export function splitTopLevel(input, delimiter) {
       escaped = false;
       continue;
     }
-    if (ch === '\\' && quote !== "'") {
+    if (backslashEscapes && ch === '\\' && quote !== "'") {
       current += ch;
       escaped = true;
       continue;
@@ -508,7 +624,8 @@ export function splitTopLevel(input, delimiter) {
   return chunks.filter(Boolean);
 }
 
-export function splitControlOperators(input) {
+export function splitControlOperators(input, options = {}) {
+  const backslashEscapes = options.backslashEscapes !== false;
   const tokens = [];
   let current = '';
   let quote = null;
@@ -526,7 +643,7 @@ export function splitControlOperators(input) {
       escaped = false;
       continue;
     }
-    if (ch === '\\' && quote !== "'") {
+    if (backslashEscapes && ch === '\\' && quote !== "'") {
       current += ch;
       escaped = true;
       continue;
@@ -571,7 +688,8 @@ export function splitControlOperators(input) {
   return tokens;
 }
 
-export function extractRedirect(commandLine) {
+export function extractRedirect(commandLine, options = {}) {
+  const backslashEscapes = options.backslashEscapes !== false;
   let quote = null;
   let escaped = false;
   let commandDepth = 0;
@@ -581,7 +699,7 @@ export function extractRedirect(commandLine) {
       escaped = false;
       continue;
     }
-    if (ch === '\\' && quote !== "'") {
+    if (backslashEscapes && ch === '\\' && quote !== "'") {
       escaped = true;
       continue;
     }
@@ -614,4 +732,17 @@ export function extractRedirect(commandLine) {
     }
   }
   return null;
+}
+
+function truncateBytes(value, maxBytes) {
+  let text = String(value ?? '');
+  if (textByteLength(text) <= maxBytes) return text;
+  let low = 0;
+  let high = text.length;
+  while (low < high) {
+    const mid = Math.ceil((low + high) / 2);
+    if (textByteLength(text.slice(0, mid)) <= maxBytes) low = mid;
+    else high = mid - 1;
+  }
+  return text.slice(0, low).replace(/\s+$/, '');
 }

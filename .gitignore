@@ -1,6 +1,8 @@
 ﻿node_modules/
 coverage/
 site/
+tmp/
+AGENTS.md
 .DS_Store
 *.log
 *.tmp

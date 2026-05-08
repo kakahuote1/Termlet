@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   createBlogTerminal,
+  createWindowsTerminal,
   createTerminal,
   blogSandboxPreset,
   effectEventsPlugin,
@@ -88,6 +89,14 @@ test('effect plugin emits data events for custom renderers', async () => {
   assert.deepEqual(result.events, [{ type: 'effect', name: 'cmatrix', args: ['--fast'] }]);
 });
 
+test('core exposes command and path completion for renderers', () => {
+  const terminal = createSubject();
+
+  assert.ok(terminal.complete('ec').includes('echo'));
+  assert.ok(terminal.complete('cat /et').includes('cat /etc/'));
+  assert.ok(terminal.complete('cat ~/bl').some(item => item.startsWith('cat ~/blog')));
+});
+
 test('memory persistence adapter is explicit and resettable', () => {
   const adapter = memoryPersistenceAdapter({ cwd: '/home/guest' });
 
@@ -125,4 +134,33 @@ test('session command exposes reset path for persistent adapters', async () => {
   assert.equal(reset.status, 0);
   assert.deepEqual(adapter.load(), {});
   assert.equal((await terminal.execute('pwd')).stdout, '/home/guest\n');
+});
+
+test('core caps oversized output and times out async commands', async () => {
+  const terminal = createTerminal({ maxOutputBytes: 1024, commandTimeoutMs: 25 });
+  terminal.register('huge', () => ({ status: 0, stdout: 'x'.repeat(2000), stderr: '', events: [] }));
+  terminal.register('slow', () => new Promise(resolve => setTimeout(() => resolve({ status: 0, stdout: 'late\n' }), 200)));
+
+  const huge = await terminal.execute('huge');
+  assert.match(huge.stdout, /\[output truncated\]/);
+  assert.ok(huge.stdout.length < 1100);
+
+  const slow = await terminal.execute('slow');
+  assert.equal(slow.status, 124);
+  assert.match(slow.stderr, /timed out/);
+});
+
+test('windows terminal profile supports cmd and powershell style commands', async () => {
+  const terminal = createWindowsTerminal();
+
+  assert.equal((await terminal.execute('Write-Output hello')).stdout, 'hello\n');
+  assert.match((await terminal.execute('Get-Location')).stdout, /^C:\\/);
+  assert.match((await terminal.execute('dir')).stdout, /Directory:/);
+  assert.equal((await terminal.execute('cd C:\\tmp')).status, 0);
+  assert.match((await terminal.execute('Get-Location')).stdout, /^C:\\tmp/);
+  assert.equal((await terminal.execute('New-Item -Path demo.txt')).status, 0);
+  assert.match((await terminal.execute('type demo.txt')).stdout, /^$/);
+  assert.equal((await terminal.execute('Remove-Item C:\\')).status, 1);
+  const commandNames = terminal.commandNames().map(name => name.toLowerCase());
+  assert.equal(new Set(commandNames).size, commandNames.length);
 });

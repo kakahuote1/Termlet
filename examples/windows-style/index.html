@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Termlet Windows Style</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      background: #0f1216;
+      color: #f2f6fb;
+      font-family: system-ui, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    main {
+      width: min(980px, 100%);
+    }
+
+    h1 {
+      font-size: 20px;
+      margin: 0 0 14px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>PowerShell style terminal</h1>
+    <div id="terminal"></div>
+  </main>
+
+  <script type="module">
+    import {
+      createWindowsTerminal,
+      DomTerminalRenderer,
+      injectDefaultStyles,
+      toWindowsPath,
+    } from '../../src/index.mjs';
+
+    injectDefaultStyles();
+
+    const terminal = createWindowsTerminal({
+      hostname: 'DESKTOP',
+    });
+
+    new DomTerminalRenderer(terminal, {
+      mount: '#terminal',
+      prompt: () => `PS ${toWindowsPath(terminal.cwd)}>`,
+      welcome: 'Try: Get-Location, dir, New-Item -Path note.txt, Get-Command, cls\\n',
+    }).attach();
+  </script>
+</body>
+</html>

@@ -146,10 +146,15 @@ export class DomTerminalRenderer {
       event.preventDefault();
     } else if (event.key === 'Tab') {
       const value = input.value;
-      const token = value.split(/\s+/).pop() || '';
-      const matches = this.core.commandNames().filter(name => name.startsWith(token));
-      if (matches.length === 1) input.value = value.slice(0, -token.length) + matches[0] + ' ';
-      else if (matches.length > 1) this.print(matches.join('  '), 'muted');
+      const matches = typeof this.core.complete === 'function'
+        ? this.core.complete(value)
+        : [];
+      if (matches.length === 1) input.value = matches[0] + (matches[0].endsWith('/') ? '' : ' ');
+      else if (matches.length > 1) {
+        const tokenLength = value.match(/(?:^|\s)(\S*)$/)?.[1]?.length || 0;
+        const prefixLength = value.length - tokenLength;
+        this.print(matches.map(item => item.slice(prefixLength)).join('  '), 'muted');
+      }
       event.preventDefault();
     }
   }

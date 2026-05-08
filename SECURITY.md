@@ -50,6 +50,9 @@ Open a private security advisory or contact the maintainer before publishing a w
 Every adapter should test:
 
 - `sudo rm -rf /` remains blocked;
+- `Remove-Item C:\` remains blocked in Windows-style profiles;
+- huge command output is capped;
+- asynchronous command handlers respect configured timeout;
 - `python3 -c "..."` does not execute code;
 - `node -e "..."` does not execute code;
 - `curl http://...` does not fetch unless a site owner explicitly provides a safe adapter;

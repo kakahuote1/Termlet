@@ -28,6 +28,16 @@ Serve `dist/` over HTTP and import from `index.mjs`:
 
 During local source development you can also import from `src/index.mjs`. Do not open the example through `file://`; browser module imports normally require HTTP.
 
+## Strict CSP
+
+If your site uses a strict Content Security Policy, prefer the generated CSS file instead of `injectDefaultStyles()`:
+
+```html
+<link rel="stylesheet" href="/termlet/termlet.css">
+```
+
+Then mount with `injectStyles: false`, or create the renderer manually without calling `injectDefaultStyles()`. Command output is still rendered as text by default.
+
 ## Hugo
 
 Recommended structure:

@@ -135,3 +135,30 @@ async function run(line) {
 - 递归文件操作必须保留根目录删除保护。
 
 参考 `docs/hardening-checklist.md`。
+
+## 7. 改造成 PowerShell 或 CMD
+
+Termlet 不把“终端外观”写死在核心里。Windows 风格终端通常只需要：
+
+- `createWindowsTerminal()` 提供 Windows 命令和大小写不敏感命令查找；
+- 自定义 `prompt` 显示 `PS C:\...>` 或 `C:\...>`；
+- 根据需要覆盖 CSS。
+
+```js
+import {
+  createWindowsTerminal,
+  DomTerminalRenderer,
+  toWindowsPath,
+} from 'termlet';
+
+const terminal = createWindowsTerminal({
+  shell: 'powershell',
+});
+
+new DomTerminalRenderer(terminal, {
+  mount: '#terminal',
+  prompt: () => `PS ${toWindowsPath(terminal.cwd)}>`,
+}).attach();
+```
+
+参考 `examples/windows-style/`。

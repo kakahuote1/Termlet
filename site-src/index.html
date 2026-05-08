@@ -3,9 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>Termlet Demo</title>
   <meta name="description" content="纯前端、可插拔、可扩展的网页伪终端基础库演示。">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./termlet/termlet.css">
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
@@ -35,6 +37,7 @@
           <button type="button" data-run="ls -al /home/guest">ls</button>
           <button type="button" data-run="tree /home/guest/lab">tree</button>
           <button type="button" data-run="cat ~/lab/readme.md">cat</button>
+          <button type="button" data-run="docs">docs</button>
           <button type="button" data-run="sudo rm -rf /">safe rm</button>
         </div>
       </div>
@@ -68,6 +71,10 @@
         <article>
           <h3>换外观</h3>
           <p>默认 DOM 渲染器可以直接用，也可以替换成浮窗、全屏、横幅或框架组件。</p>
+        </article>
+        <article>
+          <h3>换终端生态</h3>
+          <p>内置 Windows 风格插件，可以改造成 PowerShell 或 CMD 风格终端。</p>
         </article>
         <article>
           <h3>控安全边界</h3>

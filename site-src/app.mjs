@@ -4,7 +4,6 @@
   blogSandboxPreset,
   DomTerminalRenderer,
   effectEventsPlugin,
-  injectDefaultStyles,
   ok,
 } from './termlet/index.mjs';
 
@@ -36,13 +35,12 @@ function demoPlugin(terminal) {
   terminal.register('docs', () => ok([
     'README.md              项目入口',
     'docs/extend.md         扩展教程',
+    'docs/integrations.md   博客系统适配',
     'docs/github-pages.md   GitHub Pages 部署',
-    'examples/              可复制示例',
+    'examples/windows-style PowerShell/CMD 示例',
     '',
   ].join('\n')));
 }
-
-injectDefaultStyles();
 
 const eventStatus = document.querySelector('#event-status');
 const terminal = createTerminal({

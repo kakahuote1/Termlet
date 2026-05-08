@@ -57,15 +57,16 @@ export function basicCommandsPlugin(terminal, options = {}) {
       return ok('');
     })
     .register('type', ({ args, terminal }) => ok(args.map(name => {
-      if (terminal.aliases[name]) return `${name} is aliased to '${terminal.aliases[name]}'`;
-      if (terminal.commands.has(name)) return `${name} is a shell command`;
+      const alias = terminal.alias(name);
+      if (alias) return `${name} is aliased to '${alias}'`;
+      if (terminal.command(name)) return `${name} is a shell command`;
       return `bash: type: ${name}: not found`;
     }).join('\n') + '\n'))
     .register('command', ({ args, terminal }) => {
       if (args[0] !== '-v' || !args[1]) return ok('');
-      return ok(terminal.commands.has(args[1]) || terminal.aliases[args[1]] ? `${args[1]}\n` : '');
+      return ok(terminal.command(args[1]) || terminal.alias(args[1]) ? `${args[1]}\n` : '');
     })
-    .register('which', ({ args, terminal }) => ok(args.filter(name => terminal.commands.has(name)).map(name => `/bin/${name}`).join('\n') + (args.length ? '\n' : '')))
+    .register('which', ({ args, terminal }) => ok(args.filter(name => terminal.command(name)).map(name => `/bin/${name}`).join('\n') + (args.length ? '\n' : '')))
     .register('compgen', ({ args, terminal }) => ok(args[0] === '-c' ? terminal.commandNames().join('\n') + '\n' : ''))
     .register('man', ({ args }) => {
       const topic = (args[0] || '').toLowerCase();
