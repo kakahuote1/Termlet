@@ -1,4 +1,4 @@
-# Architecture
+﻿# Architecture
 
 `blog-terminal` is split around replaceable boundaries.
 

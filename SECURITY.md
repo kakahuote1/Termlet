@@ -1,6 +1,6 @@
-# Security Policy
+﻿# Security Policy
 
-Web Terminal Kit is designed to be a browser-only simulation. It must not become a real shell bridge.
+Termlet is designed to be a browser-only simulation. It must not become a real shell bridge.
 
 ## Supported Security Boundary
 

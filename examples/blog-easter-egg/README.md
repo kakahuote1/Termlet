@@ -1,4 +1,4 @@
-# Blog Easter Egg Example
+﻿# Blog Easter Egg Example
 
 这个示例演示“欢迎横幅点击三次打开终端”的做法，适合个人博客。
 

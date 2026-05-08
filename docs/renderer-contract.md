@@ -1,4 +1,4 @@
-# Renderer Contract
+﻿# Renderer Contract
 
 The terminal core is intentionally renderer-agnostic. A renderer can be a small DOM widget, a full-screen fake SSH window, a blog easter egg, a game console, or a custom framework component.
 

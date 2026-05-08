@@ -1,18 +1,18 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Web Terminal Kit Demo</title>
+  <title>Termlet Demo</title>
   <meta name="description" content="纯前端、可插拔、可扩展的网页伪终端基础库演示。">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="./" aria-label="Web Terminal Kit 首页">
+    <a class="brand" href="./" aria-label="Termlet 首页">
       <span class="brand-mark" aria-hidden="true"></span>
-      <span>Web Terminal Kit</span>
+      <span>Termlet</span>
     </a>
     <nav class="nav" aria-label="站点导航">
       <a href="#demo">演示</a>
@@ -75,7 +75,7 @@
         </article>
       </div>
 
-      <pre class="code-sample"><code>import { createTerminal, ok } from 'web-terminal-kit';
+      <pre class="code-sample"><code>import { createTerminal, ok } from 'termlet';
 
 function myPlugin(terminal) {
   terminal.register('hello', ({ user }) =&gt; ok(`hello ${user}\n`));

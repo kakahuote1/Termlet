@@ -1,4 +1,4 @@
-# Hardening Checklist
+﻿# Hardening Checklist
 
 Use this before publishing a site-specific terminal build.
 

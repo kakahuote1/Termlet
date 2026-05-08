@@ -1,4 +1,4 @@
-# Migrating The Current Blog Terminal
+﻿# Migrating The Current Blog Terminal
 
 The existing `assets/js/terminal.js` is still the active blog integration. It mixes four concerns in one large file:
 

@@ -1,6 +1,6 @@
-# Getting Started
+﻿# Getting Started
 
-Web Terminal Kit can be used three ways.
+Termlet can be used three ways.
 
 ## 1. Copy The Dist Folder
 
@@ -13,10 +13,10 @@ npm run build
 Copy `dist/` into your static site and mount:
 
 ```html
-<link rel="stylesheet" href="/web-terminal-kit/web-terminal-kit.css">
+<link rel="stylesheet" href="/termlet/termlet.css">
 <div id="terminal"></div>
 <script type="module">
-  import { mountStaticTerminal, blogSandboxPreset } from '/web-terminal-kit/index.mjs';
+  import { mountStaticTerminal, blogSandboxPreset } from '/termlet/index.mjs';
 
   await mountStaticTerminal({
     mount: '#terminal',
@@ -36,7 +36,7 @@ import {
   DomTerminalRenderer,
   blogSandboxPreset,
   injectDefaultStyles,
-} from 'web-terminal-kit';
+} from 'termlet';
 
 injectDefaultStyles();
 
@@ -74,7 +74,7 @@ See `examples/plugin-template/` for a copyable starting point, and `examples/blo
 If you enable persistence, expose a reset path:
 
 ```js
-import { createStorageAdapter } from 'web-terminal-kit';
+import { createStorageAdapter } from 'termlet';
 
 const persistence = createStorageAdapter({
   key: 'my-site-terminal',

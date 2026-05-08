@@ -1,4 +1,4 @@
-import { fail, ok } from '../../src/index.mjs';
+﻿import { fail, ok } from '../../src/index.mjs';
 
 export function myPlugin(terminal) {
   terminal.fs.ensureDir('/home/guest/workspace', {

@@ -1,4 +1,4 @@
-{{- $terminal := resources.Get "js/terminal-entry.js" -}}
+﻿{{- $terminal := resources.Get "js/terminal-entry.js" -}}
 {{- if $terminal -}}
   {{- if eq hugo.Environment "production" -}}
     {{- $terminal = $terminal | js.Build (dict "minify" true) | fingerprint -}}

@@ -1,4 +1,4 @@
-# Plugin Template
+﻿# Plugin Template
 
 复制这个目录后，通常只需要改两个文件：
 

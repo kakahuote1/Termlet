@@ -1,4 +1,4 @@
-# Plugins
+﻿# Plugins
 
 Plugins are the main extension point.
 

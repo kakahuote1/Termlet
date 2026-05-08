@@ -1,4 +1,4 @@
-import {
+﻿import {
   createStorageAdapter,
   createTerminal,
   blogSandboxPreset,
@@ -6,19 +6,19 @@ import {
   effectEventsPlugin,
   injectDefaultStyles,
   ok,
-} from './web-terminal-kit/index.mjs';
+} from './termlet/index.mjs';
 
 function demoPlugin(terminal) {
   terminal.fs.ensureDir('/home/guest/lab', { owner: 'guest', group: 'guest' });
   terminal.fs.addFile('/home/guest/lab/readme.md', [
-    '# Web Terminal Kit Lab',
+    '# Termlet Lab',
     '',
     '这是一个纯前端终端演示。',
     '试试 help、ls、cat、tree、session status、sudo rm -rf /。',
     '',
   ].join('\n'), { owner: 'guest', group: 'guest' });
   terminal.fs.addFile('/home/guest/lab/plugin.js', [
-    "import { ok } from 'web-terminal-kit';",
+    "import { ok } from 'termlet';",
     '',
     'export function myPlugin(terminal) {',
     "  terminal.register('hello', ({ user }) => ok(`hello ${user}\\n`));",
@@ -27,7 +27,7 @@ function demoPlugin(terminal) {
   ].join('\n'), { owner: 'guest', group: 'guest' });
 
   terminal.register('about', () => ok([
-    'Web Terminal Kit',
+    'Termlet',
     '纯前端、可插拔、可扩展的网页伪终端基础库。',
     '核心不会执行真实系统命令，适合静态站点、博客和彩蛋终端。',
     '',
@@ -47,7 +47,7 @@ injectDefaultStyles();
 const eventStatus = document.querySelector('#event-status');
 const terminal = createTerminal({
   hostname: 'demo',
-  persistence: createStorageAdapter({ key: 'web-terminal-kit.demo' }),
+  persistence: createStorageAdapter({ key: 'termlet.demo' }),
   plugins: [
     blogSandboxPreset({
       rootFlag: 'FLAG{demo_value_replace_me}\n',

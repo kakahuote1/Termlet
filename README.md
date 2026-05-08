@@ -1,6 +1,6 @@
-# Web Terminal Kit
+﻿# Termlet
 
-Web Terminal Kit 是一个纯前端、可插拔、可扩展的网页伪终端基础库，面向静态站点、个人博客、CTF 风格页面、文档站、作品集、仪表盘和前端实验项目。
+Termlet 是一个纯前端、可插拔、可扩展的网页伪终端基础库，面向静态站点、个人博客、CTF 风格页面、文档站、作品集、仪表盘和前端实验项目。
 
 它不是一个绑定固定 UI 的主题，而是一套可复用的“终端地基”：安全的 Shell 核心、类 Linux 虚拟文件系统、命令插件、站点适配器、持久化适配器和一个可替换的 DOM 参考渲染器。你可以把它改造成横幅彩蛋终端、弹窗终端、悬浮命令面板、假 SSH 会话、博客隐藏入口、CTF 解谜环境或文档交互沙箱，而不需要把业务 UI 和终端核心深度耦合。
 
@@ -50,10 +50,10 @@ npm run build
 然后把 `dist/` 复制到站点目录，通过 ES Module 引入：
 
 ```html
-<link rel="stylesheet" href="/web-terminal-kit/web-terminal-kit.css">
+<link rel="stylesheet" href="/termlet/termlet.css">
 <div id="terminal"></div>
 <script type="module">
-  import { mountStaticTerminal, blogSandboxPreset } from '/web-terminal-kit/index.mjs';
+  import { mountStaticTerminal, blogSandboxPreset } from '/termlet/index.mjs';
 
   await mountStaticTerminal({
     mount: '#terminal',
@@ -76,6 +76,12 @@ npm run build
 
 详情见 [GitHub Pages 演示站](docs/github-pages.md)。
 
+当前仓库的默认演示地址：
+
+```text
+https://kakahuote1.github.io/Termlet/
+```
+
 ## Hugo 接入
 
 最简单的 Hugo 用法：
@@ -83,7 +89,7 @@ npm run build
 ```html
 <div id="terminal"></div>
 <script type="module">
-  import { mountHugoTerminal } from '/web-terminal-kit/src/index.mjs';
+  import { mountHugoTerminal } from '/termlet/src/index.mjs';
 
   await mountHugoTerminal({
     mount: '#terminal',
@@ -98,7 +104,7 @@ npm run build
 如果使用 Hugo Pipes，推荐目录结构如下：
 
 ```text
-assets/js/web-terminal-kit/src/...
+assets/js/termlet/src/...
 assets/js/terminal-entry.js
 layouts/partials/footer/custom.html
 ```
@@ -106,7 +112,7 @@ layouts/partials/footer/custom.html
 `assets/js/terminal-entry.js` 示例：
 
 ```js
-import { mountHugoTerminal } from './web-terminal-kit/src/index.mjs';
+import { mountHugoTerminal } from './termlet/src/index.mjs';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const mount = document.querySelector('#terminal');
@@ -303,7 +309,7 @@ npm pack --dry-run
 
 ## 当前定位
 
-Web Terminal Kit 当前适合作为可二次开发的伪终端基础库、个人博客终端彩蛋、文档交互沙箱或 CTF 风格前端环境。它追求的是“安全、可插拔、容易改造”，不是完整复刻 Bash、PTY 或真实 Linux 系统。
+Termlet 当前适合作为可二次开发的伪终端基础库、个人博客终端彩蛋、文档交互沙箱或 CTF 风格前端环境。它追求的是“安全、可插拔、容易改造”，不是完整复刻 Bash、PTY 或真实 Linux 系统。
 
 如果你需要真实容器、真实命令执行或多人远程 Shell，请使用后端沙箱、WebTTY、容器隔离或专门的远程终端方案，而不是把这个项目改造成真实 Shell 桥。
 

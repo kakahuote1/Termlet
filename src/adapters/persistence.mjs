@@ -16,7 +16,7 @@ export function memoryPersistenceAdapter(initialState = {}) {
 export function createStorageAdapter(options = {}) {
   const {
     storage = globalThis.localStorage,
-    key = 'web-terminal-kit.state',
+    key = 'termlet.state',
     version = 1,
   } = options;
 

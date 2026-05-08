@@ -1,6 +1,6 @@
-# Security Model
+﻿# Security Model
 
-Web Terminal Kit treats terminal input as untrusted text. It parses that text into a command name, arguments, redirections, and pipelines, then dispatches only to registered command handlers.
+Termlet treats terminal input as untrusted text. It parses that text into a command name, arguments, redirections, and pipelines, then dispatches only to registered command handlers.
 
 ## Trust Boundaries
 

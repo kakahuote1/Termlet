@@ -1,4 +1,4 @@
-import { mountHugoTerminal } from '../../src/index.mjs';
+﻿import { mountHugoTerminal } from '../../src/index.mjs';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const mount = document.querySelector('#terminal');

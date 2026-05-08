@@ -1,6 +1,6 @@
-# Contributing
+﻿# Contributing
 
-Web Terminal Kit is a browser-only terminal simulation. Contributions should keep the core safe, portable, and easy to fork.
+Termlet is a browser-only terminal simulation. Contributions should keep the core safe, portable, and easy to fork.
 
 ## Local Workflow
 

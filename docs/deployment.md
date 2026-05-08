@@ -1,6 +1,6 @@
-# Deployment
+﻿# Deployment
 
-Web Terminal Kit is plain ES modules. You can use it without a bundler, or bundle it through your site generator.
+Termlet is plain ES modules. You can use it without a bundler, or bundle it through your site generator.
 
 ## Plain HTML
 
@@ -13,10 +13,10 @@ npm run build
 Serve `dist/` over HTTP and import from `index.mjs`:
 
 ```html
-<link rel="stylesheet" href="/web-terminal-kit/web-terminal-kit.css">
+<link rel="stylesheet" href="/termlet/termlet.css">
 <div id="terminal"></div>
 <script type="module">
-  import { mountStaticTerminal, blogSandboxPreset } from '/web-terminal-kit/index.mjs';
+  import { mountStaticTerminal, blogSandboxPreset } from '/termlet/index.mjs';
 
   await mountStaticTerminal({
     mount: '#terminal',
@@ -33,7 +33,7 @@ During local source development you can also import from `src/index.mjs`. Do not
 Recommended structure:
 
 ```text
-assets/js/web-terminal-kit/src/...
+assets/js/termlet/src/...
 assets/js/terminal-entry.js
 layouts/partials/footer/custom.html
 ```
@@ -41,7 +41,7 @@ layouts/partials/footer/custom.html
 `assets/js/terminal-entry.js`:
 
 ```js
-import { mountHugoTerminal } from './web-terminal-kit/src/index.mjs';
+import { mountHugoTerminal } from './termlet/src/index.mjs';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const mount = document.querySelector('#terminal');
@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 Copy the source into your app or install it as a local package, then:
 
 ```js
-import { createTerminal, DomTerminalRenderer, injectDefaultStyles } from 'web-terminal-kit';
+import { createTerminal, DomTerminalRenderer, injectDefaultStyles } from 'termlet';
 ```
 
 The reference renderer needs a browser DOM. The core can be tested in Node.
@@ -72,7 +72,7 @@ The reference renderer needs a browser DOM. The core can be tested in Node.
 Persistence is optional. Use a site-specific key and keep reset reachable:
 
 ```js
-import { createStorageAdapter, mountStaticTerminal } from 'web-terminal-kit';
+import { createStorageAdapter, mountStaticTerminal } from 'termlet';
 
 await mountStaticTerminal({
   mount: '#terminal',

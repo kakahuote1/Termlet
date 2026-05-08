@@ -1,11 +1,11 @@
-# 扩展指南
+﻿# 扩展指南
 
-Web Terminal Kit 的扩展点分成四层：命令、文件系统、渲染器事件和站点适配。多数博客和静态站点只需要写一个小插件。
+Termlet 的扩展点分成四层：命令、文件系统、渲染器事件和站点适配。多数博客和静态站点只需要写一个小插件。
 
 ## 1. 添加命令
 
 ```js
-import { ok, fail } from 'web-terminal-kit';
+import { ok, fail } from 'termlet';
 
 export function toolsPlugin(terminal) {
   terminal.register('hello', ({ args, user }) => {

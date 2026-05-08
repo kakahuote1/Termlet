@@ -1,4 +1,4 @@
-# API
+﻿# API
 
 ## `createTerminal(options)`
 
@@ -43,7 +43,7 @@ Supported shell syntax includes quotes, `$VAR`, `${VAR}`, `$(cmd)`, pipes, `&&`,
 ## Command Plugins
 
 ```js
-import { ok, fail } from 'web-terminal-kit';
+import { ok, fail } from 'termlet';
 
 export function toolsPlugin(terminal) {
   terminal.register('hello', ({ args, user }) => {

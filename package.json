@@ -1,9 +1,17 @@
-{
-  "name": "web-terminal-kit",
+﻿{
+  "name": "termlet",
   "version": "0.1.0",
   "type": "module",
   "description": "Pure frontend, pluggable pseudo-terminal kit for static sites and blogs.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kakahuote1/Termlet.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kakahuote1/Termlet/issues"
+  },
+  "homepage": "https://kakahuote1.github.io/Termlet/",
   "main": "./src/index.mjs",
   "module": "./src/index.mjs",
   "types": "./src/index.d.ts",
@@ -26,7 +34,7 @@
     "./adapters/persistence": "./src/adapters/persistence.mjs",
     "./renderers/dom": "./src/renderers/dom-renderer.mjs",
     "./dist": "./dist/index.mjs",
-    "./styles.css": "./dist/web-terminal-kit.css"
+    "./styles.css": "./dist/termlet.css"
   },
   "scripts": {
     "build": "node scripts/build.mjs",
