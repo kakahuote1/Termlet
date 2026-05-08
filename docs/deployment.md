@@ -4,21 +4,29 @@ Web Terminal Kit is plain ES modules. You can use it without a bundler, or bundl
 
 ## Plain HTML
 
-Serve this repository over HTTP and import from `src/index.mjs`:
+For copy-and-paste deployment, build `dist/`:
+
+```powershell
+npm run build
+```
+
+Serve `dist/` over HTTP and import from `index.mjs`:
 
 ```html
+<link rel="stylesheet" href="/web-terminal-kit/web-terminal-kit.css">
 <div id="terminal"></div>
 <script type="module">
-  import { mountStaticTerminal, blogSandboxPreset } from './src/index.mjs';
+  import { mountStaticTerminal, blogSandboxPreset } from '/web-terminal-kit/index.mjs';
 
   await mountStaticTerminal({
     mount: '#terminal',
     plugins: [blogSandboxPreset()],
+    injectStyles: false,
   });
 </script>
 ```
 
-Do not open the example through `file://`; browser module imports normally require HTTP.
+During local source development you can also import from `src/index.mjs`. Do not open the example through `file://`; browser module imports normally require HTTP.
 
 ## Hugo
 
@@ -58,6 +66,23 @@ import { createTerminal, DomTerminalRenderer, injectDefaultStyles } from 'web-te
 ```
 
 The reference renderer needs a browser DOM. The core can be tested in Node.
+
+## Persistence
+
+Persistence is optional. Use a site-specific key and keep reset reachable:
+
+```js
+import { createStorageAdapter, mountStaticTerminal } from 'web-terminal-kit';
+
+await mountStaticTerminal({
+  mount: '#terminal',
+  terminalOptions: {
+    persistence: createStorageAdapter({ key: 'docs-terminal-v1' }),
+  },
+});
+```
+
+Users can run `session reset`. A custom UI can also call `terminal.resetSessionState()`.
 
 ## Custom Renderer
 

@@ -55,3 +55,11 @@ Every adapter should test:
 - `curl http://...` does not fetch unless a site owner explicitly provides a safe adapter;
 - command output escapes HTML by default;
 - refresh or close does not trap a user in a persistent broken state.
+
+Run the focused local scan before release:
+
+```powershell
+npm run security:scan
+```
+
+This scan checks the included source for dangerous primitives that should not appear in a browser-only pseudo-terminal core.

@@ -97,3 +97,32 @@ test('memory persistence adapter is explicit and resettable', () => {
   adapter.reset();
   assert.deepEqual(adapter.load(), {});
 });
+
+test('terminal session persistence is opt-in and bounded', async () => {
+  const adapter = memoryPersistenceAdapter();
+  const first = createTerminal({ persistence: adapter });
+
+  await first.execute('cd /tmp && alias ll="ls -l" && export DEMO=value');
+
+  const second = createTerminal({ persistence: adapter });
+  assert.equal((await second.execute('pwd')).stdout, '/tmp\n');
+  assert.match((await second.execute('alias')).stdout, /alias ll='ls -l'/);
+  assert.equal((await second.execute('printenv DEMO')).stdout, '\n');
+
+  const third = createTerminal({ persistence: adapter, persistEnv: ['DEMO'] });
+  await third.execute('export DEMO=value');
+  const fourth = createTerminal({ persistence: adapter, persistEnv: ['DEMO'] });
+  assert.equal((await fourth.execute('printenv DEMO')).stdout, 'value\n');
+});
+
+test('session command exposes reset path for persistent adapters', async () => {
+  const adapter = memoryPersistenceAdapter();
+  const terminal = createTerminal({ persistence: adapter });
+
+  await terminal.execute('cd /tmp');
+  const reset = await terminal.execute('session reset');
+
+  assert.equal(reset.status, 0);
+  assert.deepEqual(adapter.load(), {});
+  assert.equal((await terminal.execute('pwd')).stdout, '/home/guest\n');
+});

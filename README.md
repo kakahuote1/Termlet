@@ -15,6 +15,8 @@ This project is the foundation, not a finished theme. It gives you a safe shell 
 
 ## Quick Start
 
+Use source modules directly during development:
+
 ```html
 <div id="terminal"></div>
 <script type="module">
@@ -36,6 +38,28 @@ This project is the foundation, not a finished theme. It gives you a safe shell 
     mount: '#terminal',
     welcome: 'Try: help, ls -al, tree /home/guest, sudo -l\\n',
   }).attach();
+</script>
+```
+
+Or generate a copyable static bundle:
+
+```powershell
+npm run build
+```
+
+Then copy `dist/` into a site and import:
+
+```html
+<link rel="stylesheet" href="/web-terminal-kit/web-terminal-kit.css">
+<div id="terminal"></div>
+<script type="module">
+  import { mountStaticTerminal, blogSandboxPreset } from '/web-terminal-kit/index.mjs';
+
+  await mountStaticTerminal({
+    mount: '#terminal',
+    plugins: [blogSandboxPreset()],
+    injectStyles: false,
+  });
 </script>
 ```
 
@@ -70,6 +94,8 @@ For Hugo asset bundling, copy `src/` into `assets/js/web-terminal-kit/src/`, the
 - `DomTerminalRenderer`: small reference renderer you can replace.
 - `mountStaticTerminal` and `mountHugoTerminal`: convenience adapters.
 - `createStorageAdapter`: optional persistence with explicit reset.
+- TypeScript declarations for the public API.
+- `dist/` build for copy-and-paste static deployments.
 
 ## Core API
 
@@ -114,6 +140,21 @@ Renderer events are plain data:
 { events: [{ type: 'effect', name: 'cmatrix', args: [] }] }
 ```
 
+## Persistence
+
+Persistence is opt-in and bounded to session metadata such as `cwd`, history, aliases, and selected environment variables:
+
+```js
+import { createStorageAdapter, createTerminal } from './src/index.mjs';
+
+const terminal = createTerminal({
+  persistence: createStorageAdapter({ key: 'my-site-terminal' }),
+  persistEnv: ['THEME'],
+});
+```
+
+Users can run `session reset` to clear persisted state.
+
 ## Repository Layout
 
 ```text
@@ -139,6 +180,17 @@ examples/
 test/
 ```
 
+## Documentation
+
+- [Getting started](docs/getting-started.md)
+- [API](docs/api.md)
+- [Plugins](docs/plugins.md)
+- [Renderer contract](docs/renderer-contract.md)
+- [Deployment](docs/deployment.md)
+- [Security model](docs/security-model.md)
+- [Hardening checklist](docs/hardening-checklist.md)
+- [Migration notes](docs/migration-from-current-blog.md)
+
 ## Safety Model
 
 This is a simulation layer. It must never become a real shell.
@@ -159,8 +211,10 @@ See [SECURITY.md](SECURITY.md) and [docs/security-model.md](docs/security-model.
 ## Test
 
 ```powershell
+npm run verify
 npm test
 npm run check
+npm run security:scan
 ```
 
 No install step is needed for the core tests.

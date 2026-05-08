@@ -1,0 +1,172 @@
+export type TerminalEvent =
+  | { type: 'clear' }
+  | { type: 'exit' }
+  | { type: 'effect'; name: string; args?: string[] }
+  | { type: 'editor'; editor: string; file?: string | null }
+  | Record<string, unknown>;
+
+export interface CommandResult {
+  status: number;
+  stdout: string;
+  stderr: string;
+  events: TerminalEvent[];
+}
+
+export interface CommandContext {
+  name: string;
+  args: string[];
+  stdin: string;
+  terminal: TerminalCore;
+  fs: MemoryFileSystem;
+  user: string;
+  groups: string[];
+  hostname: string;
+  cwd: string;
+  home: string;
+  env: Record<string, string>;
+}
+
+export type CommandHandler = (context: CommandContext) => CommandResult | Promise<CommandResult>;
+export type TerminalPlugin = ((terminal: TerminalCore, options?: unknown) => void) | { install(terminal: TerminalCore, options?: unknown): void };
+
+export interface PersistenceAdapter {
+  load(): Record<string, unknown>;
+  save(state: Record<string, unknown>): void;
+  reset(): void;
+}
+
+export interface TerminalOptions {
+  user?: string;
+  groups?: string[];
+  hostname?: string;
+  cwd?: string;
+  home?: string;
+  env?: Record<string, string>;
+  aliases?: Record<string, string>;
+  history?: string[];
+  maxHistory?: number;
+  fs?: MemoryFileSystem;
+  fsOptions?: Record<string, unknown>;
+  plugins?: Array<TerminalPlugin | [TerminalPlugin, unknown]>;
+  basicCommands?: false | Record<string, unknown>;
+  systemCommands?: false | Record<string, unknown>;
+  persistence?: PersistenceAdapter;
+  persistEnv?: boolean | string[];
+  restore?: boolean;
+}
+
+export class TerminalCore {
+  constructor(options?: TerminalOptions);
+  fs: MemoryFileSystem;
+  user: string;
+  groups: string[];
+  hostname: string;
+  cwd: string;
+  home: string;
+  env: Record<string, string>;
+  aliases: Record<string, string>;
+  history: string[];
+  lastStatus: number;
+  persistence: PersistenceAdapter | null;
+  use(plugin: TerminalPlugin, options?: unknown): this;
+  register(name: string, handler: CommandHandler, meta?: Record<string, unknown>): this;
+  commandNames(): string[];
+  envSnapshot(): Record<string, string>;
+  resolve(path: string): string;
+  execute(line: string): Promise<CommandResult>;
+  snapshot(): Record<string, unknown>;
+  restore(state?: Record<string, unknown>): this;
+  persist(): void;
+  resetSessionState(): this;
+}
+
+export interface VfsNode {
+  type: 'dir' | 'file' | 'exec' | string;
+  owner: string;
+  user: string;
+  group: string;
+  perm: string;
+  date: string;
+  size: number;
+  content?: string;
+  link?: string;
+  title?: string;
+  meta?: Record<string, unknown>;
+}
+
+export class MemoryFileSystem {
+  constructor(options?: { now?: () => Date; clockText?: string });
+  nodes: Map<string, VfsNode>;
+  normalize(target?: string, context?: { cwd?: string; home?: string }): string;
+  dirname(path: string): string;
+  basename(path: string): string;
+  has(path: string): boolean;
+  stat(path: string): ({ path: string } & VfsNode) | null;
+  addDir(path: string, meta?: Partial<VfsNode>): string;
+  ensureDir(path: string, meta?: Partial<VfsNode>): void;
+  makeDir(path: string, context?: Record<string, unknown>): string;
+  addFile(path: string, content?: string, meta?: Partial<VfsNode>): string;
+  addExecutable(path: string, handler: CommandHandler, meta?: Partial<VfsNode>): string;
+  list(path: string, context?: Record<string, unknown>): string[];
+  readFile(path: string, context?: Record<string, unknown>): string;
+  writeFile(path: string, content: string, context?: Record<string, unknown>): void;
+  remove(path: string, context?: Record<string, unknown>): void;
+  copy(source: string, target: string, context?: Record<string, unknown>): string;
+  move(source: string, target: string, context?: Record<string, unknown>): string;
+  chmod(path: string, mode: string, context?: Record<string, unknown>): void;
+  chown(path: string, owner: string, group?: string, context?: Record<string, unknown>): void;
+  canRead(path: string, context?: Record<string, unknown>): boolean;
+  canWrite(path: string, context?: Record<string, unknown>): boolean;
+  canExecute(path: string, context?: Record<string, unknown>): boolean;
+  glob(pattern: string, context?: Record<string, unknown>): string[];
+}
+
+export class VfsError extends Error {
+  code: string;
+}
+
+export const DEFAULT_TERMINAL_CSS: string;
+
+export class DomTerminalRenderer {
+  constructor(core: TerminalCore, options?: {
+    mount: string | Element;
+    document?: Document;
+    prompt?: () => string;
+    history?: string[];
+    className?: string;
+    welcome?: string;
+    maxLines?: number;
+    autoFocus?: boolean;
+    ariaLabel?: string;
+    onEvent?: (event: TerminalEvent, renderer: DomTerminalRenderer) => void;
+    onCommand?: (command: string, terminal: TerminalCore) => void;
+    onResult?: (result: CommandResult, command: string, terminal: TerminalCore) => void;
+    onError?: (error: unknown, command: string, terminal: TerminalCore) => void;
+  });
+  attach(): this;
+  destroy(): this;
+  focus(): void;
+  print(text: string, cls?: string): void;
+  printBlock(text: string, cls?: string): void;
+  handleEvents(events?: TerminalEvent[]): void;
+}
+
+export function ok(stdout?: string, extra?: Partial<CommandResult>): CommandResult;
+export function fail(stderr?: string, status?: number, extra?: Partial<CommandResult>): CommandResult;
+export function normalizeResult(result?: Partial<CommandResult> | string): CommandResult;
+export function createLinuxLikeFs(options?: Record<string, unknown>): MemoryFileSystem;
+export function createTerminal(options?: TerminalOptions): TerminalCore;
+export function createWebTerminal(options?: TerminalOptions): TerminalCore;
+export function createBlogTerminal(options?: TerminalOptions): TerminalCore;
+export function basicCommandsPlugin(terminal: TerminalCore, options?: Record<string, unknown>): void;
+export function systemCommandsPlugin(terminal: TerminalCore, options?: Record<string, unknown>): void;
+export function effectEventsPlugin(terminal: TerminalCore, options?: Record<string, unknown>): void;
+export function hugoPostsPlugin(posts?: Array<Record<string, string>>, options?: Record<string, unknown>): TerminalPlugin;
+export function fetchHugoPosts(feedUrl?: string, fetchImpl?: typeof fetch): Promise<Array<Record<string, string>>>;
+export function blogSandboxPreset(options?: Record<string, unknown>): TerminalPlugin;
+export function injectDefaultStyles(doc?: Document): void;
+export function mountStaticTerminal(options?: Record<string, unknown>): Promise<{ terminal: TerminalCore; renderer: DomTerminalRenderer }>;
+export function createHugoTerminal(options?: Record<string, unknown>): Promise<TerminalCore>;
+export function mountHugoTerminal(options?: Record<string, unknown>): Promise<{ terminal: TerminalCore; renderer: DomTerminalRenderer }>;
+export function createStorageAdapter(options?: Record<string, unknown>): PersistenceAdapter;
+export function memoryPersistenceAdapter(initialState?: Record<string, unknown>): PersistenceAdapter;

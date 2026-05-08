@@ -38,6 +38,13 @@
 - Turn terminal results into UI.
 - Interpret `events`.
 - Can be replaced by a custom blog renderer, modal renderer, xterm-like renderer, or game-styled renderer.
+- Must keep output text-safe by default.
+
+`src/adapters/persistence.mjs`
+
+- Provides explicit `load`, `save`, and `reset` session adapters.
+- Persists shell metadata only; it does not persist the full VFS.
+- Treats restored state as untrusted and bounded.
 
 `src/presets/*.mjs`
 

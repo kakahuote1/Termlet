@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Custom Plugin Example</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      background: #111418;
+      color: #e6edf3;
+      font-family: system-ui, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    main {
+      width: min(980px, 100%);
+    }
+
+    h1 {
+      font-size: 20px;
+      font-weight: 600;
+      margin: 0 0 12px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Custom Plugin</h1>
+    <div id="terminal"></div>
+  </main>
+
+  <script type="module">
+    import {
+      createTerminal,
+      DomTerminalRenderer,
+      blogSandboxPreset,
+      injectDefaultStyles,
+      ok,
+    } from '../../src/index.mjs';
+
+    function portfolioPlugin(terminal) {
+      terminal.fs.ensureDir('/home/guest/projects', { owner: 'guest', group: 'guest' });
+      terminal.fs.addFile('/home/guest/projects/readme.md', '# Projects\\n\\n- terminal-kit\\n', {
+        owner: 'guest',
+        group: 'guest',
+      });
+
+      terminal.register('about', ({ user, hostname }) => {
+        return ok(`${user}@${hostname}: frontend-only terminal simulation\\n`);
+      });
+    }
+
+    injectDefaultStyles();
+
+    const terminal = createTerminal({
+      hostname: 'portfolio',
+      plugins: [
+        blogSandboxPreset(),
+        portfolioPlugin,
+      ],
+    });
+
+    new DomTerminalRenderer(terminal, {
+      mount: '#terminal',
+      welcome: 'Try: about, ls ~/projects, cat ~/projects/readme.md\\n',
+    }).attach();
+  </script>
+</body>
+</html>

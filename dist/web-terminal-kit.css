@@ -1,0 +1,9 @@
+.blog-terminal { background:#05080d; color:#c9fdd7; font:13px/1.45 ui-monospace, SFMono-Regular, Consolas, monospace; padding:12px; border:1px solid #1f3b2d; border-radius:8px; }
+.blog-terminal__output { min-height:320px; max-height:70vh; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; tab-size:2; }
+.blog-terminal__line.error { color:#ff7b72; }
+.blog-terminal__line.muted { color:#7d8590; }
+.blog-terminal__input-row { display:flex; gap:8px; align-items:baseline; min-width:0; }
+.blog-terminal__prompt { color:#2ea043; flex:none; }
+.blog-terminal__input { flex:1; min-width:0; background:transparent; border:0; color:inherit; font:inherit; outline:0; }
+.blog-terminal__input:focus-visible { box-shadow:0 1px 0 #58a6ff; }
+.blog-terminal--closed { opacity:.72; }
