@@ -19,6 +19,8 @@
 4. 在 `Build and deployment` 的 `Source` 中选择 `GitHub Actions`。
 5. 推送一次 `main` 或 `master`，等待 `Deploy Demo` workflow 完成。
 
+如果第一次 push 后 workflow 已经失败，可以先完成上面的设置，然后在 GitHub 的 `Actions` 页面重新运行 `Deploy Demo`，或者再 push 一个小提交触发它。
+
 GitHub Pages 的项目页地址通常是：
 
 ```text
@@ -57,3 +59,24 @@ npx serve site
 - 之后发布 npm 包和发布在线演示可以共用同一套构建脚本。
 
 只有在 demo 需要独立品牌站、大量内容或单独权限控制时，才有必要拆成另一个仓库。
+
+## 常见错误
+
+### `Get Pages site failed`
+
+报错示例：
+
+```text
+Error: Get Pages site failed. Please verify that the repository has Pages enabled and configured to build using GitHub Actions
+```
+
+原因是仓库还没有启用 GitHub Pages，或者 Pages 的 Source 还不是 `GitHub Actions`。
+
+处理：
+
+1. 打开 GitHub 仓库页面。
+2. 进入 `Settings -> Pages`。
+3. 在 `Build and deployment` 中把 `Source` 设置为 `GitHub Actions`。
+4. 回到 `Actions`，重新运行失败的 `Deploy Demo` workflow。
+
+`actions/configure-pages` 也提供 `enablement` 参数，但官方 action 元数据说明它需要非默认 `GITHUB_TOKEN` 的 token，例如带 Pages/Administration 写权限的 PAT 或 GitHub App token。为了避免让普通使用者配置额外密钥，本项目默认采用手动一次性启用 Pages 的方式。

@@ -76,6 +76,8 @@ npm run build
 
 详情见 [GitHub Pages 演示站](docs/github-pages.md)。
 
+如果 `Deploy Demo` 第一次失败并提示 `Get Pages site failed`，先完成上面的 Pages 设置，再到 `Actions` 里重新运行失败的 workflow。
+
 当前仓库的默认演示地址：
 
 ```text
