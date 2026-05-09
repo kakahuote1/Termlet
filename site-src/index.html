@@ -66,7 +66,7 @@
           <div class="style-panel__head">
             <h3>PowerShell 风格</h3>
             <code>createWindowsTerminal({ shell: 'powershell' })</code>
-            <p>提供 Get-Location、Get-Item、Test-Path、Set-Content 等 Verb-Noun 命令。</p>
+            <p>提供 Get-Location、Get-Item、Test-Path、Set-Content 等 Verb-Noun 命令，也支持对象管道。</p>
           </div>
           <div class="terminal-shell compact-terminal" aria-label="PowerShell 风格终端演示">
             <div class="terminal-titlebar">
@@ -99,7 +99,11 @@
       <div class="capability-grid">
         <article>
           <h3>命令插件</h3>
-          <p>用 `register()` 加命令，用 `events` 触发页面效果，也可以返回 disposer 清理插件。</p>
+          <p>用 command pack 组合命令集，用 `register()` 加命令，也可以返回 disposer 清理插件。</p>
+        </article>
+        <article>
+          <h3>结构化管道</h3>
+          <p>命令可以返回对象数组，后续命令用 `input` 继续过滤、排序、投影和渲染。</p>
         </article>
         <article>
           <h3>虚拟文件系统</h3>

@@ -31,6 +31,7 @@ assert(!/GitHub Actions|workflow|Settings/.test(index), 'demo should not explain
 assert(!/胚|玩具|你拿到|开发者/.test(index + app), 'demo copy should use neutral product language');
 assert(index.includes('基础基座'), 'demo should describe the base terminal as a foundation');
 assert(index.includes('Get-Item'), 'demo should show PowerShell-specific commands');
+assert(index.includes('对象管道'), 'demo should show structured pipeline capability');
 assert(index.includes('ls、cat'), 'demo should show CMD compatibility commands');
 assert(!/\sstyle\s*=/.test(index), 'demo HTML should avoid inline style attributes');
 assert((index.match(/<h1\b/g) || []).length === 1, 'demo should have exactly one h1');
@@ -43,6 +44,7 @@ assert(app.includes('./termlet/index.mjs'), 'demo app should import built Termle
 assert(app.includes('createWindowsTerminal'), 'demo app should mount Windows-style terminals');
 assert(app.includes('toWindowsPath'), 'demo app should show Windows-style prompts');
 assert(app.includes('Get-Item readme.txt'), 'PowerShell preview should suggest PowerShell commands');
+assert(app.includes('Where-Object Name -Like *.txt'), 'PowerShell preview should suggest object pipeline commands');
 assert(app.includes('dir, ls, type readme.txt'), 'CMD preview should suggest CMD and compatibility commands');
 assert(app.includes('docs/integrations.md'), 'demo app should surface integration docs');
 assert(app.includes("terminal.register('slow'"), 'demo app should expose an interruptible slow command');

@@ -29,6 +29,10 @@
       "types": "./src/index.d.ts",
       "import": "./src/shell.mjs"
     },
+    "./extension": {
+      "types": "./src/index.d.ts",
+      "import": "./src/extension.mjs"
+    },
     "./vfs": {
       "types": "./src/index.d.ts",
       "import": "./src/vfs.mjs"

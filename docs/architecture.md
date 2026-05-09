@@ -9,9 +9,10 @@
 3. Each command segment is checked for redirects: `>` and `>>`.
 4. Pipelines split on top-level `|`.
 5. Words are parsed with shell-like quote handling, `$VAR`, `${VAR}`, and `$(command)`.
-6. Aliases and globs are expanded.
-7. A registered command receives context and returns `{ stdout, stderr, status, events }`.
-8. Renderer consumes text and optional events.
+6. Aliases are expanded; globs are expanded only when the current profile enables `expandGlobs`.
+7. A registered command receives context and returns `{ stdout, stderr, status, events, data }`.
+8. Text pipelines continue through `stdin`; structured pipelines continue through `input`/`data`.
+9. Renderer consumes text and optional events.
 
 ## Module Boundaries
 
@@ -20,6 +21,12 @@
 - Owns parsing and command dispatch.
 - Does not know about DOM.
 - Does not execute JavaScript strings.
+- Supports both text pipes and structured object pipes.
+
+`src/extension.mjs`
+
+- Owns public extension helpers: `defineCommandPack`, `defineProfile`, record projection/filtering/sorting, and table formatting.
+- Keeps common plugin/profile utilities out of command implementations.
 
 `src/vfs.mjs`
 
@@ -33,6 +40,7 @@
 - Can be small and domain-specific.
 - Should not reach into renderer internals.
 - Should use public helpers such as `register`, `unregister`, `setAlias`, and `removeAlias` instead of relying on internal storage shape.
+- Can return `data` for structured pipelines while still returning text for normal display.
 
 `src/plugins/feed-posts.mjs`
 
@@ -57,18 +65,23 @@
 - Compose files, aliases, logs, CTF clues, and blog-specific defaults.
 - Keep site personality out of the reusable core.
 
+Profiles
+
+- Bundle parser behavior, command packs, aliases, env defaults, and structured output formatting.
+- Are plain objects created by `defineProfile()`, so projects can copy and modify them without subclassing the core.
+
 ## Safety Rules For New Commands
 
 - Do not call real process APIs.
 - Do not pass user input to `eval`, `Function`, HTML injection, or shell-like APIs.
-- Return text through `stdout` or `stderr`; renderer should use `textContent` unless a command event is explicitly trusted.
+- Return text through `stdout` or `stderr`, and objects through `data`; renderer should use `textContent` unless a command event is explicitly trusted.
 - Treat network and package manager commands as simulated unless the site owner explicitly provides a safe adapter.
 - For destructive commands, enforce checks in both the command plugin and `MemoryFileSystem`.
 
 ## Known Limits
 
 - It is a high-fidelity simulation, not a POSIX shell implementation.
-- Quoted glob metadata is not preserved yet, so glob behavior is intentionally simpler than Bash.
+- Quoted glob metadata is not preserved yet, so POSIX glob behavior is intentionally simpler than Bash. Profiles can disable shell-level glob expansion with `expandGlobs: false`.
 - Job control, PTY behavior, terminal escape sequences, process groups, and real full-screen programs are renderer/plugin work.
 - Cryptographic command output uses Web Crypto when available and a deterministic fallback when not available.
 

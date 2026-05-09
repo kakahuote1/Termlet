@@ -7,11 +7,13 @@ export function fail(stderr = '', status = 1, extra = {}) {
 }
 
 export function normalizeResult(result = {}) {
+  const data = Array.isArray(result.data) ? result.data : null;
   return {
     stdout: result.stdout == null ? '' : String(result.stdout),
     stderr: result.stderr == null ? '' : String(result.stderr),
     status: Number.isInteger(result.status) ? result.status : 0,
     events: Array.isArray(result.events) ? result.events : [],
+    data,
   };
 }
 

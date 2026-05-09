@@ -5,9 +5,13 @@ import {
   createFeedTerminal,
   createWindowsTerminal,
   createTerminal,
+  defineCommandPack,
+  defineProfile,
   blogSandboxPreset,
   effectEventsPlugin,
+  formatRecords,
   hugoPostsPlugin,
+  ok,
   parseFeedPosts,
   discoverFeedUrl,
   memoryPersistenceAdapter,
@@ -101,6 +105,35 @@ test('core exposes plugin-friendly command and alias lifecycle APIs', async () =
   assert.equal(disposed, true);
   assert.equal(terminal.hasCommand('plugin-cmd'), false);
   assert.equal(terminal.alias('pc'), null);
+});
+
+test('profiles and command packs make custom extension points explicit', async () => {
+  const tools = defineCommandPack('tools', terminal => {
+    terminal.register('objects', () => ok('', {
+      data: [
+        { Name: 'alpha', Score: 2 },
+        { Name: 'beta', Score: 10 },
+      ],
+    }));
+    terminal.register('names', ({ input }) => ok(input.map(item => item.Name).join(',') + '\n'));
+  });
+  const profile = defineProfile({
+    name: 'lab',
+    core: {
+      basicCommands: false,
+      systemCommands: false,
+      formatPipelineData: data => formatRecords(data, ['Name', 'Score']),
+    },
+    env: { TERMLET_PROFILE: 'lab' },
+    aliases: { o: 'objects' },
+    commandPacks: [tools],
+  });
+  const terminal = createTerminal({ profile });
+
+  assert.equal(terminal.profileName, 'lab');
+  assert.equal(terminal.env.TERMLET_PROFILE, 'lab');
+  assert.match((await terminal.execute('o')).stdout, /Name\s+Score/);
+  assert.equal((await terminal.execute('objects | names')).stdout, 'alpha,beta\n');
 });
 
 test('feed adapter creates a generic blog terminal from posts', async () => {
@@ -256,6 +289,10 @@ test('windows terminal profile supports cmd and powershell style commands', asyn
   assert.equal((await powershell.execute('Test-Path readme.txt')).stdout, 'True\n');
   assert.equal((await powershell.execute('Set-Content -Path demo.txt -Value hello')).status, 0);
   assert.equal((await powershell.execute('Get-Content demo.txt')).stdout, 'hello\n');
+  assert.match(
+    (await powershell.execute('Get-ChildItem | Where-Object Name -Like *.txt | Sort-Object Length -Descending | Select-Object Name,Length | Format-Table')).stdout,
+    /readme\.txt/,
+  );
   assert.equal((await powershell.execute('ls')).status, 127);
   assert.equal((await powershell.execute('Remove-Item C:\\')).status, 1);
 

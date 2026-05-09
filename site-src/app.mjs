@@ -40,6 +40,7 @@ function demoPlugin(terminal) {
     'docs/extend.md         扩展教程',
     'docs/integrations.md   博客系统适配',
     'docs/theming.md        主题与外观',
+    'examples/custom-profile profile 与结构化管道示例',
     'examples/windows-style PowerShell/CMD 示例',
     '',
   ].join('\n')));
@@ -84,7 +85,7 @@ mountWindowsPreview({
   mount: '#powershell-terminal',
   className: 'termlet-powershell',
   shell: 'powershell',
-  welcome: 'PS profile. Try: Get-Item readme.txt, Test-Path readme.txt, Get-Content readme.txt\n',
+  welcome: 'PS profile. Try: Get-Item readme.txt, Get-ChildItem | Where-Object Name -Like *.txt | Select-Object Name,Length | Format-Table\n',
   prompt: terminal => `PS ${toWindowsPath(terminal.cwd)}>`,
   seed: terminal => {
     terminal.fs.addFile(`${terminal.cwd}/readme.txt`, 'PowerShell profile: Verb-Noun commands, no Linux ls by default.\n', {

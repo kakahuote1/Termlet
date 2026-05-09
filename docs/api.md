@@ -19,7 +19,9 @@ Useful options:
 | `user`, `groups`, `hostname` | Prompt and permission identity. |
 | `cwd`, `home`, `env`, `aliases` | Initial shell session state. |
 | `fs` | Custom `MemoryFileSystem` instance. |
-| `plugins` | Functions or `[plugin, options]` tuples. |
+| `profile` | Named bundle of defaults, command packs, aliases, env, parser behavior, and output formatter. |
+| `commandPacks` | Reusable command bundles installed before `plugins`. |
+| `plugins` | Functions, `{ install() }` objects, or `[plugin, options]` tuples. |
 | `basicCommands: false` | Disable built-in file/text commands. |
 | `systemCommands: false` | Disable simulated system commands. |
 | `persistence` | `{ load, save, reset }` adapter for session state. |
@@ -28,6 +30,8 @@ Useful options:
 | `commandTimeoutMs` | Optional timeout for async command handlers. |
 | `caseInsensitiveCommands` | Useful for CMD/PowerShell style terminals. |
 | `backslashEscapes` | Set `false` to preserve Windows paths such as `C:\Users\guest`. |
+| `expandGlobs` | Set `false` when a profile wants commands, not the shell, to handle wildcards. |
+| `formatPipelineData` | Formats structured pipeline data when the final command returns objects. |
 
 ## `terminal.execute(line, options?)`
 
@@ -38,7 +42,8 @@ Runs one line and returns:
   status: 0,
   stdout: 'text\n',
   stderr: '',
-  events: []
+  events: [],
+  data: null
 }
 ```
 
@@ -83,6 +88,76 @@ export function toolsPlugin(terminal) {
 ```
 
 Handlers receive command args, stdin, shell state, `signal`, and the VFS through one context object.
+
+## Profiles And Command Packs
+
+Profiles make major terminal variants explicit. They can bundle parser behavior, command packs, aliases, environment variables, and structured output formatting.
+
+```js
+import {
+  createTerminal,
+  defineCommandPack,
+  defineProfile,
+  formatRecords,
+  ok,
+} from 'termlet';
+
+const inventoryPack = defineCommandPack('inventory', terminal => {
+  terminal.register('inventory', () => ok('', {
+    data: [
+      { Name: 'alpha', Score: 2 },
+      { Name: 'beta', Score: 10 },
+    ],
+  }));
+
+  terminal.register('names', ({ input }) => {
+    return ok(input.map(item => item.Name).join(',') + '\n');
+  });
+});
+
+const terminal = createTerminal({
+  profile: defineProfile({
+    name: 'lab',
+    core: {
+      basicCommands: false,
+      systemCommands: false,
+      expandGlobs: false,
+      formatPipelineData: data => formatRecords(data, ['Name', 'Score']),
+    },
+    env: { TERMLET_PROFILE: 'lab' },
+    aliases: { inv: 'inventory' },
+    commandPacks: [inventoryPack],
+  }),
+});
+```
+
+Command packs are regular plugins with a stable name. They are installed before `plugins`, so a site can use a profile as a base and still override or add commands locally.
+
+## Structured Pipelines
+
+Text pipes keep working through `stdin` and `stdout`. Commands can also return `data`, an array of objects or values:
+
+```js
+terminal.register('items', () => ok('', {
+  data: [
+    { Name: 'readme.txt', Length: 42 },
+    { Name: 'notes.md', Length: 12 },
+  ],
+}));
+
+terminal.register('names', ({ input }) => {
+  return ok(input.map(item => item.Name).join('\n') + '\n');
+});
+```
+
+Then both forms are possible:
+
+```sh
+items
+items | names
+```
+
+If the final command returns `data` with empty `stdout`, Termlet calls `formatPipelineData`. This is the hook used by PowerShell-style object pipelines and by custom renderers that want tables, cards, search results, or typed records.
 
 Plugin-facing lifecycle helpers:
 
@@ -169,6 +244,6 @@ const terminal = createWindowsTerminal({
 });
 ```
 
-The PowerShell profile installs Verb-Noun commands such as `Get-Location`, `Get-ChildItem`, `Get-Item`, `Get-Content`, `Set-Content`, `Add-Content`, `Test-Path`, `New-Item`, `Copy-Item`, `Move-Item`, and `Remove-Item`. It does not install the Linux command plugin by default.
+The PowerShell profile installs Verb-Noun commands such as `Get-Location`, `Get-ChildItem`, `Get-Item`, `Get-Content`, `Set-Content`, `Add-Content`, `Test-Path`, `New-Item`, `Copy-Item`, `Move-Item`, and `Remove-Item`. It does not install the Linux command plugin by default. It also supports object-pipeline helpers such as `Where-Object`, `Select-Object`, `Sort-Object`, and `Format-Table`.
 
 The CMD profile installs `dir`, `type`, `copy`, `move`, `del`, `ren`, `md`, `mkdir`, `cls`, and `ver`. It keeps the basic Linux-style compatibility commands enabled by default, so commands such as `ls` and `cat` can still be available in CMD-style demos.

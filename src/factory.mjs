@@ -1,23 +1,25 @@
 import { TerminalCore } from './shell.mjs';
 import { createLinuxLikeFs } from './vfs.mjs';
+import { formatRecords, mergeProfileOptions } from './extension.mjs';
 import { basicCommandsPlugin } from './plugins/basic-commands.mjs';
 import { systemCommandsPlugin } from './plugins/system-commands.mjs';
 import { windowsCommandsPlugin } from './plugins/windows-commands.mjs';
 
 export function createTerminal(options = {}) {
-  const { plugins = [], ...coreOptions } = options;
+  const prepared = mergeProfileOptions(options);
+  const { commandPacks = [], plugins = [], ...coreOptions } = prepared;
   const terminal = new TerminalCore({
     ...coreOptions,
-    fs: options.fs || createLinuxLikeFs(options.fsOptions),
+    fs: prepared.fs || createLinuxLikeFs(prepared.fsOptions),
   });
 
-  if (options.basicCommands !== false) {
-    terminal.use(basicCommandsPlugin, options.basicCommands || {});
+  if (prepared.basicCommands !== false) {
+    terminal.use(basicCommandsPlugin, prepared.basicCommands || {});
   }
-  if (options.systemCommands !== false) {
-    terminal.use(systemCommandsPlugin, options.systemCommands || {});
+  if (prepared.systemCommands !== false) {
+    terminal.use(systemCommandsPlugin, prepared.systemCommands || {});
   }
-  plugins.forEach(plugin => {
+  [...commandPacks, ...plugins].forEach(plugin => {
     if (Array.isArray(plugin)) terminal.use(plugin[0], plugin[1]);
     else terminal.use(plugin);
   });
@@ -41,18 +43,21 @@ export function createWindowsTerminal(options = {}) {
     plugins = [],
     systemCommands = shell === 'cmd',
     windowsCommands = {},
+    formatPipelineData = formatRecords,
     ...coreOptions
   } = options;
   return createTerminal({
     hostname: hostname || (shell === 'cmd' ? 'DESKTOP' : 'termlet-win'),
     caseInsensitiveCommands: true,
     backslashEscapes: false,
+    expandGlobs: shell === 'cmd',
     env: {
       USERPROFILE: 'C:\\Users\\guest',
       ...env,
     },
     basicCommands,
     systemCommands,
+    formatPipelineData,
     ...coreOptions,
     plugins: [
       [windowsCommandsPlugin, { shell, ...windowsCommands }],

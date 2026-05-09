@@ -10,12 +10,14 @@ export interface CommandResult {
   stdout: string;
   stderr: string;
   events: TerminalEvent[];
+  data: Array<Record<string, unknown> | unknown> | null;
 }
 
 export interface CommandContext {
   name: string;
   args: string[];
   stdin: string;
+  input: Array<Record<string, unknown> | unknown> | null;
   signal: AbortSignal | null;
   terminal: TerminalCore;
   fs: MemoryFileSystem;
@@ -29,6 +31,18 @@ export interface CommandContext {
 
 export type CommandHandler = (context: CommandContext) => CommandResult | Promise<CommandResult>;
 export type TerminalPlugin = ((terminal: TerminalCore, options?: unknown) => void) | { install(terminal: TerminalCore, options?: unknown): void };
+export type CommandPack = TerminalPlugin | [TerminalPlugin, unknown];
+
+export interface TerminalProfile {
+  name?: string;
+  core?: Partial<TerminalOptions>;
+  env?: Record<string, string>;
+  aliases?: Record<string, string>;
+  commandPacks?: CommandPack[];
+  plugins?: CommandPack[];
+  formatPipelineData?: (data: unknown[], context?: { terminal: TerminalCore }) => string;
+  meta?: Record<string, unknown>;
+}
 
 export interface PersistenceAdapter {
   load(): Record<string, unknown>;
@@ -48,15 +62,19 @@ export interface TerminalOptions {
   maxHistory?: number;
   fs?: MemoryFileSystem;
   fsOptions?: Record<string, unknown>;
-  plugins?: Array<TerminalPlugin | [TerminalPlugin, unknown]>;
+  profile?: TerminalProfile | ((options: TerminalOptions) => TerminalProfile);
+  plugins?: CommandPack[];
+  commandPacks?: CommandPack[];
   basicCommands?: false | Record<string, unknown>;
   systemCommands?: false | Record<string, unknown>;
   caseInsensitiveCommands?: boolean;
   backslashEscapes?: boolean;
+  expandGlobs?: boolean;
   maxLineLength?: number;
   maxCommandSubstitutionLength?: number;
   maxOutputBytes?: number;
   commandTimeoutMs?: number;
+  formatPipelineData?: (data: unknown[], context?: { terminal: TerminalCore }) => string;
   persistence?: PersistenceAdapter;
   persistEnv?: boolean | string[];
   restore?: boolean;
@@ -74,6 +92,7 @@ export class TerminalCore {
   aliases: Record<string, string>;
   history: string[];
   lastStatus: number;
+  profileName: string;
   maxOutputBytes: number;
   commandTimeoutMs: number;
   persistence: PersistenceAdapter | null;
@@ -144,6 +163,17 @@ export class VfsError extends Error {
   code: string;
 }
 
+export function defineCommandPack(name: string, install: (terminal: TerminalCore, options?: unknown) => void, meta?: Record<string, unknown>): TerminalPlugin;
+export function defineCommandPack(options: { name?: string; install: (terminal: TerminalCore, options?: unknown) => void; meta?: Record<string, unknown> }): TerminalPlugin;
+export function defineProfile(name: string, options?: Omit<TerminalProfile, 'name'>): TerminalProfile;
+export function defineProfile(options: TerminalProfile): TerminalProfile;
+export function mergeProfileOptions(options?: TerminalOptions): TerminalOptions;
+export function formatRecords(records: unknown[], columns?: string[] | null): string;
+export function getRecordValue(record: unknown, property: string): unknown;
+export function normalizeProperties(values: string[]): string[];
+export function projectRecords(records: Array<Record<string, unknown>>, properties: string[]): Array<Record<string, unknown>>;
+export function sortRecords(records: Array<Record<string, unknown>>, property: string, direction?: 'asc' | 'desc' | string): Array<Record<string, unknown>>;
+export function filterRecords(records: Array<Record<string, unknown>>, property: string, operator: string, expected: unknown): Array<Record<string, unknown>>;
 export const DEFAULT_TERMINAL_CSS: string;
 
 export class DomTerminalRenderer {

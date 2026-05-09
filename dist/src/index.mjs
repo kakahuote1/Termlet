@@ -1,4 +1,15 @@
 export { TerminalCore } from './shell.mjs';
+export {
+  defineCommandPack,
+  defineProfile,
+  filterRecords,
+  formatRecords,
+  getRecordValue,
+  mergeProfileOptions,
+  normalizeProperties,
+  projectRecords,
+  sortRecords,
+} from './extension.mjs';
 export { MemoryFileSystem, VfsError, createLinuxLikeFs } from './vfs.mjs';
 export { basicCommandsPlugin } from './plugins/basic-commands.mjs';
 export { systemCommandsPlugin } from './plugins/system-commands.mjs';

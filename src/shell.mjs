@@ -28,6 +28,7 @@ export class TerminalCore {
     this.commands = new Map();
     this.caseInsensitiveCommands = Boolean(options.caseInsensitiveCommands);
     this.backslashEscapes = options.backslashEscapes !== false;
+    this.expandGlobs = options.expandGlobs !== false;
     this.maxLineLength = Math.max(256, Number(options.maxLineLength || 8000));
     this.maxCommandSubstitutionLength = Math.max(64, Number(options.maxCommandSubstitutionLength || 500));
     this.maxOutputBytes = Math.max(1024, Number(options.maxOutputBytes || 256 * 1024));
@@ -37,6 +38,10 @@ export class TerminalCore {
     this.maxHistory = options.maxHistory || 500;
     this.persistence = options.persistence || null;
     this.persistEnv = options.persistEnv || false;
+    this.profileName = options.profileName || 'default';
+    this.formatPipelineData = typeof options.formatPipelineData === 'function'
+      ? options.formatPipelineData
+      : defaultPipelineFormatter;
     this.suppressNextPersist = false;
     this.pluginDisposers = [];
     (options.plugins || []).forEach(plugin => this.use(plugin));
@@ -350,20 +355,23 @@ export class TerminalCore {
   async runPipeline(line, options = {}) {
     const segments = splitTopLevel(line, '|', { backslashEscapes: this.backslashEscapes });
     let stdin = '';
+    let input = null;
     let status = 0;
     let stderr = '';
     let events = [];
     for (const segment of segments) {
       const words = await this.parseWordsAsync(segment);
       if (words.length === 0) return fail('bash: syntax error near unexpected token `|`\n', 2);
-      const result = await this.runCommand(words, stdin, options);
+      const result = await this.runCommand(words, stdin, { ...options, input });
       stdin = result.stdout;
+      input = result.data;
       stderr += result.stderr;
       events = events.concat(result.events);
       status = result.status;
       this.lastStatus = status;
     }
-    return normalizeResult({ stdout: stdin, stderr, status, events });
+    const stdout = stdin || (Array.isArray(input) ? this.formatPipelineData(input, { terminal: this }) : '');
+    return normalizeResult({ stdout, stderr, status, events, data: input });
   }
 
   async runCommand(words, stdin = '', options = {}) {
@@ -387,7 +395,9 @@ export class TerminalCore {
       mutable.unshift(...aliasWords);
     }
 
-    const args = mutable.flatMap(arg => this.fs.glob(arg, { cwd: this.cwd, home: this.home }));
+    const args = this.expandGlobs
+      ? mutable.flatMap(arg => this.fs.glob(arg, { cwd: this.cwd, home: this.home }))
+      : mutable;
     const command = this.command(name);
     if (!command) return fail(`${name}: command not found\n`, 127);
     if (options.signal?.aborted) return fail(`${name}: interrupted\n`, 130);
@@ -398,6 +408,7 @@ export class TerminalCore {
         name,
         args,
         stdin,
+        input: options.input || null,
         signal: options.signal || null,
         ...this.context(),
       }));
@@ -802,4 +813,12 @@ function truncateBytes(value, maxBytes) {
     else high = mid - 1;
   }
   return text.slice(0, low).replace(/\s+$/, '');
+}
+
+function defaultPipelineFormatter(data) {
+  if (!Array.isArray(data) || data.length === 0) return '';
+  if (data.every(item => typeof item !== 'object' || item === null)) {
+    return data.map(item => String(item)).join('\n') + '\n';
+  }
+  return data.map(item => JSON.stringify(item)).join('\n') + '\n';
 }

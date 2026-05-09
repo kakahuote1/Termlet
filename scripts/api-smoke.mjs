@@ -8,6 +8,15 @@ const dts = readFileSync(join(root, 'src', 'index.d.ts'), 'utf8');
 
 const expectedRootExports = [
   'TerminalCore',
+  'defineCommandPack',
+  'defineProfile',
+  'filterRecords',
+  'formatRecords',
+  'getRecordValue',
+  'mergeProfileOptions',
+  'normalizeProperties',
+  'projectRecords',
+  'sortRecords',
   'MemoryFileSystem',
   'VfsError',
   'DEFAULT_TERMINAL_CSS',
@@ -47,6 +56,7 @@ const expectedRootExports = [
 const subpathExpectations = {
   './factory': ['createTerminal', 'createWindowsTerminal'],
   './shell': ['TerminalCore'],
+  './extension': ['defineCommandPack', 'defineProfile', 'formatRecords'],
   './vfs': ['MemoryFileSystem', 'createLinuxLikeFs'],
   './plugins/basic': ['basicCommandsPlugin'],
   './plugins/system': ['systemCommandsPlugin'],
