@@ -1,11 +1,11 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>Termlet Demo</title>
-  <meta name="description" content="纯前端、可插拔、可扩展的网页伪终端基础库演示。">
+  <meta name="description" content="Termlet 是纯前端、可插拔、可扩展的网页伪终端基础库。">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./termlet/termlet.css">
   <link rel="stylesheet" href="./styles.css">
@@ -17,9 +17,10 @@
       <span>Termlet</span>
     </a>
     <nav class="nav" aria-label="站点导航">
-      <a href="#demo">演示</a>
-      <a href="#extend">扩展</a>
-      <a href="#deploy">部署</a>
+      <a href="#demo">基础胚</a>
+      <a href="#styles">终端风格</a>
+      <a href="#kit">可改造点</a>
+      <a href="#install">接入</a>
       <a href="https://github.com/" data-repo-link>GitHub</a>
     </nav>
   </header>
@@ -27,92 +28,113 @@
   <main>
     <section class="workspace" id="demo" aria-labelledby="title">
       <div class="intro">
-        <p class="eyebrow">Browser-only pseudo terminal</p>
-        <h1 id="title">给静态站点和博客使用的可插拔伪终端</h1>
+        <p class="eyebrow">Browser-only terminal kit</p>
+        <h1 id="title">把伪终端插进任何静态站点</h1>
         <p class="lead">
-          Shell、VFS、命令插件、渲染器和持久化相互独立。你可以把它做成博客彩蛋、文档沙箱、CTF 练习环境或自己的站点终端。
+          Termlet 提供一个安全的前端终端胚子：Shell 解析、虚拟文件系统、命令插件、终端渲染器和主题都可以拆开改。
         </p>
         <div class="command-strip" aria-label="快速命令">
           <button type="button" data-run="about">about</button>
           <button type="button" data-run="ls -al /home/guest">ls</button>
-          <button type="button" data-run="tree /home/guest/lab">tree</button>
+          <button type="button" data-run="tree ~/lab">tree</button>
           <button type="button" data-run="cat ~/lab/readme.md">cat</button>
-          <button type="button" data-run="docs">docs</button>
+          <button type="button" data-run="slow">slow</button>
           <button type="button" data-run="sudo rm -rf /">safe rm</button>
         </div>
       </div>
 
-      <div class="terminal-shell" aria-label="交互式终端演示">
+      <div class="terminal-shell hero-terminal" aria-label="交互式终端演示">
         <div class="terminal-titlebar">
           <span class="window-dot red" aria-hidden="true"></span>
           <span class="window-dot yellow" aria-hidden="true"></span>
           <span class="window-dot green" aria-hidden="true"></span>
-          <span class="terminal-title">guest@demo:~/lab</span>
+          <span class="terminal-title">Linux sandbox · guest@demo:~</span>
           <span class="terminal-status" id="event-status">ready</span>
         </div>
         <div id="terminal"></div>
       </div>
     </section>
 
-    <section class="section" id="extend" aria-labelledby="extend-title">
+    <section class="section" id="styles" aria-labelledby="styles-title">
       <div class="section-head">
-        <p class="eyebrow">Extension model</p>
-        <h2 id="extend-title">扩展时只需要替换你关心的层</h2>
+        <p class="eyebrow">Same core, different shells</p>
+        <h2 id="styles-title">同一个基座，可以长成不同终端</h2>
+        <p class="section-copy">下面不是截图，都是浏览器里运行的 Termlet 实例。你可以换 prompt、命令集、主题和文件系统。</p>
+      </div>
+      <div class="style-grid" aria-label="终端风格演示">
+        <article class="style-panel">
+          <div class="style-panel__head">
+            <h3>PowerShell 风格</h3>
+            <code>createWindowsTerminal({ shell: 'powershell' })</code>
+          </div>
+          <div class="terminal-shell compact-terminal" aria-label="PowerShell 风格终端演示">
+            <div class="terminal-titlebar">
+              <span class="terminal-title">PowerShell</span>
+            </div>
+            <div id="powershell-terminal"></div>
+          </div>
+        </article>
+        <article class="style-panel">
+          <div class="style-panel__head">
+            <h3>CMD 风格</h3>
+            <code>createWindowsTerminal({ shell: 'cmd' })</code>
+          </div>
+          <div class="terminal-shell compact-terminal" aria-label="CMD 风格终端演示">
+            <div class="terminal-titlebar">
+              <span class="terminal-title">Command Prompt</span>
+            </div>
+            <div id="cmd-terminal"></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="kit" aria-labelledby="kit-title">
+      <div class="section-head">
+        <p class="eyebrow">Composable parts</p>
+        <h2 id="kit-title">你拿到的是胚子，不是写死的玩具</h2>
       </div>
       <div class="capability-grid">
         <article>
-          <h3>加命令</h3>
-          <p>通过 `terminal.register()` 注册命令，返回 `stdout`、`stderr`、`status` 和 `events`。</p>
+          <h3>命令插件</h3>
+          <p>用 `register()` 加命令，用 `events` 触发页面效果，也可以返回 disposer 清理插件。</p>
         </article>
         <article>
-          <h3>加文件系统</h3>
-          <p>用 VFS API 添加目录、文章、CTF 线索、配置文件和只读资料。</p>
+          <h3>虚拟文件系统</h3>
+          <p>文章、线索、配置、只读文件都能映射进去，不会碰真实机器。</p>
         </article>
         <article>
-          <h3>换外观</h3>
-          <p>默认 DOM 渲染器可以直接用，也可以替换成浮窗、全屏、横幅或框架组件。</p>
+          <h3>主题与渲染器</h3>
+          <p>默认 DOM renderer 可以直接用，也可以换成弹窗、横幅、全屏或框架组件。</p>
         </article>
         <article>
-          <h3>换终端生态</h3>
-          <p>内置 Windows 风格插件，可以改造成 PowerShell 或 CMD 风格终端。</p>
+          <h3>博客适配</h3>
+          <p>支持 Hugo，也支持通用 RSS/Atom feed，把文章变成终端里的文件。</p>
         </article>
         <article>
-          <h3>接博客文章</h3>
-          <p>可读取 RSS/Atom，也能从页面 feed link 自动发现文章来源。</p>
-        </article>
-        <article>
-          <h3>中断长命令</h3>
-          <p>异步命令支持超时和 AbortSignal，渲染器可实现运行中 Ctrl+C。</p>
-        </article>
-        <article>
-          <h3>控安全边界</h3>
-          <p>真实命令执行、网络访问和包安装默认关闭，危险命令在命令层和 VFS 层双重阻止。</p>
+          <h3>安全边界</h3>
+          <p>不连真实 shell，不执行用户代码；危险命令只在模拟层失败。</p>
         </article>
       </div>
-
-      <pre class="code-sample"><code>import { createTerminal, ok } from 'termlet';
-
-function myPlugin(terminal) {
-  terminal.register('hello', ({ user }) =&gt; ok(`hello ${user}\n`));
-}
-
-const terminal = createTerminal({
-  plugins: [myPlugin],
-});</code></pre>
     </section>
 
-    <section class="section deploy" id="deploy" aria-labelledby="deploy-title">
+    <section class="section install" id="install" aria-labelledby="install-title">
       <div class="section-head">
-        <p class="eyebrow">Deployment</p>
-        <h2 id="deploy-title">一个仓库就能托管文档和在线演示</h2>
+        <p class="eyebrow">Drop-in usage</p>
+        <h2 id="install-title">接入时只需要挂载一个 DOM 节点</h2>
+        <p class="section-copy">复制 `dist/` 到站点静态目录，或者用 npm 打包。Hugo、Hexo、Jekyll、Astro、VitePress 都是同一个思路。</p>
       </div>
-      <div class="steps">
-        <p><span>1</span> 推送当前仓库到 GitHub。</p>
-        <p><span>2</span> 在仓库 Settings → Pages 中选择 GitHub Actions。</p>
-        <p><span>3</span> 推送到 `main` 或 `master` 后，workflow 会构建 `site/` 并发布。</p>
-      </div>
-      <pre class="code-sample"><code>npm run verify
-npm run site:build</code></pre>
+      <pre class="code-sample"><code>&lt;link rel="stylesheet" href="/termlet/termlet.css"&gt;
+&lt;div id="terminal"&gt;&lt;/div&gt;
+&lt;script type="module"&gt;
+  import { mountStaticTerminal, blogSandboxPreset } from '/termlet/index.mjs';
+
+  await mountStaticTerminal({
+    mount: '#terminal',
+    injectStyles: false,
+    plugins: [blogSandboxPreset()],
+  });
+&lt;/script&gt;</code></pre>
     </section>
   </main>
 

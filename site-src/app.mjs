@@ -1,11 +1,13 @@
-﻿import {
+import {
   createStorageAdapter,
   createTerminal,
+  createWindowsTerminal,
   blogSandboxPreset,
   DomTerminalRenderer,
   effectEventsPlugin,
   fail,
   ok,
+  toWindowsPath,
 } from './termlet/index.mjs';
 
 function demoPlugin(terminal) {
@@ -13,8 +15,8 @@ function demoPlugin(terminal) {
   terminal.fs.addFile('/home/guest/lab/readme.md', [
     '# Termlet Lab',
     '',
-    '这是一个纯前端终端演示。',
-    '试试 help、ls、cat、tree、session status、sudo rm -rf /。',
+    '这是一个纯前端终端胚子。',
+    '可以替换命令、文件系统、渲染器、主题和博客文章来源。',
     '',
   ].join('\n'), { owner: 'guest', group: 'guest' });
   terminal.fs.addFile('/home/guest/lab/plugin.js', [
@@ -28,8 +30,8 @@ function demoPlugin(terminal) {
 
   terminal.register('about', () => ok([
     'Termlet',
-    '纯前端、可插拔、可扩展的网页伪终端基础库。',
-    '核心不会执行真实系统命令，适合静态站点、博客和彩蛋终端。',
+    'Browser-only pseudo terminal kit.',
+    'No backend shell. No real command execution. Just composable frontend primitives.',
     '',
   ].join('\n')));
 
@@ -37,7 +39,7 @@ function demoPlugin(terminal) {
     'README.md              项目入口',
     'docs/extend.md         扩展教程',
     'docs/integrations.md   博客系统适配',
-    'docs/github-pages.md   GitHub Pages 部署',
+    'docs/theming.md        主题与外观',
     'examples/windows-style PowerShell/CMD 示例',
     '',
   ].join('\n')));
@@ -51,8 +53,7 @@ function demoPlugin(terminal) {
   }));
 }
 
-const eventStatus = document.querySelector('#event-status');
-const terminal = createTerminal({
+const linuxTerminal = createTerminal({
   hostname: 'demo',
   persistence: createStorageAdapter({ key: 'termlet.demo' }),
   plugins: [
@@ -64,7 +65,8 @@ const terminal = createTerminal({
   ],
 });
 
-const renderer = new DomTerminalRenderer(terminal, {
+const eventStatus = document.querySelector('#event-status');
+const linuxRenderer = new DomTerminalRenderer(linuxTerminal, {
   mount: '#terminal',
   welcome: 'Try: about, docs, help, ls -al, tree ~/lab, slow, sudo rm -rf /\\n',
   maxLines: 600,
@@ -78,18 +80,38 @@ const renderer = new DomTerminalRenderer(terminal, {
   },
 }).attach();
 
+mountWindowsPreview({
+  mount: '#powershell-terminal',
+  className: 'termlet-powershell',
+  shell: 'powershell',
+  welcome: 'PS demo. Try: Get-Location, dir, Get-Content readme.txt\n',
+  prompt: terminal => `PS ${toWindowsPath(terminal.cwd)}>`,
+  seed: terminal => {
+    terminal.fs.addFile(`${terminal.cwd}/readme.txt`, 'PowerShell style, same frontend core.\n', {
+      owner: terminal.user,
+      group: terminal.user,
+    });
+  },
+});
+
+mountWindowsPreview({
+  mount: '#cmd-terminal',
+  className: 'termlet-cmd',
+  shell: 'cmd',
+  welcome: 'CMD demo. Try: dir, type readme.txt, cls\n',
+  prompt: terminal => `${toWindowsPath(terminal.cwd)}>`,
+  seed: terminal => {
+    terminal.fs.addFile(`${terminal.cwd}/readme.txt`, 'CMD style, no backend process.\n', {
+      owner: terminal.user,
+      group: terminal.user,
+    });
+  },
+});
+
 document.querySelectorAll('[data-run]').forEach(button => {
   button.addEventListener('click', () => {
     const command = button.getAttribute('data-run') || '';
-    const input = renderer.activeInput;
-    const row = input?.closest('.blog-terminal__input-row');
-    if (!input || !row) return;
-    input.value = command;
-    renderer.handleKey({
-      key: 'Enter',
-      ctrlKey: false,
-      preventDefault() {},
-    }, input, row);
+    runInRenderer(linuxRenderer, command);
   });
 });
 
@@ -97,6 +119,31 @@ const repoLink = document.querySelector('[data-repo-link]');
 if (repoLink) {
   const inferred = inferGitHubRepository(window.location);
   if (inferred) repoLink.href = inferred;
+}
+
+function mountWindowsPreview(options) {
+  const terminal = createWindowsTerminal({ shell: options.shell });
+  options.seed?.(terminal);
+  const renderer = new DomTerminalRenderer(terminal, {
+    mount: options.mount,
+    welcome: options.welcome,
+    maxLines: 120,
+    prompt: () => options.prompt(terminal),
+  }).attach();
+  renderer.mount.classList.add(options.className);
+  return { terminal, renderer };
+}
+
+function runInRenderer(renderer, command) {
+  const input = renderer.activeInput;
+  const row = input?.closest('.blog-terminal__input-row');
+  if (!input || !row) return;
+  input.value = command;
+  renderer.handleKey({
+    key: 'Enter',
+    ctrlKey: false,
+    preventDefault() {},
+  }, input, row);
 }
 
 function inferGitHubRepository(location) {
