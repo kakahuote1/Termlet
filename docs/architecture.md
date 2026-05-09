@@ -49,11 +49,12 @@
 
 `src/renderers/*.mjs`
 
-- Turn terminal results into UI.
+- Turn terminal results into UI and reusable renderer extensions.
 - Interpret `events`.
 - Can be replaced by a custom blog renderer, modal renderer, xterm-like renderer, or game-styled renderer.
 - Must keep output text-safe by default.
 - May persist a bounded text-only transcript when `persistTranscript: true` is enabled.
+- `renderer-kit.mjs` is the recommended customization layer: it provides lifecycle hooks, composition, token layers, and official orbit/rain primitives without replacing keyboard handling, history, completion, transcript persistence, VFS, or command execution.
 
 `src/adapters/persistence.mjs`
 

@@ -29,6 +29,7 @@ Termlet 是一个运行在浏览器中的终端引擎。不需要后端、不需
 - 维护一套带权限校验的内存 POSIX 文件系统
 - 通过**结构化管道**在命令间传递对象数据（不仅是文本）
 - 支持通过 Profile 和 Command Pack 做声明式配置
+- 通过 Renderer Kit 组合输入、输出、动效和容器形态
 
 你可以用它做博客彩蛋、文档 Playground、产品演示、新手教程，或者一个看起来像服务器的落地页。
 
@@ -103,6 +104,7 @@ python -m http.server 4177 --bind 127.0.0.1
 | PowerShell / CMD 风格 | `createWindowsTerminal()` | 命令集和路径行为按 shell 类型区分。 |
 | 组织一组可复用命令 | `defineCommandPack()` | 把命令打包成插件。 |
 | 声明一种终端形态 | `defineProfile()` | 组合环境变量、别名、命令包和管道格式化器。 |
+| 改造外观和动效 | `defineRenderer()` / `createOrbitRenderer()` / `createRainRenderer()` | 把输入、输出、事件和动效做成可组合 renderer。 |
 
 ## 常用导入
 
@@ -143,9 +145,38 @@ import { mountStarterTerminal, createTerminal, ok } from 'termlet';
 | PowerShell / CMD | `createWindowsTerminal()`、`windowsCommandsPlugin()` |
 | 当前标签页持久化 | `createSessionStorageAdapter()`、`persistVfs`、`persistTranscript` |
 | 自定义外观 | 内置主题和 `--termlet-*` CSS 变量，见 [主题](docs/theming.md) |
-| 自定义 renderer | `TerminalCore.execute()` + `CommandResult.events`，见 [渲染器契约](docs/renderer-contract.md) |
+| 自定义 renderer | `defineRenderer()`、`composeRenderers()`、`createTokenLayer()`，见 [渲染器契约](docs/renderer-contract.md) |
 
 如果希望刷新后仍保留当前标签页里的操作，见 [刷新不丢、关页重置](#刷新不丢关页重置)。
+
+---
+
+## Renderer Kit
+
+Renderer Kit 是 0.3 起推荐的外观扩展层。命令、权限、文件系统仍由 Termlet core 处理，renderer 只接收安全的文本、事件和生命周期上下文，然后用 DOM/CSS 决定它看起来像 Linux 终端、CMD、HUD、圆形轨道、命令雨，还是完全不同的交互装置。
+
+```js
+import {
+  createTerminal,
+  DomTerminalRenderer,
+  createOrbitRenderer,
+  createRainRenderer,
+  composeRenderers,
+} from 'termlet';
+
+const terminal = createTerminal();
+
+new DomTerminalRenderer(terminal, {
+  mount: '#terminal',
+  welcome: '',
+  renderer: composeRenderers(
+    createOrbitRenderer({ liveInput: true, turns: 3 }),
+    createRainRenderer({ maxTokens: 18 }),
+  ),
+}).attach();
+```
+
+需要从零创造形态时，用 `defineRenderer()` 定义生命周期和渲染点，用 `createTokenLayer()` 管理安全的字符/单词层。全部 API 都只写 `textContent` 和 CSS 变量，不使用 `eval`、`innerHTML`、WebSocket 或真实 shell。
 
 ---
 
@@ -441,7 +472,8 @@ src/
 │   ├── hugo.mjs               mountHugoTerminal()
 │   └── persistence.mjs        localStorage / sessionStorage / 内存持久化
 └── renderers/
-    └── dom-renderer.mjs       默认 DOM 渲染器
+    ├── dom-renderer.mjs       默认 DOM 渲染器
+    └── renderer-kit.mjs       Renderer Kit 与官方动效基座
 ```
 
 ## 示例

@@ -30,6 +30,8 @@ The reference renderer uses `textContent` for command output. A custom renderer 
 - `events`: renderer-owned behavior, may create trusted UI;
 - file content: render as text unless a site-specific trusted viewer is used.
 
+Renderer Kit follows the same boundary. `createTokenLayer()`, `createOrbitRenderer()`, and `createRainRenderer()` tokenize with DOM text nodes and CSS variables; they do not use `innerHTML`, `eval`, network bridges, or real process execution. Custom `defineRenderer()` hooks should follow the same rule.
+
 For strict CSP sites, use the generated `dist/termlet.css` file instead of calling `injectDefaultStyles()`, because `injectDefaultStyles()` intentionally creates an inline `<style>` tag for simple copy-paste demos.
 
 ## Persistence Boundary

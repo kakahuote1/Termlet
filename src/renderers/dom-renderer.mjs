@@ -1,3 +1,5 @@
+import { composeRenderers } from './renderer-kit.mjs';
+
 export const DEFAULT_TERMINAL_CSS = `
 .blog-terminal { --termlet-bg:#05080d; --termlet-fg:#c9fdd7; --termlet-border:#1f3b2d; --termlet-prompt:#2ea043; --termlet-error:#ff7b72; --termlet-muted:#7d8590; --termlet-focus:#58a6ff; background:var(--termlet-bg); color:var(--termlet-fg); font:13px/1.45 ui-monospace, SFMono-Regular, Consolas, monospace; padding:12px; border:1px solid var(--termlet-border); border-radius:8px; }
 .blog-terminal__output { min-height:320px; max-height:70vh; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; tab-size:2; }
@@ -15,6 +17,26 @@ export const DEFAULT_TERMINAL_CSS = `
 .blog-terminal.termlet-theme-light { --termlet-bg:#f8fafc; --termlet-fg:#111827; --termlet-border:#cbd5e1; --termlet-prompt:#0f766e; --termlet-error:#b91c1c; --termlet-muted:#64748b; --termlet-focus:#2563eb; }
 .blog-terminal.termlet-theme-crt { --termlet-bg:#020403; --termlet-fg:#b8ffcf; --termlet-border:#194d2b; --termlet-prompt:#39ff88; --termlet-error:#ff6b6b; --termlet-muted:#5fae7a; --termlet-focus:#c6ffdd; text-shadow:0 0 6px rgba(57,255,136,.35); }
 .blog-terminal.termlet-size-compact { font-size:12px; padding:10px; }
+.termlet-sr-only { position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; padding:0; }
+.termlet-token-layer { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+.termlet-renderer-orbit { position:relative; overflow:hidden; }
+.termlet-renderer-orbit .blog-terminal__output { position:relative; overflow:hidden; }
+.termlet-renderer-orbit .blog-terminal__input-row:not(.termlet-orbit-flow) { position:relative; z-index:8; }
+.termlet-orbit-flow,.termlet-orbit-line { position:absolute; inset:0; display:block; pointer-events:none; overflow:hidden; }
+.termlet-orbit-live-layer { z-index:7; }
+.termlet-orbit-track { position:absolute; left:50%; top:50%; width:1px; height:1px; opacity:var(--termlet-orbit-opacity,1); animation:termlet-orbit-spin var(--termlet-orbit-duration,5.6s) linear forwards; }
+.termlet-orbit-track::before { content:""; position:absolute; left:0; top:0; width:var(--termlet-orbit-size,220px); height:var(--termlet-orbit-size,220px); border:1px solid color-mix(in srgb, var(--termlet-prompt) 20%, transparent); border-radius:999px; transform:translate(-50%,-50%); }
+.termlet-orbit-token { position:absolute; left:0; top:0; color:var(--termlet-fg); font:700 1em/1 ui-monospace, SFMono-Regular, Consolas, monospace; text-shadow:0 0 12px currentColor; transform:rotate(var(--termlet-orbit-angle)) translateX(var(--termlet-orbit-radius)) rotate(var(--termlet-orbit-reverse-angle)); }
+.termlet-orbit-line--input .termlet-orbit-token,.termlet-orbit-line--live .termlet-orbit-token { color:var(--termlet-prompt); }
+.termlet-orbit-line--error .termlet-orbit-token { color:var(--termlet-error); }
+.termlet-renderer-rain { position:relative; overflow:hidden; }
+.termlet-renderer-rain .blog-terminal__output { position:relative; overflow:hidden; }
+.termlet-rain-line { position:absolute; inset:0; display:block; pointer-events:none; overflow:hidden; }
+.termlet-rain-token { position:absolute; left:var(--termlet-rain-lane,12%); top:-44px; border:1px solid color-mix(in srgb, var(--termlet-prompt) 28%, transparent); border-radius:999px; padding:.42em .7em; background:color-mix(in srgb, var(--termlet-bg) 80%, transparent); color:var(--termlet-prompt); white-space:nowrap; animation:termlet-rain-drop var(--termlet-rain-duration,3900ms) cubic-bezier(.16,.82,.24,1) forwards; animation-delay:var(--termlet-rain-delay,0ms); }
+.termlet-rain-line--input .termlet-rain-token { color:var(--termlet-fg); }
+.termlet-rain-line--error .termlet-rain-token { color:var(--termlet-error); border-color:var(--termlet-error); }
+@keyframes termlet-orbit-spin { from { opacity:var(--termlet-orbit-opacity,1); transform:rotate(var(--termlet-orbit-phase,0deg)); } 82% { opacity:var(--termlet-orbit-opacity,1); } to { opacity:0; transform:rotate(calc(var(--termlet-orbit-phase,0deg) + var(--termlet-orbit-turns,1080deg))); } }
+@keyframes termlet-rain-drop { 0% { opacity:0; transform:translateY(-48px) translateX(0) rotate(var(--termlet-rain-spin-start,0deg)); filter:blur(1px); } 12% { opacity:1; filter:blur(0); } 70% { opacity:.82; } 100% { opacity:0; transform:translateY(430px) translateX(var(--termlet-rain-drift,0)) rotate(var(--termlet-rain-spin,0deg)); filter:blur(2px); } }
 `;
 
 export class DomTerminalRenderer {
@@ -38,9 +60,12 @@ export class DomTerminalRenderer {
     this.onCommand = options.onCommand || null;
     this.onResult = options.onResult || null;
     this.onError = options.onError || null;
-    this.renderInput = typeof options.renderInput === 'function' ? options.renderInput : null;
-    this.renderLine = typeof options.renderLine === 'function' ? options.renderLine : null;
-    this.renderResult = typeof options.renderResult === 'function' ? options.renderResult : null;
+    this.rendererExtension = createRendererExtension(options);
+    this.rendererDisposer = null;
+    this.renderInput = this.rendererExtension?.hooks.renderInput || null;
+    this.renderLine = this.rendererExtension?.hooks.renderLine || null;
+    this.renderResult = this.rendererExtension?.hooks.renderResult || null;
+    this.renderLiveInput = this.rendererExtension?.hooks.renderLiveInput || null;
     this.editorPreview = options.editorPreview !== false;
     this.persistTranscript = Boolean(options.persistTranscript);
     this.restoreTranscriptOnAttach = options.restoreTranscript !== false;
@@ -78,11 +103,14 @@ export class DomTerminalRenderer {
     this.disposers.push(() => this.mount.removeEventListener('keydown', interruptHandler));
     const restored = this.restoreTranscriptOnAttach ? this.restoreTranscript() : false;
     if (!restored && this.welcome) this.print(this.welcome, 'muted');
+    this.rendererDisposer = this.callRendererHook('onMount');
     this.newInput();
     return this;
   }
 
   destroy() {
+    this.rendererDisposer?.();
+    this.callRendererHook('onDestroy');
     this.disposers.splice(0).forEach(dispose => dispose());
     this.activeInput = null;
     return this;
@@ -112,6 +140,8 @@ export class DomTerminalRenderer {
       renderer: this,
       terminal: this.core,
       document: this.document,
+      mount: this.mount,
+      output: this.output,
       restoring: Boolean(options.restoring),
     };
     let rendered = null;
@@ -172,6 +202,8 @@ export class DomTerminalRenderer {
       renderer: this,
       terminal: this.core,
       document: this.document,
+      mount: this.mount,
+      output: this.output,
       resetSession: Boolean(options.resetSession),
       print: (text, cls = '') => this.print(text, cls),
       printBlock: (text, cls = '') => this.printBlock(text, cls),
@@ -214,8 +246,18 @@ export class DomTerminalRenderer {
     this.output.appendChild(row);
     this.activeInput = input;
     const keyHandler = event => this.handleKey(event, input, row);
+    const inputHandler = () => this.updateLiveInput(input, row, prompt.textContent);
     input.addEventListener('keydown', keyHandler);
+    input.addEventListener('input', inputHandler);
     this.disposers.push(() => input.removeEventListener('keydown', keyHandler));
+    this.disposers.push(() => input.removeEventListener('input', inputHandler));
+    this.callRendererHook('onInputCreated', {
+      row,
+      input,
+      prompt: prompt.textContent,
+      value: input.value,
+      command: input.value,
+    });
     this.trimOutput();
     this.focus();
   }
@@ -230,6 +272,7 @@ export class DomTerminalRenderer {
     }
     if (event.key === 'Enter') {
       const command = input.value;
+      this.updateLiveInput(input, row, this.prompt(), { clear: true, value: '' });
       this.freezeInput(row, command);
       if (command.trim()) {
         this.history.push(command);
@@ -240,14 +283,17 @@ export class DomTerminalRenderer {
         this.mount.focus();
         try {
           if (this.onCommand) this.onCommand(command, this.core);
+          this.callRendererHook('onCommand', { command });
           const result = await this.core.execute(command, { signal: this.runningAbort?.signal || null });
           this.handleEvents(result.events);
           const resetSession = result.events.some(event => event.type === 'session-reset');
           const customRendered = await this.renderCommandResult(result, command, { resetSession });
           if (!customRendered) this.renderDefaultResult(result, { resetSession });
           if (this.onResult) this.onResult(result, command, this.core);
+          this.callRendererHook('onResult', { result, command });
         } catch (error) {
           if (this.onError) this.onError(error, command, this.core);
+          this.callRendererHook('onError', { error, command });
           this.print(`terminal: ${error?.message || String(error)}`, 'error');
         } finally {
           this.running = false;
@@ -298,6 +344,7 @@ export class DomTerminalRenderer {
   handleEvents(events = []) {
     events.forEach(event => {
       if (this.onEvent) this.onEvent(event, this);
+      this.callRendererHook('onEvent', { event });
       if (event.type === 'clear') this.clearTranscript();
       if (event.type === 'exit') this.mount.classList.add(`${this.className}--closed`);
       if (event.type === 'editor' && this.editorPreview) this.printEditorPreview(event);
@@ -354,6 +401,8 @@ export class DomTerminalRenderer {
       renderer: this,
       terminal: this.core,
       document: this.document,
+      mount: this.mount,
+      output: this.output,
       restoring: Boolean(options.restoring),
     };
     let rendered = null;
@@ -456,6 +505,41 @@ export class DomTerminalRenderer {
       this.core.persistence.save(state);
     } catch (_) {}
   }
+
+  updateLiveInput(input, row, promptText, extra = {}) {
+    if (!this.renderLiveInput) return;
+    try {
+      return this.renderLiveInput({
+        renderer: this,
+        terminal: this.core,
+        document: this.document,
+        mount: this.mount,
+        output: this.output,
+        row,
+        input,
+        prompt: String(promptText ?? ''),
+        value: String(extra.value ?? input?.value ?? ''),
+        command: String(extra.value ?? input?.value ?? ''),
+        clear: Boolean(extra.clear),
+      });
+    } catch (error) {
+      this.callRendererHook('onError', { error, command: String(input?.value || '') });
+      return null;
+    }
+  }
+
+  callRendererHook(name, extra = {}) {
+    const hook = this.rendererExtension?.hooks?.[name];
+    if (!hook) return undefined;
+    return hook({
+      renderer: this,
+      terminal: this.core,
+      document: this.document,
+      mount: this.mount,
+      output: this.output,
+      ...extra,
+    });
+  }
 }
 
 export function injectDefaultStyles(doc = document) {
@@ -552,4 +636,18 @@ function resultTextForTranscript(result, command) {
 
 function transcriptByteLength(entries) {
   return entries.reduce((total, entry) => total + JSON.stringify(entry).length, 0);
+}
+
+function createRendererExtension(options) {
+  const renderers = [
+    ...normalizeRendererList(options.renderer),
+    ...normalizeRendererList(options.renderers),
+  ];
+  if (!renderers.length) return null;
+  return composeRenderers(renderers);
+}
+
+function normalizeRendererList(value) {
+  if (!value) return [];
+  return Array.isArray(value) ? value.flat(Infinity).filter(Boolean) : [value];
 }

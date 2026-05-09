@@ -184,10 +184,32 @@ export const DEFAULT_TERMINAL_CSS: string;
 
 export type DomRenderedValue = Node | string | number | false | null | undefined | DomRenderedValue[] | Iterable<DomRenderedValue>;
 
+export interface TermletRenderer {
+  name: string;
+  meta: Record<string, unknown>;
+  hooks: TermletRendererHooks;
+}
+
+export interface TermletRendererHooks {
+  onMount?: (context: DomRenderLifecycleContext) => void | (() => void);
+  onDestroy?: (context: DomRenderLifecycleContext) => void;
+  onInputCreated?: (context: DomInputCreatedContext) => void;
+  renderLiveInput?: (context: DomLiveInputRenderContext) => void | DomRenderedValue;
+  renderInput?: (context: DomInputRenderContext) => DomRenderedValue;
+  renderLine?: (context: DomLineRenderContext) => DomRenderedValue;
+  renderResult?: (context: DomResultRenderContext) => DomRenderedValue | true | Promise<DomRenderedValue | true>;
+  onCommand?: (context: DomCommandLifecycleContext) => void;
+  onResult?: (context: DomResultLifecycleContext) => void;
+  onEvent?: (context: DomEventLifecycleContext) => void;
+  onError?: (context: DomErrorLifecycleContext) => void;
+}
+
 export interface DomRenderContextBase {
   renderer: DomTerminalRenderer;
   terminal: TerminalCore;
   document: Document;
+  mount: Element;
+  output: Element;
 }
 
 export interface DomLineRenderContext extends DomRenderContextBase {
@@ -201,6 +223,36 @@ export interface DomInputRenderContext extends DomRenderContextBase {
   command: string;
   row: Element;
   restoring: boolean;
+}
+
+export interface DomInputCreatedContext extends DomRenderContextBase {
+  row: Element;
+  input: HTMLInputElement;
+  prompt: string;
+  value: string;
+  command: string;
+}
+
+export interface DomLiveInputRenderContext extends DomInputCreatedContext {
+  clear: boolean;
+}
+
+export interface DomRenderLifecycleContext extends DomRenderContextBase {}
+
+export interface DomCommandLifecycleContext extends DomRenderContextBase {
+  command: string;
+}
+
+export interface DomResultLifecycleContext extends DomCommandLifecycleContext {
+  result: CommandResult;
+}
+
+export interface DomEventLifecycleContext extends DomRenderContextBase {
+  event: TerminalEvent;
+}
+
+export interface DomErrorLifecycleContext extends DomCommandLifecycleContext {
+  error: unknown;
 }
 
 export interface DomResultRenderContext extends DomRenderContextBase {
@@ -234,9 +286,8 @@ export class DomTerminalRenderer {
     onCommand?: (command: string, terminal: TerminalCore) => void;
     onResult?: (result: CommandResult, command: string, terminal: TerminalCore) => void;
     onError?: (error: unknown, command: string, terminal: TerminalCore) => void;
-    renderInput?: (context: DomInputRenderContext) => DomRenderedValue;
-    renderLine?: (context: DomLineRenderContext) => DomRenderedValue;
-    renderResult?: (context: DomResultRenderContext) => DomRenderedValue | true | Promise<DomRenderedValue | true>;
+    renderer?: TermletRenderer | TermletRenderer[];
+    renderers?: TermletRenderer[];
     editorPreview?: boolean;
   });
   attach(): this;
@@ -278,6 +329,38 @@ export function hugoPostsPlugin(posts?: Array<Record<string, string>>, options?:
 export function fetchHugoPosts(feedUrl?: string, fetchImpl?: typeof fetch): Promise<Array<Record<string, string>>>;
 export function blogSandboxPreset(options?: Record<string, unknown>): TerminalPlugin;
 export function injectDefaultStyles(doc?: Document): void;
+export function defineRenderer(name: string, hooks: TermletRendererHooks, meta?: Record<string, unknown>): TermletRenderer;
+export function defineRenderer(options: { name?: string; hooks?: TermletRendererHooks; meta?: Record<string, unknown> } & Partial<TermletRendererHooks>): TermletRenderer;
+export function composeRenderers(...renderers: Array<TermletRenderer | TermletRenderer[]>): TermletRenderer;
+export function createTokenLayer(mount: Element, options?: {
+  document?: Document;
+  root?: Element;
+  className?: string;
+  ariaHidden?: boolean;
+  append?: boolean;
+  maxGroups?: number;
+}): {
+  root: Element;
+  emit(text: string, options?: {
+    kind?: string;
+    mode?: 'words' | 'chars' | string;
+    split?: 'words' | 'chars' | string;
+    maxTokens?: number;
+    className?: string;
+    tokenClassName?: string;
+    tagName?: string;
+    tokenTagName?: string;
+    decorateToken?: (token: Element, item: Record<string, unknown>, index: number, tokens: Array<Record<string, unknown>>) => void;
+    decorateGroup?: (group: Element, tokens: Array<Record<string, unknown>>) => void;
+  }): Element;
+  clear(): void;
+  destroy(): void;
+};
+export function createOrbitRenderer(options?: Record<string, unknown>): TermletRenderer;
+export function createRainRenderer(options?: Record<string, unknown>): TermletRenderer;
+export function createOrbitNode(document: Document, text: string, options?: Record<string, unknown>): Element;
+export function createRainNode(document: Document, text: string, options?: Record<string, unknown>): Element;
+export function tokenizeText(text: string, options?: { mode?: 'words' | 'chars' | string; maxTokens?: number }): Array<Record<string, unknown>>;
 export function mountStarterTerminal(options?: Record<string, unknown>): Promise<{ terminal: TerminalCore; renderer: DomTerminalRenderer }>;
 export function mountStaticTerminal(options?: Record<string, unknown>): Promise<{ terminal: TerminalCore; renderer: DomTerminalRenderer }>;
 export function createFeedTerminal(options?: Record<string, unknown>): Promise<TerminalCore>;

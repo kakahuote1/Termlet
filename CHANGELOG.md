@@ -1,5 +1,14 @@
 ﻿# Changelog
 
+## 0.3.0
+
+- Added Renderer Kit: `defineRenderer`, `composeRenderers`, `createTokenLayer`, `createOrbitRenderer`, and `createRainRenderer`.
+- Added official token/orbit/rain DOM primitives so advanced visual terminals can be built without private demo hooks.
+- Extended `DomTerminalRenderer` with renderer lifecycle hooks for mount, live input, submitted input, output, results, events, and errors.
+- Migrated the demo lab terminals to the official renderer extension API.
+- Updated docs, TypeScript declarations, API smoke checks, and site smoke checks for the new renderer surface.
+- Kept renderer safety text-only by default: no `innerHTML`, `eval`, WebSocket bridge, or host process execution.
+
 ## 0.2.0
 
 - Added a README-first onboarding path for npm, static-site, and source-development usage.

@@ -23,6 +23,7 @@ const required = [
   'examples/plain-html/index.html',
   'examples/drop-in/index.html',
   'examples/custom-profile/profile.mjs',
+  'examples/renderer-kit/index.html',
 ];
 for (const file of required) {
   if (!existsSync(join(root, file))) failures.push(`missing example file: ${file}`);
@@ -37,6 +38,7 @@ if (!dropIn.includes('./termlet/index.mjs')) failures.push('drop-in example shou
 const readme = readExample('README.md');
 if (!/http\.server/.test(readme)) failures.push('examples README should explain serving over local HTTP');
 if (!/file:\/\//.test(readme)) failures.push('examples README should warn against file:// usage');
+if (!/renderer-kit\//.test(readme)) failures.push('examples README should list renderer-kit');
 
 if (failures.length) {
   console.error('examples smoke failed:');

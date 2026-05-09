@@ -1,6 +1,8 @@
 let DomTerminalRenderer;
 let blogSandboxPreset;
 let createSessionStorageAdapter;
+let createOrbitRenderer;
+let createRainRenderer;
 let createTerminal;
 let createWindowsTerminal;
 let effectEventsPlugin;
@@ -16,6 +18,8 @@ try {
     DomTerminalRenderer,
     blogSandboxPreset,
     createSessionStorageAdapter,
+    createOrbitRenderer,
+    createRainRenderer,
     createTerminal,
     createWindowsTerminal,
     effectEventsPlugin,
@@ -24,6 +28,7 @@ try {
     toWindowsPath,
   } = await loadTermlet());
   mountTerminals();
+  window.setTimeout(renderSourceSnippets, 0);
   wireSceneButtons();
   wireQuickCommands();
   wireCopyButtons();
@@ -65,7 +70,7 @@ function mountLinuxTerminal() {
   const terminal = createTerminal({
     hostname: 'blog',
     cwd: '/home/guest/workspace',
-    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.clean.linux' }),
+    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.v2.linux' }),
     persistVfs: true,
     plugins: [
       blogSandboxPreset({ hostname: 'blog' }),
@@ -81,7 +86,7 @@ function mountLinuxTerminal() {
     welcome: '',
     persistTranscript: true,
     maxLines: 560,
-    autoFocus: false,
+    autoFocus: true,
     onEvent: event => updateStatus('linux', event.type === 'effect' ? `effect:${event.name}` : event.type),
     onResult: result => updateStatus('linux', `exit ${result.status}`),
   }).attach();
@@ -94,7 +99,7 @@ function mountPowerShellTerminal() {
     shell: 'powershell',
     home: '/Users/guest',
     cwd: '/Users/guest/blog',
-    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.clean.powershell' }),
+    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.v2.powershell' }),
     persistVfs: true,
     plugins: [windowsShowcaseFiles],
   });
@@ -106,7 +111,7 @@ function mountPowerShellTerminal() {
     welcome: '',
     persistTranscript: true,
     maxLines: 520,
-    autoFocus: false,
+    autoFocus: true,
     onResult: result => updateStatus('powershell', `exit ${result.status}`),
   }).attach();
 
@@ -118,7 +123,7 @@ function mountCmdTerminal() {
     shell: 'cmd',
     home: '/Users/guest',
     cwd: '/Users/guest/blog',
-    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.clean.cmd' }),
+    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.v2.cmd' }),
     persistVfs: true,
     plugins: [windowsShowcaseFiles],
   });
@@ -130,7 +135,7 @@ function mountCmdTerminal() {
     welcome: '',
     persistTranscript: true,
     maxLines: 520,
-    autoFocus: false,
+    autoFocus: true,
     onResult: result => updateStatus('cmd', `exit ${result.status}`),
   }).attach();
 
@@ -143,7 +148,7 @@ function mountDocsTerminal() {
     user: 'docs',
     home: '/home/docs',
     cwd: '/home/docs/lesson',
-    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.clean.docs' }),
+    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.v2.docs' }),
     persistVfs: true,
     plugins: [docsShowcasePlugin],
   });
@@ -155,7 +160,7 @@ function mountDocsTerminal() {
     welcome: '',
     persistTranscript: true,
     maxLines: 520,
-    autoFocus: false,
+    autoFocus: true,
     onResult: result => updateStatus('docs', `exit ${result.status}`),
   }).attach();
 
@@ -168,7 +173,7 @@ function mountOrbTerminal() {
     user: 'lab',
     home: '/home/lab',
     cwd: '/home/lab/orbit',
-    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.clean.orb' }),
+    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.v2.orb' }),
     persistVfs: true,
     plugins: [labShowcasePlugin],
   });
@@ -180,15 +185,21 @@ function mountOrbTerminal() {
     welcome: '',
     persistTranscript: false,
     maxLines: 220,
-    autoFocus: false,
-    renderInput: renderOrbInput,
-    renderLine: renderOrbLine,
-    renderResult: renderOrbResult,
+    autoFocus: true,
+    renderer: createOrbitRenderer({
+      liveInput: true,
+      radius: 96,
+      ringGap: 31,
+      maxChars: 72,
+      liveMaxChars: 52,
+      duration: 5.6,
+      liveDuration: 3.2,
+      turns: 3,
+    }),
     onResult: result => {
       updateStatus('orb', `exit ${result.status}`);
     },
   }).attach();
-  attachOrbLiveInput(renderer);
 
   return { terminal, renderer };
 }
@@ -199,7 +210,7 @@ function mountRainTerminal() {
     user: 'fx',
     home: '/home/fx',
     cwd: '/home/fx/cloud',
-    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.clean.rain' }),
+    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.v2.rain' }),
     persistVfs: true,
     plugins: [labShowcasePlugin],
   });
@@ -211,10 +222,14 @@ function mountRainTerminal() {
     welcome: '',
     persistTranscript: false,
     maxLines: 220,
-    autoFocus: false,
-    renderInput: renderRainInput,
-    renderLine: renderRainLine,
-    renderResult: renderRainResult,
+    autoFocus: true,
+    renderer: createRainRenderer({
+      inputMaxTokens: 14,
+      maxTokens: 24,
+      laneStart: 20,
+      laneSpan: 38,
+      duration: 3900,
+    }),
     onResult: result => {
       updateStatus('rain', `exit ${result.status}`);
     },
@@ -226,8 +241,23 @@ function mountRainTerminal() {
 function linuxShowcasePlugin(terminal) {
   const owner = terminal.user;
   terminal.fs.ensureDir('/home/guest/workspace', { owner, group: owner });
+  terminal.fs.ensureDir('/home/guest/workspace/public', { owner, group: owner });
+  terminal.fs.ensureDir('/home/guest/workspace/examples', { owner, group: owner });
   terminal.fs.ensureDir('/home/guest/blog/about', { owner, group: owner });
   terminal.fs.ensureDir('/home/guest/lab', { owner, group: owner });
+  terminal.fs.addFile('/home/guest/workspace/README.md', [
+    '# Workspace',
+    '',
+    'Try: ls, ls -al, cat README.md, tree ~/blog, grep browser ~/blog/deploy-notes.txt',
+    '',
+  ].join('\n'), { owner, group: owner });
+  terminal.fs.addFile('/home/guest/workspace/package.json', '{ "type": "module", "scripts": { "build": "termlet build" } }\n', { owner, group: owner });
+  terminal.fs.addFile('/home/guest/workspace/public/index.html', '<div id="terminal"></div>\n', { owner, group: owner });
+  terminal.fs.addFile('/home/guest/workspace/examples/custom-command.mjs', [
+    "import { ok } from 'termlet';",
+    "terminal.register('hello', ({ args }) => ok(`hello ${args[0] || 'world'}\\n`));",
+    '',
+  ].join('\n'), { owner, group: owner });
   terminal.fs.addFile('/home/guest/blog/README.md', [
     '# Termlet Blog Terminal',
     '',
@@ -263,16 +293,26 @@ function linuxShowcasePlugin(terminal) {
 function windowsShowcaseFiles(terminal) {
   const owner = terminal.user;
   terminal.fs.ensureDir('/Users/guest/blog/posts', { owner, group: owner });
+  terminal.fs.ensureDir('/Users/guest/blog/assets', { owner, group: owner });
   terminal.fs.addFile('/Users/guest/blog/readme.txt', 'Frontend terminal. Safe by default. Easy to customize.\n', { owner, group: owner });
   terminal.fs.addFile('/Users/guest/blog/release-note.md', '# Release note\nStructured profiles, commands and themes.\n', { owner, group: owner });
   terminal.fs.addFile('/Users/guest/blog/terminal.json', '{ "profile": "windows", "safe": true }\n', { owner, group: owner });
   terminal.fs.addFile('/Users/guest/blog/terminal.ini', '[termlet]\nmode=cmd\nsafe=true\n', { owner, group: owner });
   terminal.fs.addFile('/Users/guest/blog/scripts.ps1', 'Get-ChildItem | Where-Object Type -EQ file | Format-Table\n', { owner, group: owner });
+  terminal.fs.addFile('/Users/guest/blog/posts/welcome.md', '# Welcome\nTermlet can be shaped into Windows-style profiles.\n', { owner, group: owner });
+  terminal.fs.addFile('/Users/guest/blog/assets/theme.css', '.terminal { color: #8dffd5; }\n', { owner, group: owner });
 }
 
 function docsShowcasePlugin(terminal) {
   const owner = terminal.user;
   terminal.fs.ensureDir('/home/docs/lesson', { owner, group: owner });
+  terminal.fs.ensureDir('/home/docs/lesson/examples', { owner, group: owner });
+  terminal.fs.addFile('/home/docs/lesson/README.md', [
+    '# Lesson workspace',
+    '',
+    'Try: ls, cat steps.md, guide, run-demo, hello reader',
+    '',
+  ].join('\n'), { owner, group: owner });
   terminal.fs.addFile('/home/docs/lesson/steps.md', [
     "1. import { defineCommandPack, ok } from 'termlet'",
     '2. register your command',
@@ -288,6 +328,14 @@ function docsShowcasePlugin(terminal) {
   terminal.fs.addFile('/home/docs/lesson/theme.md', [
     'theme = renderer + css variables + profile copy',
     'try light, crt, cmd, powershell or a fully custom container',
+    '',
+  ].join('\n'), { owner, group: owner });
+  terminal.fs.addFile('/home/docs/lesson/examples/plugin.mjs', [
+    "import { defineCommandPack, ok } from 'termlet';",
+    '',
+    "export default defineCommandPack('lesson', terminal => {",
+    "  terminal.register('hello', ({ args }) => ok(`hello ${args[0] || 'reader'}\\n`));",
+    '});',
     '',
   ].join('\n'), { owner, group: owner });
   terminal.register('guide', () => ok('steps.md\ndeploy.md\ntheme.md\nplugin.md\n'));
@@ -329,7 +377,8 @@ function activateScene(scene) {
   document.querySelectorAll('[data-scene-button]').forEach(button => {
     button.setAttribute('aria-pressed', button.getAttribute('data-scene-button') === scene ? 'true' : 'false');
   });
-  terminals.get(scene)?.renderer?.focus();
+  const focusProfile = scene === 'lab' ? 'orb' : scene;
+  terminals.get(focusProfile)?.renderer?.focus();
 }
 
 function wireQuickCommands() {
@@ -354,243 +403,247 @@ function runInRenderer(renderer, command) {
     ctrlKey: false,
     preventDefault() {},
   }, input, row);
+  window.setTimeout(() => renderer.focus(), 0);
 }
 
-function attachOrbLiveInput(renderer) {
-  const preview = renderer.document.createElement('div');
-  preview.className = 'orb-live-preview';
-  preview.setAttribute('aria-hidden', 'true');
-  renderer.mount.appendChild(preview);
-  let latestNode = null;
-  const render = () => {
-    const input = renderer.activeInput;
-    if (!input || input.disabled) {
-      preview.replaceChildren();
-      latestNode = null;
-      return;
-    }
-    const value = input.value.trim();
-    if (!value) {
-      preview.replaceChildren();
-      latestNode = null;
-      return;
-    }
-    const node = createOrbOrbit(renderer.document, value, {
-      kind: 'live',
-      className: 'orb-live-orbit',
-      seed: value.length,
-      maxChars: 52,
-      duration: 3.2,
-    });
-    latestNode = node;
-    preview.replaceChildren(node);
-    window.setTimeout(() => {
-      if (latestNode === node) {
-        node.remove();
-        latestNode = null;
-      }
-    }, 3400);
-  };
-  renderer.mount.addEventListener('input', render);
-  renderer.mount.addEventListener('keyup', render);
-  renderer.mount.addEventListener('keydown', event => {
-    if (event.key === 'Enter') {
-      preview.replaceChildren();
-      latestNode = null;
-    }
+const sourceSnippets = {
+  linux: sourceText([
+    '<link rel="stylesheet" href="/termlet/termlet.css">',
+    '<div class="termlet-window termlet-window--linux">',
+    '  <div class="termlet-title">guest@blog:~/workspace <span>session ready</span></div>',
+    '  <div id="terminal-linux"></div>',
+    '</div>',
+    '<script type="module">',
+    "import { createTerminal, DomTerminalRenderer, blogSandboxPreset, ok } from '/termlet/index.mjs';",
+    '',
+    'const terminal = createTerminal({',
+    "  hostname: 'blog',",
+    "  cwd: '/home/guest/workspace',",
+    '  plugins: [',
+    "    blogSandboxPreset({ hostname: 'blog' }),",
+    '    terminal => {',
+    "      const owner = terminal.user;",
+    "      terminal.fs.ensureDir('/home/guest/workspace/public', { owner, group: owner });",
+    "      terminal.fs.ensureDir('/home/guest/workspace/examples', { owner, group: owner });",
+    "      terminal.fs.addFile('/home/guest/workspace/README.md', '# Workspace\\nTry: ls, ls -al, tree ~/blog\\n', { owner, group: owner });",
+    "      terminal.fs.addFile('/home/guest/workspace/package.json', '{ \"type\": \"module\" }\\n', { owner, group: owner });",
+    "      terminal.fs.addFile('/home/guest/workspace/public/index.html', '<div id=\"terminal\"></div>\\n', { owner, group: owner });",
+    "      terminal.register('about', () => ok('Termlet\\nfrontend-only pseudo terminal base\\n'));",
+    "      terminal.register('stack', () => ok('core -> parser -> command packs -> VFS -> renderer\\n'));",
+    '    },',
+    '  ],',
+    '});',
+    '',
+    'new DomTerminalRenderer(terminal, {',
+    "  mount: '#terminal',",
+    "  theme: 'linux',",
+    "  welcome: '',",
+    "  prompt: () => `guest@blog ${terminal.cwd.replace(terminal.home, '~')}$`,",
+    '}).attach();',
+    '<\\/script>',
+    '<style>',
+    '.termlet-window { border: 1px solid rgba(51,255,136,.28); border-radius: 9px; overflow: hidden; background: #030504; }',
+    '.termlet-title { height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: rgba(255,255,255,.055); color: #f5fbff; font: 900 15px ui-monospace, Consolas, monospace; }',
+    '#terminal-linux.blog-terminal { height: 520px; border: 0; border-radius: 0; padding: 26px; --termlet-bg:#030504; --termlet-fg:#d7ffe9; --termlet-prompt:#33ff88; }',
+    '<\\/style>',
+  ]),
+  powershell: sourceText([
+    '<link rel="stylesheet" href="/termlet/termlet.css">',
+    '<div class="termlet-window termlet-window--powershell">',
+    '  <div class="termlet-title">PS C:\\Users\\guest\\blog <span>objects flowing</span></div>',
+    '  <div id="terminal-powershell"></div>',
+    '</div>',
+    '<script type="module">',
+    "import { createWindowsTerminal, DomTerminalRenderer, ok, toWindowsPath } from '/termlet/index.mjs';",
+    '',
+    'const terminal = createWindowsTerminal({',
+    "  shell: 'powershell',",
+    "  home: '/Users/guest',",
+    "  cwd: '/Users/guest/blog',",
+    '  plugins: [terminal => {',
+    "    const owner = terminal.user;",
+    "    terminal.fs.ensureDir('/Users/guest/blog/posts', { owner, group: owner });",
+    "    terminal.fs.addFile('/Users/guest/blog/readme.txt', 'Frontend terminal. Safe by default. Easy to customize.\\n', { owner, group: owner });",
+    "    terminal.fs.addFile('/Users/guest/blog/release-note.md', '# Release note\\nStructured profiles, commands and themes.\\n', { owner, group: owner });",
+    "    terminal.fs.addFile('/Users/guest/blog/terminal.json', '{ \"profile\": \"windows\", \"safe\": true }\\n', { owner, group: owner });",
+    "    terminal.register('Get-BlogStatus', () => ok('Status  Theme\\n------  -----\\nReady   powershell\\n'));",
+    '  }],',
+    '});',
+    '',
+    'new DomTerminalRenderer(terminal, {',
+    "  mount: '#terminal',",
+    "  theme: 'powershell',",
+    "  welcome: '',",
+    "  prompt: () => `PS ${toWindowsPath(terminal.cwd, terminal.windowsDrive)}>`",
+    '}).attach();',
+    '<\\/script>',
+    '<style>',
+    '.termlet-window--powershell { border: 1px solid rgba(77,156,255,.62); border-radius: 9px; overflow: hidden; background: #062754; }',
+    '.termlet-title { height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: rgba(255,255,255,.055); color: #d8ecff; font: 900 15px ui-monospace, Consolas, monospace; }',
+    '#terminal-powershell.blog-terminal { height: 520px; border: 0; border-radius: 0; padding: 26px; --termlet-bg:#062754; --termlet-fg:#d8ecff; --termlet-prompt:#fff; }',
+    '<\\/style>',
+  ]),
+  cmd: sourceText([
+    '<link rel="stylesheet" href="/termlet/termlet.css">',
+    '<div class="termlet-window termlet-window--cmd">',
+    '  <div class="termlet-title">C:\\TERMLET\\BLOG <span>no backend</span></div>',
+    '  <div id="terminal-cmd"></div>',
+    '</div>',
+    '<script type="module">',
+    "import { createWindowsTerminal, DomTerminalRenderer, toWindowsPath } from '/termlet/index.mjs';",
+    '',
+    'const terminal = createWindowsTerminal({',
+    "  shell: 'cmd',",
+    "  home: '/Users/guest',",
+    "  cwd: '/Users/guest/blog',",
+    '  plugins: [terminal => {',
+    "    const owner = terminal.user;",
+    "    terminal.fs.ensureDir('/Users/guest/blog/posts', { owner, group: owner });",
+    "    terminal.fs.addFile('/Users/guest/blog/readme.txt', 'Frontend terminal. Safe by default. Easy to customize.\\n', { owner, group: owner });",
+    "    terminal.fs.addFile('/Users/guest/blog/terminal.ini', '[termlet]\\nmode=cmd\\nsafe=true\\n', { owner, group: owner });",
+    "    terminal.fs.addFile('/Users/guest/blog/scripts.ps1', 'Get-ChildItem | Format-Table\\n', { owner, group: owner });",
+    '  }],',
+    '});',
+    '',
+    'new DomTerminalRenderer(terminal, {',
+    "  mount: '#terminal',",
+    "  theme: 'cmd',",
+    "  welcome: '',",
+    "  prompt: () => `${toWindowsPath(terminal.cwd, terminal.windowsDrive)}>`",
+    '}).attach();',
+    '<\\/script>',
+    '<style>',
+    '.termlet-window--cmd { border: 1px solid rgba(255,255,255,.2); border-radius: 9px; overflow: hidden; background: #000; }',
+    '.termlet-title { height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: #191919; color: #f1f1f1; font: 900 15px ui-monospace, Consolas, monospace; }',
+    '#terminal-cmd.blog-terminal { height: 520px; border: 0; border-radius: 0; padding: 26px; --termlet-bg:#000; --termlet-fg:#d7d7d7; --termlet-prompt:#fff; }',
+    '<\\/style>',
+  ]),
+  docs: sourceText([
+    '<link rel="stylesheet" href="/termlet/termlet.css">',
+    '<div class="termlet-window termlet-window--docs">',
+    '  <div class="termlet-title">termlet docs · /lesson/start <span>copy ready</span></div>',
+    '  <div id="terminal-docs"></div>',
+    '</div>',
+    '<script type="module">',
+    "import { createTerminal, DomTerminalRenderer, defineCommandPack, ok } from '/termlet/index.mjs';",
+    '',
+    "const lessonPack = defineCommandPack('lesson', terminal => {",
+    "  const owner = terminal.user;",
+    "  terminal.fs.ensureDir('/home/docs/lesson/examples', { owner, group: owner });",
+    "  terminal.fs.addFile('/home/docs/lesson/README.md', '# Lesson workspace\\nTry: ls, cat steps.md, run-demo\\n', { owner, group: owner });",
+    "  terminal.fs.addFile('/home/docs/lesson/steps.md', '1. import\\n2. register\\n3. mount\\n', { owner, group: owner });",
+    "  terminal.register('hello', ({ args }) => ok(`hello ${args[0] || 'reader'}\\n`));",
+    "  terminal.register('run-demo', () => ok('Created command: hello\\nCreated file: /home/guest/workspace/readme.txt\\n'));",
+    '});',
+    '',
+    'const terminal = createTerminal({',
+    "  user: 'docs',",
+    "  hostname: 'termlet',",
+    "  cwd: '/home/docs/lesson',",
+    '  plugins: [lessonPack],',
+    '});',
+    '',
+    "new DomTerminalRenderer(terminal, { mount: '#terminal', theme: 'light', welcome: '' }).attach();",
+    '<\\/script>',
+    '<style>',
+    '.termlet-window--docs { border: 1px solid rgba(26,60,70,.18); border-radius: 9px; overflow: hidden; background: #fff; }',
+    '.termlet-title { height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: #e9f2f5; color: #142133; font: 900 15px ui-monospace, Consolas, monospace; }',
+    '#terminal-docs.blog-terminal { height: 520px; border: 0; border-radius: 0; padding: 26px; --termlet-bg:#fff; --termlet-fg:#1d2636; --termlet-prompt:#0f8278; }',
+    '<\\/style>',
+  ]),
+  'lab-orb': sourceText([
+    '<link rel="stylesheet" href="/termlet/termlet.css">',
+    '<div class="orb-terminal">',
+    '  <div class="orb-glow"></div>',
+    '  <div id="terminal-orb"></div>',
+    '</div>',
+    '<script type="module">',
+    "import { createTerminal, DomTerminalRenderer, createOrbitRenderer, ok } from '/termlet/index.mjs';",
+    '',
+    'const terminal = createTerminal({',
+    "  hostname: 'sphere', user: 'lab', home: '/home/lab', cwd: '/home/lab/orbit',",
+    '  plugins: [terminal => {',
+    "    terminal.fs.addFile('/home/lab/orbit/renderer.txt', 'A renderer can be round, floating or embedded in prose.\\n');",
+    "    terminal.register('orbit', () => ok('sphere renderer online\\nmount: #terminal-orb\\n'));",
+    "    terminal.register('gravity', ({ args }) => ok(`gravity well captured command: ${args.join(' ') || 'none'}\\n`));",
+    '  }],',
+    '});',
+    '',
+    'new DomTerminalRenderer(terminal, {',
+    "  mount: '#terminal-orb', theme: 'crt', welcome: '',",
+    "  prompt: () => `orb:${terminal.cwd.replace(terminal.home, '~')}$`,",
+    '  renderer: createOrbitRenderer({',
+    '    liveInput: true,',
+    '    radius: 96,',
+    '    ringGap: 31,',
+    '    maxChars: 72,',
+    '    turns: 3,',
+    '  }),',
+    '}).attach();',
+    '<\\/script>',
+    '<style>',
+    '.orb-terminal { position: relative; width: 540px; aspect-ratio: 1; overflow: hidden; border: 1px solid rgba(255,79,216,.34); border-radius: 10px; background: #04070a; }',
+    '.orb-glow { position: absolute; inset: -24%; background: conic-gradient(from 120deg, transparent, rgba(255,79,216,.16), transparent, rgba(66,255,196,.14), transparent); animation: spin 12s linear infinite; }',
+    '#terminal-orb.blog-terminal { position: absolute; inset: 0; height: auto; border: 0; border-radius: 0; padding: 0; --termlet-bg:rgba(0,0,0,.42); --termlet-fg:#d7ffe9; --termlet-prompt:#ff7de6; overflow:hidden; }',
+    '#terminal-orb .blog-terminal__output { height: 100%; overflow: hidden; }',
+    '#terminal-orb .blog-terminal__input-row:not(.termlet-orbit-flow) { position: absolute; z-index: 9; left: 50%; bottom: 22px; width: min(78%,330px); transform: translateX(-50%); border: 1px solid rgba(255,125,230,.34); border-radius: 8px; padding: 10px 13px; background: rgba(2,3,8,.72); }',
+    '#terminal-orb .termlet-orbit-flow, .termlet-orbit-line { position: absolute; inset: 0; pointer-events: none; }',
+    '.termlet-orbit-track { position: absolute; left: 50%; top: 50%; width: 1px; height: 1px; animation: termlet-orbit-spin 5.6s linear forwards; }',
+    '.termlet-orbit-token { position: absolute; color: #8dffd5; font: 950 13px/1 ui-monospace, Consolas, monospace; text-shadow: 0 0 18px rgba(141,255,213,.72); transform: rotate(var(--termlet-orbit-angle)) translateX(var(--termlet-orbit-radius)) rotate(var(--termlet-orbit-reverse-angle)); }',
+    '@keyframes spin { to { transform: rotate(360deg); } }',
+    '<\\/style>',
+  ]),
+  'lab-rain': sourceText([
+    '<link rel="stylesheet" href="/termlet/termlet.css">',
+    '<div class="rain-terminal">',
+    '  <div class="rain-titlebar">command rain renderer</div>',
+    '  <div id="terminal-rain"></div>',
+    '</div>',
+    '<script type="module">',
+    "import { createTerminal, DomTerminalRenderer, createRainRenderer, ok } from '/termlet/index.mjs';",
+    '',
+    'const terminal = createTerminal({',
+    "  hostname: 'rain', user: 'fx', home: '/home/fx', cwd: '/home/fx/cloud',",
+    '  plugins: [terminal => {',
+    "    terminal.fs.addFile('/home/fx/cloud/commands.txt', 'help\\nls -al\\nplugin\\ntheme\\n');",
+    "    terminal.register('rain', () => ok('command rain active\\nfalling tokens are DOM around the same terminal core\\n'));",
+    "    terminal.register('fall', ({ args }) => ok(`drop sequence: ${(args.length ? args : ['help','ls','theme']).join(' -> ')}\\n`));",
+    '  }],',
+    '});',
+    '',
+    'new DomTerminalRenderer(terminal, {',
+    "  mount: '#terminal-rain', theme: 'linux', welcome: '',",
+    "  prompt: () => `rain:${terminal.cwd.replace(terminal.home, '~')}$`,",
+    '  renderer: createRainRenderer({',
+    '    inputMaxTokens: 14,',
+    '    maxTokens: 24,',
+    '    laneStart: 20,',
+    '    laneSpan: 38,',
+    '  }),',
+    '}).attach();',
+    '<\\/script>',
+    '<style>',
+    '.rain-terminal { position: relative; width: 540px; height: 520px; overflow: hidden; border: 1px solid rgba(141,255,213,.28); border-radius: 10px; background: #030508; }',
+    '.rain-titlebar { height: 42px; display: flex; align-items: center; padding: 0 16px; border-bottom: 1px solid rgba(255,255,255,.12); color: #8dffd5; font: 900 13px ui-monospace, Consolas, monospace; }',
+    '#terminal-rain.blog-terminal { height: calc(100% - 42px); border: 0; border-radius: 0; padding: 0; --termlet-bg:rgba(0,0,0,.42); --termlet-fg:#d9ffe9; --termlet-prompt:#8dffd5; overflow:hidden; }',
+    '#terminal-rain .blog-terminal__output { height: 100%; overflow: hidden; padding: 18px; }',
+    '#terminal-rain .blog-terminal__input-row:not(.termlet-rain-line) { position: absolute; z-index: 6; left: 18px; right: 18px; bottom: 18px; border: 1px solid rgba(141,255,213,.22); border-radius: 8px; padding: 9px 11px; background: rgba(0,0,0,.66); }',
+    '.termlet-rain-line { position: absolute; inset: 0; pointer-events: none; }',
+    '.termlet-rain-token { position: absolute; left: var(--termlet-rain-lane); top: -44px; border: 1px solid rgba(141,255,213,.22); border-radius: 999px; padding: 6px 10px; color: #8dffd5; background: rgba(0,0,0,.52); font: 950 13px/1.25 ui-monospace, Consolas, monospace; animation: termlet-rain-drop 3900ms cubic-bezier(.16,.82,.24,1) forwards; animation-delay: var(--termlet-rain-delay); }',
+    '.termlet-rain-line--input .termlet-rain-token { color: #ffb5ee; border-color: rgba(255,125,230,.28); }',
+    '<\\/style>',
+  ]),
+};
+
+function sourceText(lines) {
+  return lines.join('\n');
+}
+
+function renderSourceSnippets() {
+  document.querySelectorAll('[data-source-snippet]').forEach(code => {
+    const key = code.getAttribute('data-source-snippet');
+    code.textContent = sourceSnippets[key] || '';
   });
-}
-
-function resultText(result, command) {
-  const text = [result?.stdout, result?.stderr].filter(Boolean).join('\n').trim();
-  return text || command || 'exit 0';
-}
-
-function outputText(result) {
-  return [result?.stdout, result?.stderr].filter(Boolean).join('\n').replace(/\n$/, '').trim();
-}
-
-function renderOrbInput({ document, prompt, command, row, restoring }) {
-  row.classList.add('orb-flow', 'orb-flow--input', 'orb-output-ring');
-  if (restoring) row.classList.add('is-restored');
-  return createOrbOrbit(document, command || prompt, {
-    kind: 'input',
-    className: 'orb-command-orbit orb-output-ring',
-    seed: command.length,
-    duration: 4.8,
-  });
-}
-
-function renderOrbLine({ document, text, className, restoring }) {
-  return createOrbOrbit(document, text, {
-    kind: className?.includes('error') ? 'error' : 'output',
-    className: 'orb-output-ring',
-    restored: restoring,
-    seed: text.length,
-    duration: 5.6,
-  });
-}
-
-function renderOrbResult(context) {
-  const text = outputText(context.result) || resultText(context.result, context.command);
-  const kind = context.result.status === 0 ? 'output' : 'error';
-  if (!text) return true;
-  context.append(createOrbOrbit(context.document, text, {
-    kind,
-    className: 'orb-output-ring',
-    seed: context.command.length + text.length,
-    duration: 5.6,
-  }), {
-    type: 'line',
-    text,
-    className: kind,
-  });
-  return true;
-}
-
-function renderRainInput({ document, prompt, command, row, restoring }) {
-  row.classList.add('rain-render-line', 'rain-render-line--input');
-  if (restoring) row.classList.add('is-restored');
-  return createRainLineContent(document, `${prompt} ${command}`, 'input', command.length);
-}
-
-function renderRainLine({ document, text, className, restoring }) {
-  const node = createRainDropLine(document, text, className?.includes('error') ? 'error' : 'output', 0);
-  if (restoring) node.classList.add('is-restored');
-  return node;
-}
-
-function renderRainResult(context) {
-  const text = outputText(context.result) || resultText(context.result, context.command);
-  const kind = context.result.status === 0 ? 'output' : 'error';
-  if (!text) return true;
-  const nodes = text.split('\n').slice(0, 12).map((line, index) => createRainDropLine(context.document, line, kind, index));
-  context.append(nodes, {
-    type: 'line',
-    text,
-    className: kind,
-  });
-  return true;
-}
-
-function createOrbOrbit(document, text, options = {}) {
-  const line = document.createElement('div');
-  const kind = options.kind || 'output';
-  line.className = `orb-orbit-line orb-orbit-line--${kind} ${options.className || ''} ${options.restored ? 'is-restored' : ''}`.trim();
-  const plainText = String(text || '').trim() || 'termlet';
-  line.setAttribute('aria-label', plainText);
-  const plain = document.createElement('span');
-  plain.className = 'sr-only';
-  plain.textContent = plainText;
-  const ringsData = tokenizeOrbCharacters(plainText, {
-    maxChars: options.maxChars || (kind === 'live' ? 52 : kind === 'input' ? 58 : 72),
-    ringCapacity: kind === 'live' ? 26 : kind === 'input' ? 30 : 34,
-    maxRings: 3,
-  });
-  const seed = Number(options.seed || 0);
-  ringsData.forEach((ringWords, ringIndex) => {
-    const track = document.createElement('span');
-    track.className = 'orb-orbit-track orb-output-ring__track';
-    const radius = 86 + ringIndex * 31 + (kind === 'live' ? 10 : 0);
-    track.style.setProperty('--orbit-duration', `${Number(options.duration || (kind === 'live' ? 3.2 : 5.6)) + ringIndex * .35}s`);
-    track.style.setProperty('--orbit-phase', `${(seed * 13 + ringIndex * 47) % 360}deg`);
-    track.style.setProperty('--ring-opacity', `${Math.max(.42, 1 - ringIndex * .18)}`);
-    track.style.setProperty('--ring-size', `${(radius + 5) * 2}px`);
-    layoutOrbRingCharacters(ringWords).forEach((item, index) => {
-      const token = document.createElement('span');
-      const angle = item.angle + ((seed * 5 + ringIndex * 19) % 24);
-      token.textContent = item.char;
-      token.className = `orb-orbit-token ${kind === 'input' && index < 12 ? 'orb-orbit-token--prompt' : ''}`.trim();
-      token.style.setProperty('--a', `${angle}deg`);
-      token.style.setProperty('--ra', `${-angle}deg`);
-      token.style.setProperty('--d', `${radius}px`);
-      token.style.setProperty('--i', String(index));
-      track.appendChild(token);
-    });
-    line.appendChild(track);
-  });
-  line.prepend(plain);
-  return line;
-}
-
-function tokenizeOrbCharacters(text, options = {}) {
-  const maxChars = Math.max(1, Number(options.maxChars || 72));
-  const ringCapacity = Math.max(8, Number(options.ringCapacity || 32));
-  const maxRings = Math.max(1, Number(options.maxRings || 3));
-  const words = String(text || '').trim().split(/\s+/).filter(Boolean);
-  const rings = [[]];
-  let used = 0;
-  let total = 0;
-  for (const rawWord of words) {
-    if (total >= maxChars) break;
-    const chars = Array.from(rawWord).slice(0, maxChars - total);
-    if (!chars.length) continue;
-    if (used && used + chars.length > ringCapacity && rings.length < maxRings) {
-      rings.push([]);
-      used = 0;
-    }
-    rings[rings.length - 1].push(chars);
-    used += chars.length + 3;
-    total += chars.length;
-  }
-  return rings.filter(ring => ring.length);
-}
-
-function layoutOrbRingCharacters(words) {
-  const gapUnits = 3.2;
-  const charUnits = words.reduce((sum, word) => sum + word.length, 0);
-  const totalUnits = Math.max(1, charUnits + Math.max(0, words.length - 1) * gapUnits);
-  const items = [];
-  let cursor = 0;
-  words.forEach((word, wordIndex) => {
-    word.forEach((char, charIndex) => {
-      items.push({
-        char,
-        angle: ((cursor + charIndex + .5) / totalUnits) * 360,
-      });
-    });
-    cursor += word.length;
-    if (wordIndex < words.length - 1) cursor += gapUnits;
-  });
-  return items;
-}
-
-function createRainDropLine(document, text, kind, index) {
-  const line = document.createElement('div');
-  line.className = `rain-render-line rain-render-line--${kind || 'output'}`;
-  line.appendChild(createRainLineContent(document, text, kind, index));
-  return line;
-}
-
-function createRainLineContent(document, text, kind, seed = 0) {
-  const stream = document.createElement('span');
-  stream.className = `rain-token-stream rain-token-stream--${kind || 'output'}`;
-  const plainText = String(text || '').trim() || 'stdout';
-  stream.setAttribute('aria-label', plainText);
-  const plain = document.createElement('span');
-  plain.className = 'sr-only';
-  plain.textContent = plainText;
-  stream.appendChild(plain);
-  tokenizeEffectText(plainText).slice(0, kind === 'input' ? 14 : 24).forEach((word, index) => {
-    const token = document.createElement('span');
-    const spin = ((index + Number(seed || 0)) % 5 - 2) * 12;
-    token.className = `rain-render-text rain-render-token rain-render-text--${kind || 'output'}`;
-    token.textContent = word;
-    token.style.setProperty('--lane', `${20 + ((Number(seed || 0) * 17 + index * 11) % 38)}%`);
-    token.style.setProperty('--delay', `${(index % 9) * 72}ms`);
-    token.style.setProperty('--drift', `${((index % 5) - 2) * 8}px`);
-    token.style.setProperty('--spin', `${spin}deg`);
-    token.style.setProperty('--spin-start', `${-spin}deg`);
-    stream.appendChild(token);
-  });
-  return stream;
-}
-
-function tokenizeEffectText(text) {
-  const value = String(text || '').replace(/[^\p{L}\p{N}_./:\\|~-]+/gu, ' ').trim();
-  const words = (value ? value.split(/\s+/) : ['termlet']).filter(Boolean);
-  while (words.length < 8) words.push(...['input', 'stdout', 'renderer', 'event', 'theme', 'plugin', 'pipe', 'mount']);
-  return words;
 }
 
 function wireCopyButtons() {

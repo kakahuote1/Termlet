@@ -1,6 +1,6 @@
 ﻿{
   "name": "termlet",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "description": "Pure frontend, pluggable pseudo-terminal kit for static sites and blogs.",
   "license": "MIT",
@@ -88,6 +88,10 @@
     "./renderers/dom": {
       "types": "./src/index.d.ts",
       "import": "./src/renderers/dom-renderer.mjs"
+    },
+    "./renderers/kit": {
+      "types": "./src/index.d.ts",
+      "import": "./src/renderers/renderer-kit.mjs"
     },
     "./dist": {
       "types": "./src/index.d.ts",

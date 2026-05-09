@@ -22,6 +22,14 @@ const expectedRootExports = [
   'DEFAULT_TERMINAL_CSS',
   'DomTerminalRenderer',
   'injectDefaultStyles',
+  'composeRenderers',
+  'createOrbitNode',
+  'createOrbitRenderer',
+  'createRainNode',
+  'createRainRenderer',
+  'createTokenLayer',
+  'defineRenderer',
+  'tokenizeText',
   'ok',
   'fail',
   'normalizeResult',
@@ -73,6 +81,7 @@ const subpathExpectations = {
   './adapters/hugo': ['createHugoTerminal', 'mountHugoTerminal'],
   './adapters/persistence': ['createStorageAdapter', 'createSessionStorageAdapter', 'memoryPersistenceAdapter'],
   './renderers/dom': ['DomTerminalRenderer', 'DEFAULT_TERMINAL_CSS'],
+  './renderers/kit': ['defineRenderer', 'composeRenderers', 'createOrbitRenderer', 'createRainRenderer'],
   './dist': ['createTerminal', 'DomTerminalRenderer'],
 };
 

@@ -4,11 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Cache-Control" content="no-store">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Termlet - 可插拔网页伪终端基座</title>
   <meta name="description" content="Termlet 是一个纯前端、零依赖、可插拔、可扩展的网页伪终端基座，适合静态博客和前端项目快速接入。">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./termlet/termlet.css">
-  <link rel="stylesheet" href="./styles.css?v=20260509-renderer">
+  <link rel="stylesheet" href="./styles.css?v=20260509-title-scale">
 </head>
 <body>
   <div class="runtime-warning" data-runtime-warning role="status">
@@ -57,6 +60,14 @@
         </div>
         <div class="terminal-mount" id="terminal-linux"></div>
       </div>
+      <details class="scene-source">
+        <summary>控制台源码</summary>
+        <div class="source-toolbar">
+          <span>Linux 基础场景</span>
+          <button type="button" data-copy-target="source-linux">copy</button>
+        </div>
+        <pre><code id="source-linux" data-source-snippet="linux"></code></pre>
+      </details>
       <p class="scene-foot scene-foot-left">Termlet · frontend-only pseudo terminal</p>
       <a class="scene-foot scene-foot-right" href="https://github.com/" data-repo-link>github.com/kakahuote1/Termlet</a>
     </section>
@@ -87,6 +98,14 @@
         </div>
         <div class="terminal-mount" id="terminal-powershell"></div>
       </div>
+      <details class="scene-source">
+        <summary>控制台源码</summary>
+        <div class="source-toolbar">
+          <span>PowerShell 风格场景</span>
+          <button type="button" data-copy-target="source-powershell">copy</button>
+        </div>
+        <pre><code id="source-powershell" data-source-snippet="powershell"></code></pre>
+      </details>
       <p class="scene-foot scene-foot-left">Termlet · structured object pipelines</p>
       <a class="scene-foot scene-foot-right" href="https://github.com/" data-repo-link>github.com/kakahuote1/Termlet</a>
     </section>
@@ -117,6 +136,14 @@
         </div>
         <div class="terminal-mount" id="terminal-cmd"></div>
       </div>
+      <details class="scene-source">
+        <summary>控制台源码</summary>
+        <div class="source-toolbar">
+          <span>CMD 风格场景</span>
+          <button type="button" data-copy-target="source-cmd">copy</button>
+        </div>
+        <pre><code id="source-cmd" data-source-snippet="cmd"></code></pre>
+      </details>
       <p class="scene-foot scene-foot-left">Termlet · embeddable terminal base</p>
       <a class="scene-foot scene-foot-right" href="https://github.com/" data-repo-link>github.com/kakahuote1/Termlet</a>
     </section>
@@ -146,6 +173,14 @@
         </div>
         <div class="terminal-mount" id="terminal-docs"></div>
       </div>
+      <details class="scene-source">
+        <summary>控制台源码</summary>
+        <div class="source-toolbar">
+          <span>交互教程场景</span>
+          <button type="button" data-copy-target="source-docs">copy</button>
+        </div>
+        <pre><code id="source-docs" data-source-snippet="docs"></code></pre>
+      </details>
       <p class="scene-foot scene-foot-left">Termlet · static-site friendly</p>
       <a class="scene-foot scene-foot-right" href="https://github.com/" data-repo-link>github.com/kakahuote1/Termlet</a>
     </section>
@@ -166,24 +201,54 @@
       </div>
       <div class="lab-stage" aria-label="扩展终端实验室">
         <div class="lab-effect-layer" data-lab-effect-layer aria-hidden="true"></div>
-        <div class="orb-terminal" data-tilt-card>
-          <div class="orb-glow" aria-hidden="true"></div>
-          <div class="terminal-mount terminal-mount--orb" id="terminal-orb"></div>
-        </div>
-        <div class="rain-terminal" data-tilt-card>
-          <div class="command-rain" aria-hidden="true">
-            <span>help</span>
-            <span>ls -al</span>
-            <span>deploy</span>
-            <span>plugin</span>
-            <span>theme</span>
-            <span>pipe</span>
-            <span>event</span>
-            <span>mount</span>
+        <div class="lab-unit lab-unit--orb">
+          <div class="lab-unit-copy">
+            <span>01 / orbit renderer</span>
+            <strong>输入会按字符绕轨道运动</strong>
           </div>
-          <div class="rain-titlebar">command rain renderer</div>
-          <div class="terminal-mount terminal-mount--rain" id="terminal-rain"></div>
+          <div class="orb-terminal" data-tilt-card>
+            <div class="orb-glow" aria-hidden="true"></div>
+            <div class="terminal-mount terminal-mount--orb" id="terminal-orb"></div>
+          </div>
         </div>
+        <div class="lab-unit lab-unit--rain">
+          <div class="lab-unit-copy">
+            <span>02 / gravity renderer</span>
+            <strong>输入和输出从终端内部下坠</strong>
+          </div>
+          <div class="rain-terminal" data-tilt-card>
+            <div class="command-rain" aria-hidden="true">
+              <span>help</span>
+              <span>ls -al</span>
+              <span>deploy</span>
+              <span>plugin</span>
+              <span>theme</span>
+              <span>pipe</span>
+              <span>event</span>
+              <span>mount</span>
+            </div>
+            <div class="rain-titlebar">command rain renderer</div>
+            <div class="terminal-mount terminal-mount--rain" id="terminal-rain"></div>
+          </div>
+        </div>
+      </div>
+      <div class="scene-source-grid" aria-label="Lab 控制台源码">
+        <details class="scene-source scene-source--lab">
+          <summary>Orbit 控制台源码</summary>
+          <div class="source-toolbar">
+            <span>字符环绕 renderer</span>
+            <button type="button" data-copy-target="source-lab-orb">copy</button>
+          </div>
+          <pre><code id="source-lab-orb" data-source-snippet="lab-orb"></code></pre>
+        </details>
+        <details class="scene-source scene-source--lab">
+          <summary>Rain 控制台源码</summary>
+          <div class="source-toolbar">
+            <span>输入输出下坠 renderer</span>
+            <button type="button" data-copy-target="source-lab-rain">copy</button>
+          </div>
+          <pre><code id="source-lab-rain" data-source-snippet="lab-rain"></code></pre>
+        </details>
       </div>
       <p class="scene-foot scene-foot-left">Termlet · renderer and effect playground</p>
       <a class="scene-foot scene-foot-right" href="https://github.com/" data-repo-link>github.com/kakahuote1/Termlet</a>
@@ -249,6 +314,6 @@ await mountStarterTerminal({ mount: '#terminal' });</code></pre>
   </main>
 
   <textarea class="copy-buffer" aria-hidden="true" tabindex="-1"></textarea>
-  <script type="module" src="./app.mjs?v=20260509-renderer"></script>
+  <script type="module" src="./app.mjs?v=20260509-title-scale"></script>
 </body>
 </html>

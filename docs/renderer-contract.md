@@ -12,16 +12,10 @@ The terminal core is intentionally renderer-agnostic. A renderer can be a small 
 
 ## Output Safety
 
-Use text APIs for command output:
+Use text APIs for command output. The renderer must treat command output as untrusted text:
 
 ```js
 line.textContent = result.stdout;
-```
-
-Avoid:
-
-```js
-line.innerHTML = result.stdout;
 ```
 
 Events are different. If a trusted command emits `{ type: 'effect', name: 'matrix' }`, the renderer may create controlled HTML/canvas for that effect. The event name should still be matched against an allowlist.
@@ -39,38 +33,86 @@ A reusable terminal should support:
 
 The reference DOM renderer implements these basics.
 
-## Reference DOM Renderer Hooks
+## Renderer Kit
 
-`DomTerminalRenderer` can be used as a complete renderer or as a base renderer with custom output surfaces. These hooks let you keep the built-in keyboard handling, history, completion, session transcript, and Ctrl+C behavior while replacing how input and output appear:
+`DomTerminalRenderer` can be used as a complete renderer or as a base renderer with custom output surfaces. In 0.3, the recommended extension path is Renderer Kit:
 
-- `renderInput(context)` rewrites a submitted command row after the user presses Enter.
-- `renderLine(context)` rewrites each visible stdout/stderr/editor line.
-- `renderResult(context)` can take ownership of a whole command result. Return `true` after rendering to prevent the default stdout/stderr printer from running.
+- `defineRenderer(name, hooks)` declares a reusable renderer extension.
+- `composeRenderers(a, b, c)` combines independent renderer extensions.
+- `createTokenLayer(mount)` creates a safe DOM token layer for character/word effects.
+- `createOrbitRenderer(options)` ships a character-level orbit renderer.
+- `createRainRenderer(options)` ships a falling-token renderer.
+
+Renderer extensions keep the built-in keyboard handling, history, completion, Ctrl+C, transcript persistence, VFS, and command safety, while taking ownership of how input and output appear.
 
 ```js
+import {
+  createTerminal,
+  DomTerminalRenderer,
+  createOrbitRenderer,
+} from 'termlet';
+
+const terminal = createTerminal();
+
 new DomTerminalRenderer(terminal, {
   mount: '#terminal',
-  renderInput({ document, prompt, command }) {
-    const row = document.createElement('div');
-    row.textContent = `${prompt} ${command}`;
-    row.className = 'my-command-row';
-    return row;
-  },
-  renderLine({ document, text, className }) {
-    const line = document.createElement('div');
-    line.className = `my-output-line ${className}`;
-    line.textContent = text;
-    return line;
-  },
-  renderResult({ result, printBlock }) {
-    if (result.stdout) printBlock(result.stdout);
-    if (result.stderr) printBlock(result.stderr, 'error');
-    return true;
-  },
+  welcome: '',
+  renderer: createOrbitRenderer({
+    liveInput: true,
+    radius: 120,
+    turns: 3,
+  }),
 }).attach();
 ```
 
-For special effects, `renderLine` can return a controlled DOM structure such as falling tokens, orbiting text, HUD chips, timeline entries, or framework-owned nodes. Use `textContent` for any command-derived text. Do not use `innerHTML` for terminal output.
+## Custom Renderer
+
+Use `defineRenderer()` when you want a shape that Termlet does not ship. Hooks are intentionally small and explicit:
+
+- `onMount(context)` creates overlay layers or returns a disposer.
+- `onInputCreated(context)` can decorate the active prompt/input row.
+- `renderLiveInput(context)` mirrors text before Enter.
+- `renderInput(context)` rewrites a submitted command row.
+- `renderLine(context)` rewrites visible stdout/stderr/editor lines.
+- `renderResult(context)` can take ownership of a whole command result.
+- `onCommand`, `onResult`, `onEvent`, and `onError` observe lifecycle events.
+
+Return `true` from `renderResult()` after rendering to prevent the default stdout/stderr printer from running.
+
+```js
+import { defineRenderer, createTokenLayer } from 'termlet';
+
+let layer;
+const floatingWords = defineRenderer('floating-words', {
+  onMount({ renderer, document }) {
+    layer = createTokenLayer(renderer.mount, {
+      document,
+      className: 'floating-word-layer',
+    });
+    return () => layer.destroy();
+  },
+  renderLiveInput({ value }) {
+    layer.clear();
+    if (value.trim()) layer.emit(value, { mode: 'chars', maxTokens: 32 });
+  },
+  renderResult({ result, command, append, document }) {
+    const line = document.createElement('div');
+    line.className = 'floating-result';
+    line.textContent = result.stdout || result.stderr || command;
+    append(line, { type: 'line', text: line.textContent });
+    return true;
+  },
+});
+
+new DomTerminalRenderer(terminal, {
+  mount: '#terminal',
+  renderer: floatingWords,
+}).attach();
+```
+
+For special effects, hooks can return a controlled DOM structure such as falling tokens, orbiting text, HUD chips, timeline entries, or framework-owned nodes. Use `textContent` for any command-derived text, and only create fixed markup owned by the renderer itself.
+
+Reusable visual behavior should be packaged as renderer extensions and passed through `renderer` or `renderers`. This keeps custom behavior named, composable, testable, and easy to copy between projects.
 
 ## Layout Baseline
 

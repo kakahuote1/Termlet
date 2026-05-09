@@ -202,6 +202,39 @@ new DomTerminalRenderer(terminal, {
 
 `DomTerminalRenderer` is a reference implementation. Production sites can replace it without changing command plugins.
 
+Renderer Kit lets you alter input, output, event behavior, and visual motion without rewriting keyboard handling:
+
+```js
+import {
+  defineRenderer,
+  composeRenderers,
+  createOrbitRenderer,
+  createRainRenderer,
+  createTokenLayer,
+} from 'termlet';
+
+new DomTerminalRenderer(terminal, {
+  mount: '#terminal',
+  renderer: composeRenderers(
+    createOrbitRenderer({ liveInput: true }),
+    createRainRenderer({ maxTokens: 12 }),
+  ),
+}).attach();
+```
+
+Public renderer helpers:
+
+| API | Purpose |
+|---|---|
+| `defineRenderer(name, hooks)` | Creates a reusable renderer extension. |
+| `composeRenderers(...renderers)` | Combines lifecycle/effect renderers. |
+| `createTokenLayer(mount, options)` | Creates a safe text-token overlay layer. |
+| `createOrbitRenderer(options)` | Character-level orbit renderer with live input support. |
+| `createRainRenderer(options)` | Falling-token input/output renderer. |
+| `createOrbitNode(document, text, options)` | Low-level orbit DOM node factory. |
+| `createRainNode(document, text, options)` | Low-level rain DOM node factory. |
+| `tokenizeText(text, options)` | Word/character tokenization helper. |
+
 Renderer transcript persistence is optional. When `persistTranscript: true` is used with a persistence adapter, frozen prompts and command output are saved as text-only entries. Refresh restores the visible screen; `clear`, `Ctrl+L`, and `session reset` clear the transcript. Use `maxTranscriptEntries` and `maxTranscriptBytes` to tune storage limits.
 
 `vim`, `vi`, and `nano` emit `editor` events. The default DOM renderer shows a small read-only preview so these commands do not feel like dead ends. Set `editorPreview: false` if your site opens its own editor UI in `onEvent`.

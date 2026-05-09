@@ -33,5 +33,15 @@ export { createFeedTerminal, mountFeedTerminal } from './adapters/feed.mjs';
 export { createHugoTerminal, mountHugoTerminal } from './adapters/hugo.mjs';
 export { createSessionStorageAdapter, createStorageAdapter, memoryPersistenceAdapter } from './adapters/persistence.mjs';
 export { DEFAULT_TERMINAL_CSS, DomTerminalRenderer, injectDefaultStyles } from './renderers/dom-renderer.mjs';
+export {
+  composeRenderers,
+  createOrbitNode,
+  createOrbitRenderer,
+  createRainNode,
+  createRainRenderer,
+  createTokenLayer,
+  defineRenderer,
+  tokenizeText,
+} from './renderers/renderer-kit.mjs';
 export { ok, fail, normalizeResult } from './result.mjs';
 export { createTerminal, createWebTerminal, createBlogTerminal, createWindowsTerminal } from './factory.mjs';

@@ -11,8 +11,13 @@ import {
   defineProfile,
   DomTerminalRenderer,
   blogSandboxPreset,
+  composeRenderers,
+  createOrbitRenderer,
+  createRainRenderer,
+  createTokenLayer,
   effectEventsPlugin,
   formatRecords,
+  defineRenderer,
   hugoPostsPlugin,
   ok,
   parseFeedPosts,
@@ -73,6 +78,11 @@ class FakeElement {
     this.disabled = false;
     this.scrollTop = 0;
     this.tabIndex = 0;
+    this.style = {
+      values: new Map(),
+      setProperty: (name, value) => this.style.values.set(name, String(value)),
+      getPropertyValue: name => this.style.values.get(name) || '',
+    };
     this._textContent = '';
     this.listeners = new Map();
     this.classList = {
@@ -118,6 +128,15 @@ class FakeElement {
     if (index >= 0) this.childNodes.splice(index, 1);
     child.parentNode = null;
     return child;
+  }
+
+  replaceChildren(...children) {
+    this.childNodes.forEach(child => {
+      child.parentNode = null;
+    });
+    this.childNodes = [];
+    this._textContent = '';
+    children.forEach(child => this.appendChild(child));
   }
 
   setAttribute(name, value) {
@@ -425,15 +444,12 @@ test('dom renderer provides a default editor preview for editor events', async (
   assert.match(mount.textContent, /--- end vim preview ---/);
 });
 
-test('dom renderer hooks can rewrite input rows, lines, and whole command results', async () => {
+test('renderer extension hooks can rewrite input rows, lines, and whole command results', async () => {
   const terminal = createTerminal();
   terminal.register('paint', () => ok('alpha\nbeta\n'));
   const document = createFakeDocument();
   const mount = document.createElement('div');
-  const renderer = new DomTerminalRenderer(terminal, {
-    document,
-    mount,
-    welcome: '',
+  const customRenderer = defineRenderer('custom-hooks', {
     renderInput({ document, prompt, command }) {
       const node = document.createElement('section');
       node.className = 'custom-input';
@@ -452,6 +468,12 @@ test('dom renderer hooks can rewrite input rows, lines, and whole command result
       node.textContent = `result:${result.stdout.trim().replace(/\n/g, '|')}`;
       return node;
     },
+  });
+  const renderer = new DomTerminalRenderer(terminal, {
+    document,
+    mount,
+    welcome: '',
+    renderer: customRenderer,
   }).attach();
 
   renderer.print('manual', 'muted');
@@ -461,6 +483,107 @@ test('dom renderer hooks can rewrite input rows, lines, and whole command result
   assert.match(mount.textContent, /input:\[guest@blog-server ~\]\$:paint/);
   assert.match(mount.textContent, /result:alpha\|beta/);
   assert.doesNotMatch(mount.textContent, /line:normal:alpha/);
+});
+
+test('renderer extensions compose lifecycle, live input, and result rendering', async () => {
+  const terminal = createTerminal();
+  terminal.register('paint', () => ok('alpha\n'));
+  const document = createFakeDocument();
+  const mount = document.createElement('div');
+  const events = [];
+  const lifecycle = defineRenderer('lifecycle', {
+    onMount() {
+      events.push('mount');
+      return () => events.push('dispose');
+    },
+    onInputCreated({ row }) {
+      row.classList.add('from-extension');
+      events.push('input-created');
+    },
+    renderLiveInput({ value }) {
+      events.push(`live:${value}`);
+    },
+    onCommand({ command }) {
+      events.push(`command:${command}`);
+    },
+    onResult({ result }) {
+      events.push(`result:${result.status}`);
+    },
+  });
+  const painter = defineRenderer('painter', {
+    renderResult({ result, append }) {
+      append(`painted:${result.stdout.trim()}`, {
+        type: 'line',
+        text: `painted:${result.stdout.trim()}`,
+      });
+      return true;
+    },
+  });
+  const renderer = new DomTerminalRenderer(terminal, {
+    document,
+    mount,
+    welcome: '',
+    renderer: composeRenderers(lifecycle, painter),
+  }).attach();
+
+  renderer.activeInput.value = 'pa';
+  renderer.activeInput.listeners.get('input').forEach(listener => listener({ type: 'input' }));
+  await submitRendererCommand(renderer, 'paint');
+  renderer.destroy();
+
+  assert.match(mount.childNodes[0].childNodes[0].className, /from-extension/);
+  assert.match(mount.textContent, /painted:alpha/);
+  assert.deepEqual(events, [
+    'mount',
+    'input-created',
+    'live:pa',
+    'live:',
+    'command:paint',
+    'result:0',
+    'input-created',
+    'dispose',
+  ]);
+});
+
+test('official token, orbit, and rain renderers are DOM-safe extension primitives', async () => {
+  const document = createFakeDocument();
+  const layerHost = document.createElement('div');
+  const layer = createTokenLayer(layerHost, { document });
+  layer.emit('<b>alpha</b> beta', { mode: 'words', maxTokens: 4 });
+
+  assert.equal(layerHost.textContent, 'balpha/bbeta');
+  assert.equal(layerHost.childNodes[0].className, 'termlet-token-layer');
+
+  const orbitTerminal = createTerminal();
+  orbitTerminal.register('paint', () => ok('orbit output\n'));
+  const orbitMount = document.createElement('div');
+  const orbitRenderer = new DomTerminalRenderer(orbitTerminal, {
+    document,
+    mount: orbitMount,
+    welcome: '',
+    renderer: createOrbitRenderer({ liveInput: true, radius: 40 }),
+  }).attach();
+  orbitRenderer.activeInput.value = 'spin';
+  orbitRenderer.activeInput.listeners.get('input').forEach(listener => listener({ type: 'input' }));
+  assert.match(orbitMount.textContent, /spin/);
+  await submitRendererCommand(orbitRenderer, 'paint');
+
+  assert.match(orbitMount.className, /termlet-renderer-orbit/);
+  assert.match(orbitMount.textContent, /orbitoutput/);
+
+  const rainTerminal = createTerminal();
+  rainTerminal.register('drop', () => ok('rain output\n'));
+  const rainMount = document.createElement('div');
+  const rainRenderer = new DomTerminalRenderer(rainTerminal, {
+    document,
+    mount: rainMount,
+    welcome: '',
+    renderer: createRainRenderer({ maxTokens: 8 }),
+  }).attach();
+  await submitRendererCommand(rainRenderer, 'drop');
+
+  assert.match(rainMount.className, /termlet-renderer-rain/);
+  assert.match(rainMount.textContent, /rainoutput/);
 });
 
 test('starter adapter mounts a themed refresh-resistant blog terminal', async () => {

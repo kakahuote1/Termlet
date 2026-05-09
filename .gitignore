@@ -6,5 +6,6 @@ AGENTS.md
 .DS_Store
 *.log
 *.tmp
+*.code-workspace
 playwright-report/
 test-results/

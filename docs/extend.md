@@ -1,6 +1,6 @@
 ﻿# 扩展指南
 
-Termlet 的扩展点分成六层：profile、command pack、命令、结构化管道、文件系统、渲染器事件和站点适配。多数博客和静态站点只需要写一个小插件；复杂终端可以把整套行为整理成 profile。
+Termlet 的扩展点分成七层：profile、command pack、命令、结构化管道、文件系统、renderer、站点适配。多数博客和静态站点只需要写一个小插件；复杂终端可以把命令生态做成 profile，把外观和动效做成 renderer。
 
 ## 1. 添加命令
 
@@ -157,58 +157,100 @@ new DomTerminalRenderer(terminal, {
 
 这样命令插件仍然可以在 Node 中测试，页面效果也不会污染核心逻辑。
 
-## 6. 替换渲染器
+## 6. 改造渲染器和动效
 
-自定义渲染器只需要做四件事：
+想做圆形终端、命令雨、HUD、漂浮字符、游戏面板时，不需要重写整个终端。推荐用 Renderer Kit：
+
+- `defineRenderer()`：声明一个可复用 renderer。
+- `composeRenderers()`：组合多个 renderer。
+- `createTokenLayer()`：创建安全的字符/单词层。
+- `createOrbitRenderer()`：内置字符环绕 renderer。
+- `createRainRenderer()`：内置输入输出下坠 renderer。
+
+直接使用内置 renderer：
+
+```js
+import {
+  createTerminal,
+  DomTerminalRenderer,
+  createOrbitRenderer,
+} from 'termlet';
+
+const terminal = createTerminal();
+
+new DomTerminalRenderer(terminal, {
+  mount: '#terminal',
+  welcome: '',
+  renderer: createOrbitRenderer({
+    liveInput: true,
+    radius: 120,
+    turns: 3,
+  }),
+}).attach();
+```
+
+从零做一个 renderer：
+
+```js
+import { defineRenderer, createTokenLayer } from 'termlet';
+
+let layer;
+
+const cometRenderer = defineRenderer('comet', {
+  onMount({ renderer, document }) {
+    layer = createTokenLayer(renderer.mount, {
+      document,
+      className: 'comet-layer',
+    });
+    return () => layer.destroy();
+  },
+  renderLiveInput({ value }) {
+    layer.clear();
+    if (value.trim()) {
+      layer.emit(value, {
+        mode: 'chars',
+        maxTokens: 36,
+        tokenClassName: 'comet-char',
+      });
+    }
+  },
+  renderResult({ result, command, append, document }) {
+    const line = document.createElement('div');
+    line.className = 'comet-output';
+    line.textContent = result.stdout || result.stderr || command;
+    append(line, { type: 'line', text: line.textContent });
+    return true;
+  },
+});
+
+new DomTerminalRenderer(terminal, {
+  mount: '#terminal',
+  renderer: cometRenderer,
+}).attach();
+```
+
+组合多个 renderer：
+
+```js
+import { composeRenderers, createOrbitRenderer } from 'termlet';
+
+new DomTerminalRenderer(terminal, {
+  mount: '#terminal',
+  renderer: composeRenderers(
+    createOrbitRenderer({ liveInput: true }),
+    myStatusBarRenderer,
+  ),
+}).attach();
+```
+
+Renderer 仍然只能拿到文本、事件和 DOM 容器。命令不会获得宿主页面权限，渲染层也不要使用 `innerHTML`、`eval`、真实 shell 或远程桥接。
+
+如果要完全替换 DOM renderer，也只需要遵守四件事：
 
 1. 收集用户输入的一行命令。
 2. 调用 `await terminal.execute(line)`，必要时传入 `AbortSignal` 支持 Ctrl+C。
 3. 把 `stdout` 和 `stderr` 当作文本渲染。
 4. 根据 `events` 做受控 UI 效果。
-
-最小结构：
-
-```js
-async function run(line) {
-  const result = await terminal.execute(line);
-  output.textContent += result.stdout;
-  error.textContent += result.stderr;
-  result.events.forEach(handleEvent);
-}
-```
-
-不要把命令输出写入 `innerHTML`。
-
-如果只想改输入和输出的形态，不一定要从零写完整 renderer。可以继续使用 `DomTerminalRenderer` 的键盘、历史、补全、Ctrl+C 和 transcript 能力，只接管需要改变的显示层：
-
-```js
-new DomTerminalRenderer(terminal, {
-  mount: '#terminal',
-  renderInput({ document, prompt, command }) {
-    const row = document.createElement('div');
-    row.className = 'dragon-command';
-    row.textContent = `${prompt} ${command}`;
-    return row;
-  },
-  renderLine({ document, text, className }) {
-    const burst = document.createElement('div');
-    burst.className = `falling-output ${className}`;
-    text.split(/\s+/).forEach(word => {
-      const token = document.createElement('span');
-      token.textContent = word;
-      burst.appendChild(token);
-    });
-    return burst;
-  },
-  renderResult({ result, printBlock }) {
-    if (result.stdout) printBlock(result.stdout);
-    if (result.stderr) printBlock(result.stderr, 'error');
-    return true;
-  },
-}).attach();
-```
-
-这类写法适合做命令雨、圆形终端、游戏 HUD、对话气泡、课程步骤流等特殊形态。命令仍然只返回 `stdout/stderr/events`，页面怎么动由渲染层决定。
 
 如果你的渲染器支持中断：
 
