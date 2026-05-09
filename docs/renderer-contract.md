@@ -41,7 +41,7 @@ The reference DOM renderer implements these basics.
 
 ## Layout Baseline
 
-Terminal output commonly contains long paths, hashes, base64 strings, and CTF artifacts. The renderer should prevent page breakage:
+Terminal output commonly contains long paths, hashes, base64 strings, and generated artifacts. The renderer should prevent page breakage:
 
 - constrain height and scroll internally;
 - use `white-space: pre-wrap`;

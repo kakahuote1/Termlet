@@ -62,7 +62,7 @@
 
 `src/presets/*.mjs`
 
-- Compose files, aliases, logs, CTF clues, and blog-specific defaults.
+- Compose files, aliases, logs, hidden demo content, and blog-specific defaults.
 - Keep site personality out of the reusable core.
 
 Profiles

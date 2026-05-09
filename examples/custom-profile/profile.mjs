@@ -10,7 +10,7 @@ export const labCommands = defineCommandPack('lab-commands', terminal => {
   terminal.register('items', () => ok('', {
     data: [
       { Name: 'decoder', Kind: 'tool', Score: 8 },
-      { Name: 'flag-note', Kind: 'note', Score: 3 },
+      { Name: 'release-note', Kind: 'note', Score: 3 },
       { Name: 'trace-viewer', Kind: 'tool', Score: 13 },
     ],
   }));

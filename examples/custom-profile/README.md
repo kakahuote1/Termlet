@@ -8,7 +8,7 @@
 - 后续命令通过 `input` 处理对象管道。
 - `formatPipelineData` 决定最终表格怎么显示。
 
-核心代码见 `profile.mjs`。最小用法：
+核心代码见 `profile.mjs`，可运行页面见 `index.html`。最小用法：
 
 ```js
 import { createTerminal } from 'termlet';

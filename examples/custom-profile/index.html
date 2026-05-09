@@ -1,9 +1,10 @@
-﻿<!doctype html>
-<html lang="en">
+<!doctype html>
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Blog Terminal Example</title>
+  <title>Termlet Custom Profile</title>
+  <link rel="icon" href="../../site-src/favicon.svg" type="image/svg+xml">
   <style>
     :root {
       color-scheme: dark;
@@ -27,38 +28,40 @@
     h1 {
       font-size: 20px;
       font-weight: 600;
-      margin: 0 0 12px;
+      margin: 0 0 8px;
+    }
+
+    p {
+      color: #aab6c5;
+      margin: 0 0 16px;
     }
   </style>
 </head>
 <body>
   <main>
-    <h1>Blog Terminal</h1>
+    <h1>Custom Profile</h1>
+    <p>Try: items, i, items | only Kind tool, items | only Kind tool | names</p>
     <div id="terminal"></div>
   </main>
 
   <script type="module">
     import {
-      createBlogTerminal,
-      blogSandboxPreset,
+      createTerminal,
       DomTerminalRenderer,
       injectDefaultStyles,
     } from '../../src/index.mjs';
+    import { labProfile } from './profile.mjs';
 
     injectDefaultStyles();
 
-    const terminal = createBlogTerminal({
-      hostname: 'blog-server',
-      plugins: [
-        blogSandboxPreset({
-          rootSecret: 'example private content\\n',
-        }),
-      ],
+    const terminal = createTerminal({
+      hostname: 'profile-demo',
+      profile: labProfile,
     });
 
     new DomTerminalRenderer(terminal, {
       mount: '#terminal',
-      welcome: 'Try: help, ls -al, tree /home/guest, sudo -l, journalctl -n 3\\n',
+      welcome: 'Try: items, i, items | only Kind tool, items | only Kind tool | names\\n',
     }).attach();
   </script>
 </body>

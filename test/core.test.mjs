@@ -20,7 +20,7 @@ import {
 function createSubject(extra = {}) {
   return createBlogTerminal({
     plugins: [
-      blogSandboxPreset({ rootFlag: 'FLAG{unit_test_secret}\n' }),
+      blogSandboxPreset({ rootSecret: 'unit test private content\n' }),
       hugoPostsPlugin([{ title: 'Hello Terminal', content: '# Hello\nTerminal post\n' }]),
     ],
     ...extra,

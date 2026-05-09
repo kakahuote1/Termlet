@@ -67,7 +67,7 @@ Your renderer only needs to collect a command line, call `execute()`, render `st
 - Replace only the renderer CSS first.
 - Move to a custom renderer only when the default DOM renderer blocks your design.
 
-See `examples/plugin-template/` for a copyable starting point, `examples/custom-profile/` for profile and structured-pipeline customization, `examples/blog-easter-egg/` for a blog banner that opens a terminal after three clicks, and `examples/windows-style/` for a PowerShell/CMD-style terminal.
+See `docs/recipes.md` for copyable integration recipes, `examples/plugin-template/` for a command plugin starting point, `examples/custom-profile/` for profile and structured-pipeline customization, `examples/blog-easter-egg/` for a blog banner that opens a terminal after three clicks, and `examples/windows-style/` for a PowerShell/CMD-style terminal.
 
 ## Reset Path
 

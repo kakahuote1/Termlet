@@ -59,7 +59,7 @@ const linuxTerminal = createTerminal({
   persistence: createStorageAdapter({ key: 'termlet.demo' }),
   plugins: [
     blogSandboxPreset({
-      rootFlag: 'FLAG{demo_value_replace_me}\n',
+      rootSecret: 'demo private content\n',
     }),
     demoPlugin,
     effectEventsPlugin,
