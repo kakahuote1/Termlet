@@ -467,9 +467,11 @@ function createOrbOrbit(document, text, options = {}) {
     const ringChars = chars.filter((_, index) => index % rings === ringIndex);
     const count = Math.max(ringChars.length, 1);
     track.className = 'orb-orbit-track orb-output-ring__track';
+    const radius = 86 + ringIndex * 31 + (kind === 'live' ? 10 : 0);
     track.style.setProperty('--orbit-duration', `${kind === 'live' ? 8 + ringIndex * 1.4 : 12 + ringIndex * 2 + (seed % 3)}s`);
     track.style.setProperty('--orbit-phase', `${(seed * 13 + ringIndex * 47) % 360}deg`);
     track.style.setProperty('--ring-opacity', `${Math.max(.42, 1 - ringIndex * .18)}`);
+    track.style.setProperty('--ring-size', `${(radius + 5) * 2}px`);
     ringChars.forEach((char, index) => {
       const token = document.createElement('span');
       const angle = (360 / count) * index + ((seed * 5 + ringIndex * 19) % 30);
@@ -477,7 +479,7 @@ function createOrbOrbit(document, text, options = {}) {
       token.className = `orb-orbit-token ${kind === 'input' && index < 12 ? 'orb-orbit-token--prompt' : ''}`.trim();
       token.style.setProperty('--a', `${angle}deg`);
       token.style.setProperty('--ra', `${-angle}deg`);
-      token.style.setProperty('--d', `${46 + ringIndex * 17 + ((index + seed) % 2) * 3}px`);
+      token.style.setProperty('--d', `${radius + ((index + seed) % 2) * 3}px`);
       token.style.setProperty('--i', String(index));
       track.appendChild(token);
     });
