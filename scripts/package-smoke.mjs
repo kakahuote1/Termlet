@@ -44,6 +44,7 @@ const required = [
   'examples/drop-in/index.html',
   'scripts/api-smoke.mjs',
   'scripts/examples-smoke.mjs',
+  'scripts/run-tests.mjs',
   'test/core.test.mjs',
   'test/shell.test.mjs',
   'test/vfs.test.mjs',

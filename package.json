@@ -106,7 +106,7 @@
     "package:smoke": "node scripts/package-smoke.mjs",
     "security:scan": "node scripts/security-scan.mjs",
     "site:smoke": "node scripts/site-smoke.mjs",
-    "test": "node --test test",
+    "test": "node scripts/run-tests.mjs",
     "verify": "npm run check && npm test && npm run bench && npm run docs:smoke && npm run examples:smoke && npm run security:scan && npm run site:build && npm run site:smoke"
   },
   "files": [
