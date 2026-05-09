@@ -38,6 +38,9 @@ export class DomTerminalRenderer {
     this.onCommand = options.onCommand || null;
     this.onResult = options.onResult || null;
     this.onError = options.onError || null;
+    this.renderInput = typeof options.renderInput === 'function' ? options.renderInput : null;
+    this.renderLine = typeof options.renderLine === 'function' ? options.renderLine : null;
+    this.renderResult = typeof options.renderResult === 'function' ? options.renderResult : null;
     this.editorPreview = options.editorPreview !== false;
     this.persistTranscript = Boolean(options.persistTranscript);
     this.restoreTranscriptOnAttach = options.restoreTranscript !== false;
@@ -96,17 +99,94 @@ export class DomTerminalRenderer {
   }
 
   print(text, cls = '') {
-    const line = this.document.createElement('div');
-    line.className = `${this.className}__line ${cls}`.trim();
-    line.textContent = String(text ?? '').replace(/\n$/, '');
+    return this.appendLine(text, cls, { record: true });
+  }
+
+  appendLine(text, cls = '', options = {}) {
+    const value = String(text ?? '').replace(/\n$/, '');
+    const className = String(cls || '');
+    const fallbackClassName = `${this.className}__line ${className}`.trim();
+    const context = {
+      text: value,
+      className,
+      renderer: this,
+      terminal: this.core,
+      document: this.document,
+      restoring: Boolean(options.restoring),
+    };
+    let rendered = null;
+    if (this.renderLine) rendered = this.renderLine(context);
+    if (rendered === false) {
+      if (options.record !== false) {
+        this.recordTranscript({
+          type: 'line',
+          text: value,
+          className,
+        });
+      }
+      return null;
+    }
+    const nodes = normalizeRenderedNodes(rendered, this.document, fallbackClassName);
+    const line = nodes.length ? nodes[0] : this.document.createElement('div');
+    if (!nodes.length) {
+      line.className = fallbackClassName;
+      line.textContent = value;
+    }
     this.output.appendChild(line);
-    this.recordTranscript({
-      type: 'line',
-      text: line.textContent,
-      className: cls,
-    });
+    for (let index = 1; index < nodes.length; index += 1) {
+      this.output.appendChild(nodes[index]);
+    }
+    if (options.record !== false) {
+      this.recordTranscript({
+        type: 'line',
+        text: value,
+        className,
+      });
+    }
     this.trimOutput();
     this.output.scrollTop = this.output.scrollHeight;
+    return line;
+  }
+
+  appendOutput(rendered, transcriptEntry = null) {
+    const nodes = normalizeRenderedNodes(rendered, this.document, `${this.className}__line`);
+    if (!nodes.length) return null;
+    nodes.forEach(node => this.output.appendChild(node));
+    if (transcriptEntry) this.recordTranscript(transcriptEntry);
+    this.trimOutput();
+    this.output.scrollTop = this.output.scrollHeight;
+    return nodes[nodes.length - 1];
+  }
+
+  renderDefaultResult(result, options = {}) {
+    if (options.resetSession) return;
+    if (result.stdout) this.printBlock(result.stdout);
+    if (result.stderr) this.printBlock(result.stderr, 'error');
+  }
+
+  async renderCommandResult(result, command, options = {}) {
+    if (!this.renderResult || options.resetSession) return false;
+    const context = {
+      result,
+      command,
+      renderer: this,
+      terminal: this.core,
+      document: this.document,
+      resetSession: Boolean(options.resetSession),
+      print: (text, cls = '') => this.print(text, cls),
+      printBlock: (text, cls = '') => this.printBlock(text, cls),
+      append: (rendered, transcriptEntry = null) => this.appendOutput(rendered, transcriptEntry),
+      defaultRender: () => this.renderDefaultResult(result, options),
+    };
+    const rendered = await this.renderResult(context);
+    if (rendered === true) return true;
+    if (rendered === false || rendered == null) return false;
+    this.appendOutput(rendered, {
+      type: 'line',
+      text: resultTextForTranscript(result, command),
+      className: result.status === 0 ? '' : 'error',
+    });
+    return true;
   }
 
   printBlock(text, cls = '') {
@@ -163,8 +243,8 @@ export class DomTerminalRenderer {
           const result = await this.core.execute(command, { signal: this.runningAbort?.signal || null });
           this.handleEvents(result.events);
           const resetSession = result.events.some(event => event.type === 'session-reset');
-          if (!resetSession && result.stdout) this.printBlock(result.stdout);
-          if (!resetSession && result.stderr) this.printBlock(result.stderr, 'error');
+          const customRendered = await this.renderCommandResult(result, command, { resetSession });
+          if (!customRendered) this.renderDefaultResult(result, { resetSession });
           if (this.onResult) this.onResult(result, command, this.core);
         } catch (error) {
           if (this.onError) this.onError(error, command, this.core);
@@ -261,19 +341,52 @@ export class DomTerminalRenderer {
   }
 
   freezeInput(row, command) {
+    this.renderFrozenInput(row, this.prompt(), command, { record: true });
+  }
+
+  renderFrozenInput(row, promptText, command, options = {}) {
+    const commandText = String(command ?? '');
     row.textContent = '';
-    const prompt = this.document.createElement('span');
-    prompt.className = `${this.className}__prompt`;
-    prompt.textContent = this.prompt();
-    const text = this.document.createElement('span');
-    text.className = `${this.className}__command`;
-    text.textContent = ` ${command}`;
-    row.append(prompt, text);
-    this.recordTranscript({
-      type: 'input',
-      prompt: prompt.textContent,
-      command: String(command ?? ''),
-    });
+    const context = {
+      prompt: String(promptText ?? ''),
+      command: commandText,
+      row,
+      renderer: this,
+      terminal: this.core,
+      document: this.document,
+      restoring: Boolean(options.restoring),
+    };
+    let rendered = null;
+    if (this.renderInput) rendered = this.renderInput(context);
+    if (rendered === false) {
+      if (options.record !== false) {
+        this.recordTranscript({
+          type: 'input',
+          prompt: context.prompt,
+          command: commandText,
+        });
+      }
+      return;
+    }
+    const nodes = normalizeRenderedNodes(rendered, this.document);
+    if (nodes.length) {
+      row.append(...nodes);
+    } else {
+      const prompt = this.document.createElement('span');
+      prompt.className = `${this.className}__prompt`;
+      prompt.textContent = context.prompt;
+      const text = this.document.createElement('span');
+      text.className = `${this.className}__command`;
+      text.textContent = ` ${commandText}`;
+      row.append(prompt, text);
+    }
+    if (options.record !== false) {
+      this.recordTranscript({
+        type: 'input',
+        prompt: context.prompt,
+        command: commandText,
+      });
+    }
   }
 
   trimOutput() {
@@ -302,20 +415,11 @@ export class DomTerminalRenderer {
     if (entry.type === 'input') {
       const row = this.document.createElement('div');
       row.className = `${this.className}__input-row`;
-      const prompt = this.document.createElement('span');
-      prompt.className = `${this.className}__prompt`;
-      prompt.textContent = entry.prompt;
-      const text = this.document.createElement('span');
-      text.className = `${this.className}__command`;
-      text.textContent = ` ${entry.command}`;
-      row.append(prompt, text);
       this.output.appendChild(row);
+      this.renderFrozenInput(row, entry.prompt, entry.command, { record: false, restoring: true });
       return;
     }
-    const line = this.document.createElement('div');
-    line.className = `${this.className}__line ${entry.className || ''}`.trim();
-    line.textContent = entry.text;
-    this.output.appendChild(line);
+    this.appendLine(entry.text, entry.className || '', { record: false, restoring: true });
   }
 
   clearTranscript() {
@@ -414,6 +518,36 @@ function sanitizeTranscript(state, maxEntries, maxBytes) {
 
 function sanitizeClassName(value) {
   return String(value || '').split(/\s+/).filter(name => /^[A-Za-z0-9_-]{1,64}$/.test(name)).join(' ');
+}
+
+function normalizeRenderedNodes(rendered, doc, fallbackClassName = '') {
+  if (rendered === false || rendered == null) return [];
+  if (Array.isArray(rendered)) return rendered.flatMap(item => normalizeRenderedNodes(item, doc, fallbackClassName));
+  if (typeof rendered !== 'string' && isIterable(rendered)) {
+    return [...rendered].flatMap(item => normalizeRenderedNodes(item, doc, fallbackClassName));
+  }
+  if (isDomNode(rendered)) return [rendered];
+  const line = doc.createElement('div');
+  if (fallbackClassName) line.className = fallbackClassName;
+  line.textContent = String(rendered);
+  return [line];
+}
+
+function isIterable(value) {
+  return value && typeof value !== 'string' && typeof value[Symbol.iterator] === 'function';
+}
+
+function isDomNode(value) {
+  return Boolean(value && typeof value === 'object' && (
+    typeof value.nodeType === 'number' ||
+    typeof value.appendChild === 'function' ||
+    typeof value.textContent === 'string'
+  ));
+}
+
+function resultTextForTranscript(result, command) {
+  const text = [result?.stdout, result?.stderr].filter(Boolean).join('\n').trim();
+  return text || String(command || '').trim() || `exit ${Number(result?.status || 0)}`;
 }
 
 function transcriptByteLength(entries) {

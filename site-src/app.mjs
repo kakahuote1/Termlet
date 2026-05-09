@@ -181,11 +181,11 @@ function mountOrbTerminal() {
     persistTranscript: true,
     maxLines: 220,
     autoFocus: false,
-    onCommand: command => playLabEffect('dragon', command, { source: 'input' }),
-    onResult: (result, command) => {
+    renderInput: renderOrbInput,
+    renderLine: renderOrbLine,
+    renderResult: renderOrbResult,
+    onResult: result => {
       updateStatus('orb', `exit ${result.status}`);
-      playLabEffect('orbit', resultText(result, command), { source: 'output' });
-      if (result.events.some(event => event.type === 'effect')) playLabEffect('pulse', command, { source: 'event' });
     },
   }).attach();
 
@@ -211,11 +211,11 @@ function mountRainTerminal() {
     persistTranscript: true,
     maxLines: 220,
     autoFocus: false,
-    onCommand: command => playLabEffect('fall', command, { source: 'input' }),
-    onResult: (result, command) => {
+    renderInput: renderRainInput,
+    renderLine: renderRainLine,
+    renderResult: renderRainResult,
+    onResult: result => {
       updateStatus('rain', `exit ${result.status}`);
-      playLabEffect('fall', resultText(result, command), { source: 'output' });
-      if (result.events.some(event => event.type === 'effect')) playLabEffect('pulse', command, { source: 'event' });
     },
   }).attach();
 
@@ -357,6 +357,132 @@ function runInRenderer(renderer, command) {
 function resultText(result, command) {
   const text = [result?.stdout, result?.stderr].filter(Boolean).join('\n').trim();
   return text || command || 'exit 0';
+}
+
+function outputText(result) {
+  return [result?.stdout, result?.stderr].filter(Boolean).join('\n').replace(/\n$/, '').trim();
+}
+
+function renderOrbInput({ document, prompt, command, row, restoring }) {
+  row.classList.add('orb-flow', 'orb-flow--input', 'orb-output-ring');
+  if (restoring) row.classList.add('is-restored');
+  return createOrbOrbit(document, `${prompt} ${command}`, {
+    kind: 'input',
+    className: 'orb-command-orbit orb-output-ring',
+    seed: command.length,
+  });
+}
+
+function renderOrbLine({ document, text, className, restoring }) {
+  return createOrbOrbit(document, text, {
+    kind: className?.includes('error') ? 'error' : 'output',
+    className: 'orb-output-ring',
+    restored: restoring,
+    seed: text.length,
+  });
+}
+
+function renderOrbResult(context) {
+  const text = outputText(context.result) || resultText(context.result, context.command);
+  const kind = context.result.status === 0 ? 'output' : 'error';
+  if (!text) return true;
+  context.append(createOrbOrbit(context.document, text, {
+    kind,
+    className: 'orb-output-ring',
+    seed: context.command.length + text.length,
+  }), {
+    type: 'line',
+    text,
+    className: kind,
+  });
+  return true;
+}
+
+function renderRainInput({ document, prompt, command, row, restoring }) {
+  row.classList.add('rain-render-line', 'rain-render-line--input');
+  if (restoring) row.classList.add('is-restored');
+  return createRainLineContent(document, `${prompt} ${command}`, 'input', command.length);
+}
+
+function renderRainLine({ document, text, className, restoring }) {
+  const node = createRainDropLine(document, text, className?.includes('error') ? 'error' : 'output', 0);
+  if (restoring) node.classList.add('is-restored');
+  return node;
+}
+
+function renderRainResult(context) {
+  const text = outputText(context.result) || resultText(context.result, context.command);
+  const kind = context.result.status === 0 ? 'output' : 'error';
+  if (!text) return true;
+  const nodes = text.split('\n').slice(0, 12).map((line, index) => createRainDropLine(context.document, line, kind, index));
+  context.append(nodes, {
+    type: 'line',
+    text,
+    className: kind,
+  });
+  return true;
+}
+
+function createOrbOrbit(document, text, options = {}) {
+  const line = document.createElement('div');
+  const kind = options.kind || 'output';
+  line.className = `orb-orbit-line orb-orbit-line--${kind} ${options.className || ''} ${options.restored ? 'is-restored' : ''}`.trim();
+  const plainText = String(text || '').trim() || 'termlet';
+  line.setAttribute('aria-label', plainText);
+  const plain = document.createElement('span');
+  plain.className = 'sr-only';
+  plain.textContent = plainText;
+  const track = document.createElement('span');
+  track.className = 'orb-orbit-track orb-output-ring__track';
+  const words = tokenizeEffectText(plainText).slice(0, kind === 'input' ? 18 : 16);
+  const count = Math.max(words.length, 1);
+  const seed = Number(options.seed || 0);
+  track.style.setProperty('--orbit-duration', `${kind === 'input' ? 10 : 13 + (seed % 4)}s`);
+  track.style.setProperty('--orbit-phase', `${(seed * 17) % 360}deg`);
+  words.forEach((word, index) => {
+    const token = document.createElement('span');
+    const angle = (360 / count) * index + ((seed * 7) % 28);
+    token.textContent = word;
+    token.className = `orb-orbit-token ${index === 0 && kind === 'input' ? 'orb-orbit-token--prompt' : ''}`.trim();
+    token.style.setProperty('--a', `${angle}deg`);
+    token.style.setProperty('--ra', `${-angle}deg`);
+    token.style.setProperty('--d', `${48 + ((index + seed) % 4) * 11}px`);
+    token.style.setProperty('--i', String(index));
+    track.appendChild(token);
+  });
+  line.append(plain, track);
+  return line;
+}
+
+function createRainDropLine(document, text, kind, index) {
+  const line = document.createElement('div');
+  line.className = `rain-render-line rain-render-line--${kind || 'output'}`;
+  line.appendChild(createRainLineContent(document, text, kind, index));
+  return line;
+}
+
+function createRainLineContent(document, text, kind, seed = 0) {
+  const stream = document.createElement('span');
+  stream.className = `rain-token-stream rain-token-stream--${kind || 'output'}`;
+  const plainText = String(text || '').trim() || 'stdout';
+  stream.setAttribute('aria-label', plainText);
+  const plain = document.createElement('span');
+  plain.className = 'sr-only';
+  plain.textContent = plainText;
+  stream.appendChild(plain);
+  tokenizeEffectText(plainText).slice(0, kind === 'input' ? 14 : 24).forEach((word, index) => {
+    const token = document.createElement('span');
+    const spin = ((index + Number(seed || 0)) % 5 - 2) * 12;
+    token.className = `rain-render-text rain-render-token rain-render-text--${kind || 'output'}`;
+    token.textContent = word;
+    token.style.setProperty('--lane', `${6 + ((Number(seed || 0) * 17 + index * 13) % 88)}%`);
+    token.style.setProperty('--delay', `${(index % 9) * 72}ms`);
+    token.style.setProperty('--drift', `${((index % 7) - 3) * 18}px`);
+    token.style.setProperty('--spin', `${spin}deg`);
+    token.style.setProperty('--spin-start', `${-spin}deg`);
+    stream.appendChild(token);
+  });
+  return stream;
 }
 
 function playLabEffect(type, text, options = {}) {

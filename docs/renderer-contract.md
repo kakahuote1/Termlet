@@ -39,6 +39,39 @@ A reusable terminal should support:
 
 The reference DOM renderer implements these basics.
 
+## Reference DOM Renderer Hooks
+
+`DomTerminalRenderer` can be used as a complete renderer or as a base renderer with custom output surfaces. These hooks let you keep the built-in keyboard handling, history, completion, session transcript, and Ctrl+C behavior while replacing how input and output appear:
+
+- `renderInput(context)` rewrites a submitted command row after the user presses Enter.
+- `renderLine(context)` rewrites each visible stdout/stderr/editor line.
+- `renderResult(context)` can take ownership of a whole command result. Return `true` after rendering to prevent the default stdout/stderr printer from running.
+
+```js
+new DomTerminalRenderer(terminal, {
+  mount: '#terminal',
+  renderInput({ document, prompt, command }) {
+    const row = document.createElement('div');
+    row.textContent = `${prompt} ${command}`;
+    row.className = 'my-command-row';
+    return row;
+  },
+  renderLine({ document, text, className }) {
+    const line = document.createElement('div');
+    line.className = `my-output-line ${className}`;
+    line.textContent = text;
+    return line;
+  },
+  renderResult({ result, printBlock }) {
+    if (result.stdout) printBlock(result.stdout);
+    if (result.stderr) printBlock(result.stderr, 'error');
+    return true;
+  },
+}).attach();
+```
+
+For special effects, `renderLine` can return a controlled DOM structure such as falling tokens, orbiting text, HUD chips, timeline entries, or framework-owned nodes. Use `textContent` for any command-derived text. Do not use `innerHTML` for terminal output.
+
 ## Layout Baseline
 
 Terminal output commonly contains long paths, hashes, base64 strings, and generated artifacts. The renderer should prevent page breakage:

@@ -179,6 +179,37 @@ async function run(line) {
 
 不要把命令输出写入 `innerHTML`。
 
+如果只想改输入和输出的形态，不一定要从零写完整 renderer。可以继续使用 `DomTerminalRenderer` 的键盘、历史、补全、Ctrl+C 和 transcript 能力，只接管需要改变的显示层：
+
+```js
+new DomTerminalRenderer(terminal, {
+  mount: '#terminal',
+  renderInput({ document, prompt, command }) {
+    const row = document.createElement('div');
+    row.className = 'dragon-command';
+    row.textContent = `${prompt} ${command}`;
+    return row;
+  },
+  renderLine({ document, text, className }) {
+    const burst = document.createElement('div');
+    burst.className = `falling-output ${className}`;
+    text.split(/\s+/).forEach(word => {
+      const token = document.createElement('span');
+      token.textContent = word;
+      burst.appendChild(token);
+    });
+    return burst;
+  },
+  renderResult({ result, printBlock }) {
+    if (result.stdout) printBlock(result.stdout);
+    if (result.stderr) printBlock(result.stderr, 'error');
+    return true;
+  },
+}).attach();
+```
+
+这类写法适合做命令雨、圆形终端、游戏 HUD、对话气泡、课程步骤流等特殊形态。命令仍然只返回 `stdout/stderr/events`，页面怎么动由渲染层决定。
+
 如果你的渲染器支持中断：
 
 ```js

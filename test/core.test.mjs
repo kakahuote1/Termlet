@@ -425,6 +425,44 @@ test('dom renderer provides a default editor preview for editor events', async (
   assert.match(mount.textContent, /--- end vim preview ---/);
 });
 
+test('dom renderer hooks can rewrite input rows, lines, and whole command results', async () => {
+  const terminal = createTerminal();
+  terminal.register('paint', () => ok('alpha\nbeta\n'));
+  const document = createFakeDocument();
+  const mount = document.createElement('div');
+  const renderer = new DomTerminalRenderer(terminal, {
+    document,
+    mount,
+    welcome: '',
+    renderInput({ document, prompt, command }) {
+      const node = document.createElement('section');
+      node.className = 'custom-input';
+      node.textContent = `input:${prompt}:${command}`;
+      return node;
+    },
+    renderLine({ document, text, className }) {
+      const node = document.createElement('article');
+      node.className = `custom-line ${className}`.trim();
+      node.textContent = `line:${className || 'normal'}:${text}`;
+      return node;
+    },
+    renderResult({ document, result }) {
+      const node = document.createElement('aside');
+      node.className = 'custom-result';
+      node.textContent = `result:${result.stdout.trim().replace(/\n/g, '|')}`;
+      return node;
+    },
+  }).attach();
+
+  renderer.print('manual', 'muted');
+  await submitRendererCommand(renderer, 'paint');
+
+  assert.match(mount.textContent, /line:muted:manual/);
+  assert.match(mount.textContent, /input:\[guest@blog-server ~\]\$:paint/);
+  assert.match(mount.textContent, /result:alpha\|beta/);
+  assert.doesNotMatch(mount.textContent, /line:normal:alpha/);
+});
+
 test('starter adapter mounts a themed refresh-resistant blog terminal', async () => {
   const document = createFakeDocument();
   const mount = document.createElement('div');

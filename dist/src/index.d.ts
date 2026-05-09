@@ -182,6 +182,37 @@ export function sortRecords(records: Array<Record<string, unknown>>, property: s
 export function filterRecords(records: Array<Record<string, unknown>>, property: string, operator: string, expected: unknown): Array<Record<string, unknown>>;
 export const DEFAULT_TERMINAL_CSS: string;
 
+export type DomRenderedValue = Node | string | number | false | null | undefined | DomRenderedValue[] | Iterable<DomRenderedValue>;
+
+export interface DomRenderContextBase {
+  renderer: DomTerminalRenderer;
+  terminal: TerminalCore;
+  document: Document;
+}
+
+export interface DomLineRenderContext extends DomRenderContextBase {
+  text: string;
+  className: string;
+  restoring: boolean;
+}
+
+export interface DomInputRenderContext extends DomRenderContextBase {
+  prompt: string;
+  command: string;
+  row: Element;
+  restoring: boolean;
+}
+
+export interface DomResultRenderContext extends DomRenderContextBase {
+  result: CommandResult;
+  command: string;
+  resetSession: boolean;
+  print(text: string, className?: string): Element | null;
+  printBlock(text: string, className?: string): void;
+  append(rendered: DomRenderedValue, transcriptEntry?: Record<string, unknown> | null): Element | null;
+  defaultRender(): void;
+}
+
 export class DomTerminalRenderer {
   constructor(core: TerminalCore, options?: {
     mount: string | Element;
@@ -203,13 +234,20 @@ export class DomTerminalRenderer {
     onCommand?: (command: string, terminal: TerminalCore) => void;
     onResult?: (result: CommandResult, command: string, terminal: TerminalCore) => void;
     onError?: (error: unknown, command: string, terminal: TerminalCore) => void;
+    renderInput?: (context: DomInputRenderContext) => DomRenderedValue;
+    renderLine?: (context: DomLineRenderContext) => DomRenderedValue;
+    renderResult?: (context: DomResultRenderContext) => DomRenderedValue | true | Promise<DomRenderedValue | true>;
     editorPreview?: boolean;
   });
   attach(): this;
   destroy(): this;
   focus(): void;
-  print(text: string, cls?: string): void;
+  print(text: string, cls?: string): Element | null;
   printBlock(text: string, cls?: string): void;
+  appendLine(text: string, cls?: string, options?: Record<string, unknown>): Element | null;
+  appendOutput(rendered: DomRenderedValue, transcriptEntry?: Record<string, unknown> | null): Element | null;
+  renderDefaultResult(result: CommandResult, options?: { resetSession?: boolean }): void;
+  renderCommandResult(result: CommandResult, command: string, options?: { resetSession?: boolean }): Promise<boolean>;
   restoreTranscript(): boolean;
   clearTranscript(): void;
   saveTranscript(): void;
