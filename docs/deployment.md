@@ -6,6 +6,8 @@ Termlet is plain ES modules. You can use it without a bundler, or bundle it thro
 
 For copy-and-paste deployment, build `dist/`:
 
+The demo site also publishes `downloads/termlet-drop-in.zip`, which contains a ready-to-test `index.html` and `termlet/` folder.
+
 ```powershell
 npm run build
 ```

@@ -131,6 +131,10 @@
         <h2 id="install-title">三步接入博客</h2>
         <p class="section-copy">下载构建产物，把 `dist/` 改名为 `termlet/` 放进站点静态目录，再复制下面这段 HTML。Hugo、Hexo、Jekyll、Astro、VitePress 都是同一个思路。</p>
       </div>
+      <div class="download-panel">
+        <a class="download-button" href="./downloads/termlet-drop-in.zip" download>下载 drop-in zip</a>
+        <p>压缩包里已经包含 `index.html` 和 `termlet/`，解压后可以直接放进静态站点测试。</p>
+      </div>
       <div class="install-steps" aria-label="接入步骤">
         <article>
           <span>1</span>
@@ -144,6 +148,23 @@
           <span>3</span>
           <p>粘贴代码，修改 `siteName`、`intro` 和 `theme`。</p>
         </article>
+      </div>
+      <div class="starter-config" aria-label="生成接入代码">
+        <label>
+          <span>站点名称</span>
+          <input type="text" value="My Blog" data-config-field="siteName" autocomplete="off">
+        </label>
+        <label>
+          <span>欢迎语</span>
+          <input type="text" value="Welcome to my terminal." data-config-field="intro" autocomplete="off">
+        </label>
+        <div class="theme-picker" aria-label="选择主题">
+          <button type="button" data-theme-choice="linux" aria-pressed="true">linux</button>
+          <button type="button" data-theme-choice="powershell" aria-pressed="false">powershell</button>
+          <button type="button" data-theme-choice="cmd" aria-pressed="false">cmd</button>
+          <button type="button" data-theme-choice="light" aria-pressed="false">light</button>
+          <button type="button" data-theme-choice="crt" aria-pressed="false">crt</button>
+        </div>
       </div>
       <div class="copy-row">
         <button type="button" data-copy-target="starter-snippet">复制接入代码</button>
@@ -171,11 +192,11 @@
         <p class="section-copy">`theme` 支持 linux、powershell、cmd、light、crt。需要更细的外观时，覆盖 `--termlet-*` CSS 变量即可。</p>
       </div>
       <div class="theme-list" aria-label="内置主题">
-        <button type="button" data-copy-text="theme: 'linux'">linux</button>
-        <button type="button" data-copy-text="theme: 'powershell'">powershell</button>
-        <button type="button" data-copy-text="theme: 'cmd'">cmd</button>
-        <button type="button" data-copy-text="theme: 'light'">light</button>
-        <button type="button" data-copy-text="theme: 'crt'">crt</button>
+        <button type="button" data-theme-choice="linux">linux</button>
+        <button type="button" data-theme-choice="powershell">powershell</button>
+        <button type="button" data-theme-choice="cmd">cmd</button>
+        <button type="button" data-theme-choice="light">light</button>
+        <button type="button" data-theme-choice="crt">crt</button>
       </div>
     </section>
   </main>

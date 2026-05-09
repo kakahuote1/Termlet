@@ -55,7 +55,7 @@ Termlet 是一个运行在浏览器中的终端引擎。不需要后端、不需
 </script>
 ```
 
-生产环境先 `npm run build`，然后引用 `dist/` 产物：
+生产环境可以直接在在线演示页下载 `termlet-drop-in.zip`，也可以本地运行 `npm run build` 后引用 `dist/` 产物：
 
 ```html
 <link rel="stylesheet" href="/termlet/termlet.css">

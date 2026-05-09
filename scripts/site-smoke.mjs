@@ -8,12 +8,14 @@ const indexPath = join(siteDir, 'index.html');
 const appPath = join(siteDir, 'app.mjs');
 const cssPath = join(siteDir, 'termlet', 'termlet.css');
 const entryPath = join(siteDir, 'termlet', 'index.mjs');
+const dropInZipPath = join(siteDir, 'downloads', 'termlet-drop-in.zip');
 
 const failures = [];
 assertFile(indexPath);
 assertFile(appPath);
 assertFile(cssPath);
 assertFile(entryPath);
+assertFile(dropInZipPath);
 
 const index = readText(indexPath);
 const app = readText(appPath);
@@ -28,6 +30,9 @@ assert(index.includes('id="powershell-terminal"'), 'demo should include a PowerS
 assert(index.includes('id="cmd-terminal"'), 'demo should include a CMD terminal preview');
 assert(index.includes('mountStarterTerminal'), 'demo should include beginner starter snippet');
 assert(index.includes('data-copy-target="starter-snippet"'), 'demo should expose a copy button for starter snippet');
+assert(index.includes('downloads/termlet-drop-in.zip'), 'demo should expose a drop-in zip download');
+assert(index.includes('data-config-field="siteName"'), 'demo should expose site name config');
+assert(index.includes('data-theme-choice="crt"'), 'demo should expose visual theme choices');
 assert(index.includes("theme: 'linux'"), 'demo should show beginner theme selection');
 assert(!/GitHub Actions|workflow|Settings/.test(index), 'demo should not explain maintainer-specific GitHub Actions flow');
 assert(!/胚|玩具|你拿到|开发者/.test(index + app), 'demo copy should use neutral product language');
@@ -45,6 +50,7 @@ assert(!app.includes('injectDefaultStyles'), 'strict demo should not inject inli
 assert(app.includes('./termlet/index.mjs'), 'demo app should import built Termlet entry');
 assert(app.includes('createWindowsTerminal'), 'demo app should mount Windows-style terminals');
 assert(app.includes('copyFromButton'), 'demo app should support copying starter snippets');
+assert(app.includes('updateStarterSnippet'), 'demo app should regenerate starter snippets from form input');
 assert(app.includes('createSessionStorageAdapter'), 'demo should use current-tab session persistence');
 assert(app.includes('persistVfs: true'), 'demo should persist VFS changes across refreshes in the current tab');
 assert(app.includes('persistTranscript: true'), 'demo should persist visible terminal transcript across refreshes in the current tab');

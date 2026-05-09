@@ -118,9 +118,30 @@ document.querySelectorAll('[data-run]').forEach(button => {
   });
 });
 
-document.querySelectorAll('[data-copy-target], [data-copy-text]').forEach(button => {
+const starterConfig = {
+  siteName: 'My Blog',
+  intro: 'Welcome to my terminal.',
+  theme: 'linux',
+};
+
+document.querySelectorAll('[data-copy-target]').forEach(button => {
   button.addEventListener('click', () => copyFromButton(button));
 });
+document.querySelectorAll('[data-config-field]').forEach(input => {
+  input.addEventListener('input', () => {
+    starterConfig[input.getAttribute('data-config-field')] = input.value;
+    updateStarterSnippet();
+  });
+});
+document.querySelectorAll('[data-theme-choice]').forEach(button => {
+  button.addEventListener('click', () => {
+    starterConfig.theme = button.getAttribute('data-theme-choice') || 'linux';
+    updateStarterSnippet();
+    updateThemeButtons();
+  });
+});
+updateStarterSnippet();
+updateThemeButtons();
 
 const repoLink = document.querySelector('[data-repo-link]');
 if (repoLink) {
@@ -156,7 +177,7 @@ function runInRenderer(renderer, command) {
 async function copyFromButton(button) {
   const targetId = button.getAttribute('data-copy-target');
   const target = targetId ? document.getElementById(targetId) : null;
-  const text = button.getAttribute('data-copy-text') || target?.textContent || '';
+  const text = target?.textContent || '';
   if (!text.trim()) return;
   let copied = false;
   try {
@@ -173,6 +194,41 @@ async function copyFromButton(button) {
     button.textContent = previous;
     if (status) status.textContent = '';
   }, 1400);
+}
+
+function updateStarterSnippet() {
+  const target = document.querySelector('#starter-snippet');
+  if (!target) return;
+  target.textContent = makeStarterSnippet(starterConfig);
+}
+
+function updateThemeButtons() {
+  document.querySelectorAll('[data-theme-choice]').forEach(button => {
+    const active = button.getAttribute('data-theme-choice') === starterConfig.theme;
+    button.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+}
+
+function makeStarterSnippet(config) {
+  return [
+    '<link rel="stylesheet" href="/termlet/termlet.css">',
+    '<div id="terminal"></div>',
+    '<script type="module">',
+    "  import { mountStarterTerminal } from '/termlet/index.mjs';",
+    '',
+    '  await mountStarterTerminal({',
+    "    mount: '#terminal',",
+    '    injectStyles: false,',
+    `    theme: ${jsString(config.theme)},`,
+    `    siteName: ${jsString(config.siteName)},`,
+    `    intro: ${jsString(config.intro)},`,
+    '  });',
+    '</script>',
+  ].join('\n');
+}
+
+function jsString(value) {
+  return JSON.stringify(String(value || ''));
 }
 
 function fallbackCopy(text) {

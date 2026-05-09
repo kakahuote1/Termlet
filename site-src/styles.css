@@ -342,6 +342,35 @@ h3 {
   margin-top: 26px;
 }
 
+.download-panel {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  margin-top: 28px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.download-panel p {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.download-button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--cyan);
+  border-radius: 6px;
+  padding: 0 16px;
+  color: var(--text);
+  background: rgba(101, 217, 232, .12);
+}
+
 .install-steps {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -385,7 +414,8 @@ h3 {
 }
 
 .copy-row button,
-.theme-list button {
+.theme-list button,
+.theme-picker button {
   min-height: 44px;
   border: 1px solid var(--line);
   border-radius: 6px;
@@ -398,9 +428,50 @@ h3 {
 .copy-row button:hover,
 .copy-row button:focus-visible,
 .theme-list button:hover,
-.theme-list button:focus-visible {
+.theme-list button:focus-visible,
+.theme-picker button:hover,
+.theme-picker button:focus-visible,
+.theme-picker button[aria-pressed="true"],
+.theme-list button[aria-pressed="true"] {
   border-color: var(--cyan);
   outline: none;
+}
+
+.starter-config {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.starter-config label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.starter-config input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0 12px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.starter-config input:focus-visible {
+  border-color: var(--cyan);
+  outline: none;
+}
+
+.theme-picker {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 [data-copy-status] {
@@ -427,7 +498,9 @@ h3 {
 @media (max-width: 900px) {
   .workspace,
   .style-grid,
-  .install-steps {
+  .install-steps,
+  .starter-config,
+  .download-panel {
     grid-template-columns: 1fr;
   }
 
