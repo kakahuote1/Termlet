@@ -188,6 +188,7 @@ function mountOrbTerminal() {
       updateStatus('orb', `exit ${result.status}`);
     },
   }).attach();
+  attachOrbLiveInput(renderer);
 
   return { terminal, renderer };
 }
@@ -354,6 +355,31 @@ function runInRenderer(renderer, command) {
   }, input, row);
 }
 
+function attachOrbLiveInput(renderer) {
+  const preview = renderer.document.createElement('div');
+  preview.className = 'orb-live-preview';
+  preview.setAttribute('aria-hidden', 'true');
+  renderer.mount.appendChild(preview);
+  const render = () => {
+    const input = renderer.activeInput;
+    if (!input || input.disabled) return;
+    const row = input.closest('.blog-terminal__input-row');
+    const prompt = row?.querySelector('.blog-terminal__prompt')?.textContent || renderer.prompt();
+    const value = input.value ? `${input.value}_` : '_';
+    preview.replaceChildren(createOrbOrbit(renderer.document, `${prompt} ${value}`, {
+      kind: 'live',
+      className: 'orb-live-orbit',
+      seed: value.length,
+      maxChars: 52,
+    }));
+  };
+  renderer.mount.addEventListener('input', render);
+  renderer.mount.addEventListener('keyup', render);
+  renderer.mount.addEventListener('click', render);
+  window.setInterval(render, 260);
+  render();
+}
+
 function resultText(result, command) {
   const text = [result?.stdout, result?.stderr].filter(Boolean).join('\n').trim();
   return text || command || 'exit 0';
@@ -432,26 +458,40 @@ function createOrbOrbit(document, text, options = {}) {
   const plain = document.createElement('span');
   plain.className = 'sr-only';
   plain.textContent = plainText;
-  const track = document.createElement('span');
-  track.className = 'orb-orbit-track orb-output-ring__track';
-  const words = tokenizeEffectText(plainText).slice(0, kind === 'input' ? 18 : 16);
-  const count = Math.max(words.length, 1);
+  const chars = tokenizeOrbCharacters(plainText, options.maxChars || (kind === 'input' ? 58 : 72));
   const seed = Number(options.seed || 0);
-  track.style.setProperty('--orbit-duration', `${kind === 'input' ? 10 : 13 + (seed % 4)}s`);
-  track.style.setProperty('--orbit-phase', `${(seed * 17) % 360}deg`);
-  words.forEach((word, index) => {
-    const token = document.createElement('span');
-    const angle = (360 / count) * index + ((seed * 7) % 28);
-    token.textContent = word;
-    token.className = `orb-orbit-token ${index === 0 && kind === 'input' ? 'orb-orbit-token--prompt' : ''}`.trim();
-    token.style.setProperty('--a', `${angle}deg`);
-    token.style.setProperty('--ra', `${-angle}deg`);
-    token.style.setProperty('--d', `${48 + ((index + seed) % 4) * 11}px`);
-    token.style.setProperty('--i', String(index));
-    track.appendChild(token);
-  });
-  line.append(plain, track);
+  const ringSize = kind === 'live' ? 22 : kind === 'input' ? 24 : 26;
+  const rings = Math.max(1, Math.min(3, Math.ceil(chars.length / ringSize)));
+  for (let ringIndex = 0; ringIndex < rings; ringIndex += 1) {
+    const track = document.createElement('span');
+    const ringChars = chars.filter((_, index) => index % rings === ringIndex);
+    const count = Math.max(ringChars.length, 1);
+    track.className = 'orb-orbit-track orb-output-ring__track';
+    track.style.setProperty('--orbit-duration', `${kind === 'live' ? 8 + ringIndex * 1.4 : 12 + ringIndex * 2 + (seed % 3)}s`);
+    track.style.setProperty('--orbit-phase', `${(seed * 13 + ringIndex * 47) % 360}deg`);
+    track.style.setProperty('--ring-opacity', `${Math.max(.42, 1 - ringIndex * .18)}`);
+    ringChars.forEach((char, index) => {
+      const token = document.createElement('span');
+      const angle = (360 / count) * index + ((seed * 5 + ringIndex * 19) % 30);
+      token.textContent = char;
+      token.className = `orb-orbit-token ${kind === 'input' && index < 12 ? 'orb-orbit-token--prompt' : ''}`.trim();
+      token.style.setProperty('--a', `${angle}deg`);
+      token.style.setProperty('--ra', `${-angle}deg`);
+      token.style.setProperty('--d', `${46 + ringIndex * 17 + ((index + seed) % 2) * 3}px`);
+      token.style.setProperty('--i', String(index));
+      track.appendChild(token);
+    });
+    line.appendChild(track);
+  }
+  line.prepend(plain);
   return line;
+}
+
+function tokenizeOrbCharacters(text, maxChars) {
+  const chars = Array.from(String(text || '').replace(/\s+/g, ' ').trim())
+    .filter(char => char !== ' ')
+    .slice(0, maxChars);
+  return chars.length ? chars : ['_'];
 }
 
 function createRainDropLine(document, text, kind, index) {
@@ -475,9 +515,9 @@ function createRainLineContent(document, text, kind, seed = 0) {
     const spin = ((index + Number(seed || 0)) % 5 - 2) * 12;
     token.className = `rain-render-text rain-render-token rain-render-text--${kind || 'output'}`;
     token.textContent = word;
-    token.style.setProperty('--lane', `${8 + ((Number(seed || 0) * 17 + index * 13) % 52)}%`);
+    token.style.setProperty('--lane', `${20 + ((Number(seed || 0) * 17 + index * 11) % 38)}%`);
     token.style.setProperty('--delay', `${(index % 9) * 72}ms`);
-    token.style.setProperty('--drift', `${((index % 7) - 3) * 18}px`);
+    token.style.setProperty('--drift', `${((index % 5) - 2) * 8}px`);
     token.style.setProperty('--spin', `${spin}deg`);
     token.style.setProperty('--spin-start', `${-spin}deg`);
     stream.appendChild(token);

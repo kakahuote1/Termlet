@@ -92,6 +92,8 @@ assert(app.includes('renderInput: renderRainInput'), 'rain lab terminal should r
 assert(app.includes('renderLine: renderRainLine'), 'rain lab terminal should rewrite stdout/stderr lines');
 assert(app.includes('renderResult: renderRainResult'), 'rain lab terminal should own result rendering');
 assert(app.includes('createOrbOrbit'), 'orb lab terminal should render input and output on circular tracks');
+assert(app.includes('tokenizeOrbCharacters'), 'orb lab terminal should split orbiting text into characters');
+assert(app.includes('attachOrbLiveInput'), 'orb lab terminal should mirror pre-submit input on the orbit');
 assert(!app.includes('playLabEffect'), 'lab effects should stay inside each terminal renderer instead of external overlays');
 assert(!app.includes('injectDefaultStyles'), 'strict demo should not inject inline styles');
 
@@ -102,7 +104,7 @@ assert(css.includes('.scene-docs'), 'site CSS should style docs promo scene');
 assert(css.includes('.scene-lab'), 'site CSS should style extension lab scene');
 assert(css.includes('.orb-terminal'), 'site CSS should style spherical terminal');
 assert(css.includes('.command-rain'), 'site CSS should style falling command layer');
-assert(css.includes('@keyframes orb-live-input-orbit'), 'orb active input prompt should orbit before submission');
+assert(css.includes('.orb-live-preview'), 'orb active input prompt should orbit before submission');
 assert(css.includes('.orb-orbit-line'), 'orb renderer should place submitted input and output on circular tracks');
 assert(css.includes('.orb-orbit-token'), 'orb renderer should split input and output into orbiting tokens');
 assert(css.includes('.rain-render-line'), 'site CSS should animate rewritten rain input and output rows');
