@@ -475,7 +475,7 @@ function createRainLineContent(document, text, kind, seed = 0) {
     const spin = ((index + Number(seed || 0)) % 5 - 2) * 12;
     token.className = `rain-render-text rain-render-token rain-render-text--${kind || 'output'}`;
     token.textContent = word;
-    token.style.setProperty('--lane', `${6 + ((Number(seed || 0) * 17 + index * 13) % 88)}%`);
+    token.style.setProperty('--lane', `${8 + ((Number(seed || 0) * 17 + index * 13) % 52)}%`);
     token.style.setProperty('--delay', `${(index % 9) * 72}ms`);
     token.style.setProperty('--drift', `${((index % 7) - 3) * 18}px`);
     token.style.setProperty('--spin', `${spin}deg`);
@@ -483,77 +483,6 @@ function createRainLineContent(document, text, kind, seed = 0) {
     stream.appendChild(token);
   });
   return stream;
-}
-
-function playLabEffect(type, text, options = {}) {
-  const layer = document.querySelector('[data-lab-effect-layer]');
-  if (!layer) return;
-  trimEffectLayer(layer);
-  if (type === 'dragon') spawnDragon(layer, text, options);
-  else if (type === 'orbit') spawnOrbit(layer, text, options);
-  else if (type === 'pulse') spawnPulse(layer, text, options);
-  else spawnFalling(layer, text, options);
-}
-
-function trimEffectLayer(layer) {
-  while (layer.childElementCount > 90) layer.firstElementChild?.remove();
-}
-
-function spawnDragon(layer, text, options = {}) {
-  const words = tokenizeEffectText(text).slice(0, 18);
-  const dragon = document.createElement('div');
-  dragon.className = `lab-dragon ${options.source || ''}`.trim();
-  words.forEach((word, index) => {
-    const token = document.createElement('span');
-    const angle = index * 0.72;
-    const radius = 72 + index * 18;
-    token.textContent = word;
-    token.style.setProperty('--i', String(index));
-    token.style.setProperty('--x', `${Math.cos(angle) * radius}px`);
-    token.style.setProperty('--y', `${Math.sin(angle * 1.35) * 118}px`);
-    token.style.setProperty('--r', `${Math.sin(angle) * 44}deg`);
-    dragon.appendChild(token);
-  });
-  layer.appendChild(dragon);
-  setTimeout(() => dragon.remove(), 3600);
-}
-
-function spawnOrbit(layer, text, options = {}) {
-  const words = tokenizeEffectText(text).slice(0, 14);
-  const ring = document.createElement('div');
-  ring.className = `lab-orbit ${options.source || ''}`.trim();
-  const count = Math.max(words.length, 1);
-  words.forEach((word, index) => {
-    const token = document.createElement('span');
-    token.textContent = word;
-    token.style.setProperty('--a', `${(360 / count) * index}deg`);
-    token.style.setProperty('--d', `${180 + (index % 3) * 24}px`);
-    ring.appendChild(token);
-  });
-  layer.appendChild(ring);
-  setTimeout(() => ring.remove(), 5200);
-}
-
-function spawnFalling(layer, text, options = {}) {
-  const words = tokenizeEffectText(text).slice(0, 24);
-  words.forEach((word, index) => {
-    const token = document.createElement('span');
-    token.className = `lab-fall ${options.source || ''}`.trim();
-    token.textContent = word;
-    token.style.setProperty('--x', `${8 + ((index * 17) % 82)}%`);
-    token.style.setProperty('--delay', `${(index % 8) * 85}ms`);
-    token.style.setProperty('--drift', `${((index % 5) - 2) * 22}px`);
-    layer.appendChild(token);
-    setTimeout(() => token.remove(), 4200);
-  });
-}
-
-function spawnPulse(layer, text, options = {}) {
-  const pulse = document.createElement('div');
-  pulse.className = `lab-pulse ${options.source || ''}`.trim();
-  pulse.textContent = tokenizeEffectText(text).slice(0, 3).join(' ') || 'effect';
-  layer.appendChild(pulse);
-  setTimeout(() => pulse.remove(), 1500);
 }
 
 function tokenizeEffectText(text) {
