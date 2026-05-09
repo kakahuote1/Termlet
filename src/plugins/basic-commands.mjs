@@ -52,7 +52,7 @@ export function basicCommandsPlugin(terminal, options = {}) {
       if (args.length === 0) return ok(Object.keys(terminal.aliases).sort().map(key => `alias ${key}='${terminal.aliases[key]}'`).join('\n') + '\n');
       args.forEach(arg => {
         const match = arg.match(/^([A-Za-z0-9_-]+)=(.+)$/);
-        if (match) terminal.aliases[match[1]] = match[2].replace(/^['"]|['"]$/g, '');
+        if (match) terminal.setAlias(match[1], match[2].replace(/^['"]|['"]$/g, ''));
       });
       return ok('');
     })

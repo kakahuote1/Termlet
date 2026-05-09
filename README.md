@@ -221,7 +221,7 @@ npm run verify
 npm pack --dry-run
 ```
 
-`npm run verify` 会执行语法检查、单元测试、性能基线、文档断链检查、安全扫描、GitHub Pages demo 构建、API/导出 smoke、站点 smoke 和发布包 smoke。
+`npm run verify` 会执行语法检查、单元测试、性能基线、文档断链检查、安全扫描、GitHub Pages demo 构建和站点 smoke。
 
 ## License
 

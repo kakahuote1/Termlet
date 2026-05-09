@@ -79,6 +79,13 @@ export class TerminalCore {
   persistence: PersistenceAdapter | null;
   use(plugin: TerminalPlugin, options?: unknown): this;
   register(name: string, handler: CommandHandler, meta?: Record<string, unknown>): this;
+  unregister(name: string): boolean;
+  hasCommand(name: string): boolean;
+  command(name: string): { name: string; handler: CommandHandler; meta: Record<string, unknown> } | null;
+  alias(name: string): string | null;
+  setAlias(name: string, value: string): this;
+  removeAlias(name: string): boolean;
+  disposePlugins(): this;
   commandNames(): string[];
   complete(line: string): string[];
   completeCommand(token: string): string[];

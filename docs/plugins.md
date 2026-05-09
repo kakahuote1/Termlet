@@ -18,6 +18,20 @@ export function demoPlugin(terminal) {
 }
 ```
 
+如果插件需要清理，可以返回 disposer：
+
+```js
+export function temporaryPlugin(terminal) {
+  terminal.register('tmpcmd', () => ok('temporary\n'));
+  terminal.setAlias('tc', 'tmpcmd');
+
+  return () => {
+    terminal.unregister('tmpcmd');
+    terminal.removeAlias('tc');
+  };
+}
+```
+
 命令返回统一结构：
 
 ```js
@@ -98,6 +112,7 @@ renderer 负责解释事件。这样插件可以在 Node 中测试，也不会�
 - 输出走 `stdout`，错误走 `stderr`。
 - 失败时返回非 0 `status`。
 - 文件访问使用 VFS API。
+- 命令和 alias 优先用 `register()`、`unregister()`、`setAlias()`、`removeAlias()` 管理。
 - 异步命令支持 `signal` 或配置超时。
 - 大输出有上限。
 - 不操作无关 DOM。

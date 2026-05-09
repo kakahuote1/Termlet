@@ -33,6 +33,7 @@ const required = [
   'src/index.mjs',
   'src/index.d.ts',
   'src/adapters/feed.mjs',
+  'src/plugins/feed-posts.mjs',
   'dist/index.mjs',
   'dist/termlet.css',
   'docs/api.md',

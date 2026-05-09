@@ -10,6 +10,8 @@ export {
   fetchDiscoveredFeedPosts,
   parseFeedPosts,
   discoverFeedUrl,
+} from './plugins/feed-posts.mjs';
+export {
   hugoPostsPlugin,
   fetchHugoPosts,
 } from './plugins/hugo-adapter.mjs';

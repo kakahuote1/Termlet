@@ -1,12 +1,12 @@
 # 质量门禁
 
-Termlet 的目标是做成可复用的前端基础库，不只是一个 demo。提交前至少运行：
+Termlet 的默认门禁按普通开源项目维护，不追求过重流程。提交前运行：
 
 ```powershell
 npm run verify
 ```
 
-## `verify` 覆盖范围
+## 默认 `verify`
 
 | 命令 | 检查内容 |
 |---|---|
@@ -16,25 +16,31 @@ npm run verify
 | `npm run docs:smoke` | 检查 README、docs、examples 中的本地 Markdown 链接。 |
 | `npm run security:scan` | 扫描 runtime/demo/examples 中不应出现的危险前端终端原语。 |
 | `npm run site:build` | 生成 `dist/` 和 GitHub Pages demo。 |
-| `npm run api:smoke` | 检查 package exports、根导出、子路径导出和类型声明目标。 |
-| `npm run site:smoke` | 检查 demo 的 CSP、资源路径、严格样式路径和关键演示能力。 |
-| `npm run package:smoke` | 检查 `npm pack --dry-run` 的必备文件、禁止文件和包体上限。 |
+| `npm run site:smoke` | 检查 demo 的 CSP、资源路径、基础可访问性和关键演示能力。 |
+
+## 可选发布检查
+
+发布 npm 包或调整 public API 时再运行：
+
+```powershell
+npm run api:smoke
+npm run package:smoke
+npm pack --dry-run
+```
+
+- `api:smoke` 检查 package exports、根导出、子路径导出和类型声明目标。
+- `package:smoke` 检查 `npm pack --dry-run` 的必备文件、禁止文件和包体上限。
 
 ## 什么时候加测试
 
 - 改 shell 解析：加 `test/core.test.mjs`。
 - 改 VFS 权限或文件操作：加权限失败和破坏性操作测试。
 - 改 renderer 行为：至少加核心事件测试，必要时加 browser smoke。
-- 改包导出：更新 `scripts/api-smoke.mjs`。
-- 改发布内容：更新 `scripts/package-smoke.mjs`。
+- 改包导出：更新 `scripts/api-smoke.mjs`，发布前运行即可。
+- 改发布内容：更新 `scripts/package-smoke.mjs`，发布前运行即可。
 - 改 demo：更新 `scripts/site-smoke.mjs`。
 
-## 发布前手动复核
-
-```powershell
-npm run verify
-npm pack --dry-run
-```
+## 手动浏览器复核
 
 如果改了在线 demo，再启动本地静态服务并做一次浏览器复测：
 

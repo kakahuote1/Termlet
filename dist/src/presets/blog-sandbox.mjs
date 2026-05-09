@@ -6,9 +6,9 @@ export function blogSandboxPreset(options = {}) {
     const blogRoot = options.blogRoot || `/home/${user}/blog`;
 
     terminal.hostname = options.hostname || terminal.hostname;
-    terminal.aliases.ll ||= 'ls -al';
-    terminal.aliases.la ||= 'ls -a';
-    terminal.aliases.grep ||= 'grep --color=auto';
+    if (!terminal.alias('ll')) terminal.setAlias('ll', 'ls -al');
+    if (!terminal.alias('la')) terminal.setAlias('la', 'ls -a');
+    if (!terminal.alias('grep')) terminal.setAlias('grep', 'grep --color=auto');
 
     fs.ensureDir(blogRoot, { owner: user, group });
     fs.addFile(`/home/${user}/.bashrc`, 'alias ll="ls -al"\nalias la="ls -a"\nexport EDITOR=vim\n', { owner: user, group, perm: '-rw-r--r--' });

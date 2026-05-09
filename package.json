@@ -49,6 +49,10 @@
       "types": "./src/index.d.ts",
       "import": "./src/plugins/windows-commands.mjs"
     },
+    "./plugins/feed": {
+      "types": "./src/index.d.ts",
+      "import": "./src/plugins/feed-posts.mjs"
+    },
     "./plugins/hugo": {
       "types": "./src/index.d.ts",
       "import": "./src/plugins/hugo-adapter.mjs"
@@ -94,7 +98,7 @@
     "security:scan": "node scripts/security-scan.mjs",
     "site:smoke": "node scripts/site-smoke.mjs",
     "test": "node --test test/core.test.mjs",
-    "verify": "npm run check && npm test && npm run bench && npm run docs:smoke && npm run security:scan && npm run site:build && npm run api:smoke && npm run site:smoke && npm run package:smoke"
+    "verify": "npm run check && npm test && npm run bench && npm run docs:smoke && npm run security:scan && npm run site:build && npm run site:smoke"
   },
   "files": [
     "src",

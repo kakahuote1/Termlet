@@ -82,6 +82,27 @@ test('exposes generic factory aliases for non-blog users', async () => {
   assert.equal((await terminal.execute('echo portable')).stdout, 'portable\n');
 });
 
+test('core exposes plugin-friendly command and alias lifecycle APIs', async () => {
+  const terminal = createTerminal();
+  let disposed = false;
+  terminal.use(t => {
+    t.register('plugin-cmd', () => ({ status: 0, stdout: 'plugin\n' }));
+    t.setAlias('pc', 'plugin-cmd');
+    return () => {
+      disposed = true;
+      t.unregister('plugin-cmd');
+      t.removeAlias('pc');
+    };
+  });
+
+  assert.equal(terminal.hasCommand('plugin-cmd'), true);
+  assert.equal((await terminal.execute('pc')).stdout, 'plugin\n');
+  terminal.disposePlugins();
+  assert.equal(disposed, true);
+  assert.equal(terminal.hasCommand('plugin-cmd'), false);
+  assert.equal(terminal.alias('pc'), null);
+});
+
 test('feed adapter creates a generic blog terminal from posts', async () => {
   const terminal = await createFeedTerminal({
     posts: [{ title: 'Feed Adapter', content: '# Adapter\n' }],

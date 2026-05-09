@@ -84,6 +84,19 @@ export function toolsPlugin(terminal) {
 
 Handlers receive command args, stdin, shell state, `signal`, and the VFS through one context object.
 
+Plugin-facing lifecycle helpers:
+
+```js
+terminal.register('hello', handler);
+terminal.unregister('hello');
+terminal.hasCommand('hello');
+terminal.setAlias('hi', 'hello');
+terminal.removeAlias('hi');
+terminal.disposePlugins();
+```
+
+`terminal.use(plugin)` also accepts a plugin function that returns a disposer. Disposers are called by `terminal.disposePlugins()`.
+
 ## Filesystem
 
 ```js

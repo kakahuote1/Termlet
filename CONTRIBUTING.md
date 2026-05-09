@@ -10,7 +10,7 @@ npm run verify
 
 `verify` runs syntax checks, unit tests, the performance benchmark, Markdown link smoke, the focused security scan, the dist build, and the GitHub Pages demo smoke. The core has no runtime dependencies.
 
-See `docs/quality-gates.md` for the full gate list and when to extend each check.
+See `docs/quality-gates.md` for the standard gate list and the optional release checks.
 
 ## Project Rules
 
@@ -33,5 +33,5 @@ See `docs/quality-gates.md` for the full gate list and when to extend each check
 
 - Update `CHANGELOG.md`.
 - Run `npm run verify`.
-- Check `npm pack --dry-run` before publishing.
+- Check `npm run api:smoke` and `npm run package:smoke` before publishing a package.
 - Confirm `SECURITY.md` still matches any new command or adapter behavior.

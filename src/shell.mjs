@@ -38,6 +38,7 @@ export class TerminalCore {
     this.persistence = options.persistence || null;
     this.persistEnv = options.persistEnv || false;
     this.suppressNextPersist = false;
+    this.pluginDisposers = [];
     (options.plugins || []).forEach(plugin => this.use(plugin));
     if (options.restore !== false && this.persistence?.load) {
       this.restore(this.persistence.load());
@@ -46,15 +47,31 @@ export class TerminalCore {
 
   use(plugin, options = {}) {
     if (!plugin) return this;
-    if (typeof plugin === 'function') plugin(this, options);
-    else if (typeof plugin.install === 'function') plugin.install(this, options);
+    let dispose = null;
+    if (typeof plugin === 'function') dispose = plugin(this, options);
+    else if (typeof plugin.install === 'function') dispose = plugin.install(this, options);
     else throw new TypeError('plugin must be a function or { install() }');
+    if (typeof dispose === 'function') this.pluginDisposers.push(dispose);
     return this;
   }
 
   register(name, handler, meta = {}) {
     this.commands.set(name, { name, handler, meta });
     return this;
+  }
+
+  unregister(name) {
+    if (this.commands.delete(name)) return true;
+    if (!this.caseInsensitiveCommands) return false;
+    const normalized = String(name).toLowerCase();
+    for (const key of this.commands.keys()) {
+      if (key.toLowerCase() === normalized) return this.commands.delete(key);
+    }
+    return false;
+  }
+
+  hasCommand(name) {
+    return Boolean(this.command(name));
   }
 
   command(name) {
@@ -73,6 +90,33 @@ export class TerminalCore {
     const normalized = String(name).toLowerCase();
     const key = Object.keys(this.aliases).find(item => item.toLowerCase() === normalized);
     return key ? this.aliases[key] : null;
+  }
+
+  setAlias(name, value) {
+    this.aliases[String(name)] = String(value);
+    return this;
+  }
+
+  removeAlias(name) {
+    if (Object.prototype.hasOwnProperty.call(this.aliases, name)) {
+      delete this.aliases[name];
+      return true;
+    }
+    if (!this.caseInsensitiveCommands) return false;
+    const normalized = String(name).toLowerCase();
+    const key = Object.keys(this.aliases).find(item => item.toLowerCase() === normalized);
+    if (!key) return false;
+    delete this.aliases[key];
+    return true;
+  }
+
+  disposePlugins() {
+    this.pluginDisposers.splice(0).reverse().forEach(dispose => {
+      try {
+        dispose(this);
+      } catch (_) {}
+    });
+    return this;
   }
 
   commandNames() {

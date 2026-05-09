@@ -17,3 +17,5 @@
 - AbortSignal command interruption for renderer Ctrl+C flows.
 - Feed autodiscovery and namespace-aware RSS/Atom parsing.
 - Runtime/demo security scan coverage and GitHub Pages site smoke check.
+- Generic feed plugin split from Hugo compatibility adapter.
+- Plugin lifecycle helpers for command and alias cleanup.

@@ -1,6 +1,6 @@
 import { createWebTerminal } from '../factory.mjs';
 import { DomTerminalRenderer, injectDefaultStyles } from '../renderers/dom-renderer.mjs';
-import { feedPostsPlugin, fetchDiscoveredFeedPosts, fetchFeedPosts } from '../plugins/hugo-adapter.mjs';
+import { feedPostsPlugin, fetchDiscoveredFeedPosts, fetchFeedPosts } from '../plugins/feed-posts.mjs';
 import { blogSandboxPreset } from '../presets/blog-sandbox.mjs';
 
 export async function createFeedTerminal(options = {}) {

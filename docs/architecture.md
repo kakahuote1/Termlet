@@ -32,6 +32,12 @@
 - Register commands.
 - Can be small and domain-specific.
 - Should not reach into renderer internals.
+- Should use public helpers such as `register`, `unregister`, `setAlias`, and `removeAlias` instead of relying on internal storage shape.
+
+`src/plugins/feed-posts.mjs`
+
+- Owns generic RSS/Atom parsing, feed discovery, and post-to-VFS mapping.
+- Is reused by Hugo compatibility adapters instead of living under a Hugo-specific name.
 
 `src/renderers/*.mjs`
 
