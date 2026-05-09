@@ -202,20 +202,46 @@ function lsCommand({ args, fs, terminal, home, user, groups }) {
   const all = flags.includes('a');
   const long = flags.includes('l');
   const pathArgs = args.filter(arg => !arg.startsWith('-'));
-  const target = fs.normalize(pathArgs[0] || terminal.cwd, { cwd: terminal.cwd, home });
-  const stat = fs.stat(target);
-  if (!stat) return fail(`ls: cannot access '${pathArgs[0] || target}': No such file or directory\n`);
-  if (!fs.canRead(target, { user, groups })) return fail(`ls: cannot open directory '${pathArgs[0] || target}': Permission denied\n`);
-  if (stat.type !== 'dir') return ok(`${fs.basename(target)}\n`);
-  const items = fs.list(target, { all, cwd: terminal.cwd, home });
-  const rows = items.map(name => {
-    const path = target === '/' ? `/${name}` : `${target}/${name}`;
-    const node = fs.stat(path);
-    const display = name + (node?.type === 'dir' ? '/' : (node?.type === 'exec' ? '*' : ''));
-    if (!long) return display;
-    return `${node.perm || '----------'} ${(node.owner || node.user || 'root').padEnd(8)} ${(node.group || 'root').padEnd(8)} ${String(node.size || 0).padStart(8)} ${node.date || ''} ${display}`;
+  const targets = pathArgs.length ? pathArgs : [terminal.cwd];
+  const chunks = [];
+  const errors = [];
+  let status = 0;
+  targets.forEach((arg, index) => {
+    const target = fs.normalize(arg, { cwd: terminal.cwd, home });
+    const stat = fs.stat(target);
+    if (!stat) {
+      errors.push(`ls: cannot access '${arg || target}': No such file or directory`);
+      status = 1;
+      return;
+    }
+    if (!fs.canRead(target, { user, groups })) {
+      errors.push(`ls: cannot open directory '${arg || target}': Permission denied`);
+      status = 1;
+      return;
+    }
+    const multiple = targets.length > 1;
+    if (multiple && stat.type === 'dir') chunks.push(`${arg}:`);
+    if (stat.type !== 'dir') {
+      chunks.push(fs.basename(target));
+    } else {
+      const items = fs.list(target, { all, cwd: terminal.cwd, home });
+      items.forEach(name => {
+        const path = target === '/' ? `/${name}` : `${target}/${name}`;
+        const node = fs.stat(path);
+        const display = name + (node?.type === 'dir' ? '/' : (node?.type === 'exec' ? '*' : ''));
+        chunks.push(long
+          ? `${node.perm || '----------'} ${(node.owner || node.user || 'root').padEnd(8)} ${(node.group || 'root').padEnd(8)} ${String(node.size || 0).padStart(8)} ${node.date || ''} ${display}`
+          : display);
+      });
+    }
+    if (multiple && index < targets.length - 1) chunks.push('');
   });
-  return ok(rows.join('\n') + (rows.length ? '\n' : ''));
+  const text = chunks.join('\n').replace(/\n+$/, '');
+  const stderr = errors.join('\n');
+  return ok(text + (text ? '\n' : ''), {
+    status,
+    stderr: stderr + (stderr ? '\n' : ''),
+  });
 }
 
 function grepCommand({ args, stdin, fs, terminal, home, user, groups }) {

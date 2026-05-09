@@ -1,10 +1,10 @@
-import {
+﻿import {
   defineCommandPack,
   defineProfile,
   filterRecords,
   formatRecords,
   ok,
-} from '../../src/index.mjs';
+} from '../../dist/index.mjs';
 
 export const labCommands = defineCommandPack('lab-commands', terminal => {
   terminal.register('items', () => ok('', {

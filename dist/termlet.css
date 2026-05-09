@@ -2,6 +2,7 @@
 .blog-terminal__output { min-height:320px; max-height:70vh; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; tab-size:2; }
 .blog-terminal__line.error { color:var(--termlet-error); }
 .blog-terminal__line.muted { color:var(--termlet-muted); }
+.blog-terminal__line.editor { color:var(--termlet-muted); }
 .blog-terminal__input-row { display:flex; gap:8px; align-items:baseline; min-width:0; }
 .blog-terminal__prompt { color:var(--termlet-prompt); flex:none; }
 .blog-terminal__input { flex:1; min-width:0; background:transparent; border:0; color:inherit; font:inherit; outline:0; }

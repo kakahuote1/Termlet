@@ -1,5 +1,14 @@
 ﻿# Changelog
 
+## 0.2.0
+
+- Added a README-first onboarding path for npm, static-site, and source-development usage.
+- Added a public screenshot entry point and an API selection table for the main factory functions.
+- Added a release-friendly examples guide and smoke check to keep examples on `dist/` instead of internal `src/` imports.
+- Added default DOM editor preview handling for `vim`, `vi`, and `nano` events.
+- Split additional shell and VFS coverage into dedicated test files.
+- Updated Hugo/static deployment documentation for `dist/` based integration.
+
 ## 0.1.0
 
 - Initial browser-only terminal core.

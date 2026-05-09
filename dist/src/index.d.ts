@@ -203,6 +203,7 @@ export class DomTerminalRenderer {
     onCommand?: (command: string, terminal: TerminalCore) => void;
     onResult?: (result: CommandResult, command: string, terminal: TerminalCore) => void;
     onError?: (error: unknown, command: string, terminal: TerminalCore) => void;
+    editorPreview?: boolean;
   });
   attach(): this;
   destroy(): this;

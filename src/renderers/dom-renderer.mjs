@@ -3,6 +3,7 @@ export const DEFAULT_TERMINAL_CSS = `
 .blog-terminal__output { min-height:320px; max-height:70vh; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; tab-size:2; }
 .blog-terminal__line.error { color:var(--termlet-error); }
 .blog-terminal__line.muted { color:var(--termlet-muted); }
+.blog-terminal__line.editor { color:var(--termlet-muted); }
 .blog-terminal__input-row { display:flex; gap:8px; align-items:baseline; min-width:0; }
 .blog-terminal__prompt { color:var(--termlet-prompt); flex:none; }
 .blog-terminal__input { flex:1; min-width:0; background:transparent; border:0; color:inherit; font:inherit; outline:0; }
@@ -37,6 +38,7 @@ export class DomTerminalRenderer {
     this.onCommand = options.onCommand || null;
     this.onResult = options.onResult || null;
     this.onError = options.onError || null;
+    this.editorPreview = options.editorPreview !== false;
     this.persistTranscript = Boolean(options.persistTranscript);
     this.restoreTranscriptOnAttach = options.restoreTranscript !== false;
     this.maxTranscriptEntries = Math.max(50, Number(options.maxTranscriptEntries || options.maxLines || 1000));
@@ -218,7 +220,37 @@ export class DomTerminalRenderer {
       if (this.onEvent) this.onEvent(event, this);
       if (event.type === 'clear') this.clearTranscript();
       if (event.type === 'exit') this.mount.classList.add(`${this.className}--closed`);
+      if (event.type === 'editor' && this.editorPreview) this.printEditorPreview(event);
     });
+  }
+
+  printEditorPreview(event) {
+    const editor = String(event.editor || 'editor');
+    const requested = String(event.file || '[No Name]');
+    let title = requested;
+    let body = '';
+    if (event.file) {
+      try {
+        const path = this.core.fs.normalize(event.file, { cwd: this.core.cwd, home: this.core.home });
+        title = path;
+        body = this.core.fs.readFile(path, {
+          user: this.core.user,
+          groups: this.core.groups,
+          cwd: this.core.cwd,
+          home: this.core.home,
+        });
+      } catch (error) {
+        body = `${error?.message || String(error)}\n`;
+      }
+    }
+    const content = body
+      ? body.replace(/\n$/, '').split('\n').slice(0, 20).join('\n')
+      : '[empty buffer]';
+    this.printBlock([
+      `--- ${editor} preview: ${title} ---`,
+      content.slice(0, 6000),
+      `--- end ${editor} preview ---`,
+    ].join('\n'), 'editor');
   }
 
   abortRunning() {

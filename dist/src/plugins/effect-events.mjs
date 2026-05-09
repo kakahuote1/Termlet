@@ -17,8 +17,10 @@ export function effectEventsPlugin(terminal, options = {}) {
   };
 
   Object.entries(effects).forEach(([name, event]) => {
-    terminal.register(name, ({ args }) => ok('', {
-      events: [{ ...event, args }],
-    }));
+    terminal.register(name, ({ args }) => {
+      const payload = { ...event, args };
+      if (event.type === 'editor') payload.file = args[0] || null;
+      return ok('', { events: [payload] });
+    });
   });
 }

@@ -1,4 +1,4 @@
-﻿import { mountHugoTerminal } from '../../src/index.mjs';
+﻿import { mountHugoTerminal } from '../../dist/index.mjs';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const mount = document.querySelector('#terminal');
@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     mount,
     feedUrl: '/index.xml',
     rendererOptions: {
-      welcome: 'Try: help, ls /home/guest/blog, cat /etc/os-release\\n',
+      welcome: 'Try: help, ls /home/guest/blog, cat /etc/os-release\n',
     },
   });
 });

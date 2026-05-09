@@ -204,6 +204,8 @@ new DomTerminalRenderer(terminal, {
 
 Renderer transcript persistence is optional. When `persistTranscript: true` is used with a persistence adapter, frozen prompts and command output are saved as text-only entries. Refresh restores the visible screen; `clear`, `Ctrl+L`, and `session reset` clear the transcript. Use `maxTranscriptEntries` and `maxTranscriptBytes` to tune storage limits.
 
+`vim`, `vi`, and `nano` emit `editor` events. The default DOM renderer shows a small read-only preview so these commands do not feel like dead ends. Set `editorPreview: false` if your site opens its own editor UI in `onEvent`.
+
 Theme helpers:
 
 - `theme`: built-in theme name, such as `linux`, `powershell`, `cmd`, `light`, or `crt`.

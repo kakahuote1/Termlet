@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Blog Easter Egg Terminal</title>
+  <link rel="icon" href="data:,">
   <style>
     :root {
       color-scheme: dark;
@@ -119,7 +120,7 @@
       blogSandboxPreset,
       DomTerminalRenderer,
       injectDefaultStyles,
-    } from '../../src/index.mjs';
+    } from '../../dist/index.mjs';
 
     injectDefaultStyles();
 
@@ -142,7 +143,7 @@
       if (!renderer) {
         renderer = new DomTerminalRenderer(terminal, {
           mount: '#terminal',
-          welcome: 'Try: help, ls -al, cat /etc/os-release, session reset\\n',
+          welcome: 'Try: help, ls -al, cat /etc/os-release, session reset\n',
           persistTranscript: true,
         }).attach();
       }

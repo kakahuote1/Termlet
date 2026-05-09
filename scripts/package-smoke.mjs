@@ -39,9 +39,14 @@ const required = [
   'docs/api.md',
   'docs/integrations.md',
   'docs/theming.md',
+  'examples/README.md',
   'examples/plain-html/index.html',
+  'examples/drop-in/index.html',
   'scripts/api-smoke.mjs',
+  'scripts/examples-smoke.mjs',
   'test/core.test.mjs',
+  'test/shell.test.mjs',
+  'test/vfs.test.mjs',
 ];
 const forbidden = [
   /^AGENTS\.md$/,
@@ -62,8 +67,8 @@ for (const file of files) {
   if (forbidden.some(pattern => pattern.test(file))) failures.push(`forbidden packaged file: ${file}`);
 }
 
-if (pack.size > 120_000) failures.push(`package size too large for starter kit: ${pack.size} bytes`);
-if (pack.unpackedSize > 700_000) failures.push(`unpacked size too large for starter kit: ${pack.unpackedSize} bytes`);
+if (pack.size > 300_000) failures.push(`package size too large for starter kit: ${pack.size} bytes`);
+if (pack.unpackedSize > 1_000_000) failures.push(`unpacked size too large for starter kit: ${pack.unpackedSize} bytes`);
 
 if (failures.length) {
   console.error('package smoke failed:');

@@ -1,6 +1,6 @@
 ﻿{
   "name": "termlet",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "Pure frontend, pluggable pseudo-terminal kit for static sites and blogs.",
   "license": "MIT",
@@ -100,13 +100,14 @@
     "site:build": "npm run build && node scripts/build-site.mjs",
     "api:smoke": "node scripts/api-smoke.mjs",
     "check": "node scripts/check.mjs",
+    "examples:smoke": "node scripts/examples-smoke.mjs",
     "bench": "node scripts/bench.mjs",
     "docs:smoke": "node scripts/docs-smoke.mjs",
     "package:smoke": "node scripts/package-smoke.mjs",
     "security:scan": "node scripts/security-scan.mjs",
     "site:smoke": "node scripts/site-smoke.mjs",
-    "test": "node --test test/core.test.mjs",
-    "verify": "npm run check && npm test && npm run bench && npm run docs:smoke && npm run security:scan && npm run site:build && npm run site:smoke"
+    "test": "node --test test",
+    "verify": "npm run check && npm test && npm run bench && npm run docs:smoke && npm run examples:smoke && npm run security:scan && npm run site:build && npm run site:smoke"
   },
   "files": [
     "src",

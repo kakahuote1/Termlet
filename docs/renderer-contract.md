@@ -57,3 +57,5 @@ if (event.type === 'exit') closeTerminal();
 if (event.type === 'effect' && event.name === 'cmatrix') startMatrix();
 if (event.type === 'editor') openReadOnlyEditor(event.file);
 ```
+
+`DomTerminalRenderer` already includes a small read-only editor preview for `editor` events emitted by `vim`, `vi`, and `nano`. Pass `editorPreview: false` if your renderer provides its own editor surface.

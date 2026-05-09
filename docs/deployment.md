@@ -4,15 +4,15 @@ Termlet is plain ES modules. You can use it without a bundler, or bundle it thro
 
 ## Plain HTML
 
-For copy-and-paste deployment, build `dist/`:
+For copy-and-paste deployment, use the latest release asset `termlet-drop-in.zip`. It contains a ready-to-test `index.html` and `termlet/` folder.
 
-The demo site also publishes `downloads/termlet-drop-in.zip`, which contains a ready-to-test `index.html` and `termlet/` folder.
+If you build from source instead, run:
 
 ```powershell
 npm run build
 ```
 
-Serve `dist/` over HTTP and import from `index.mjs`:
+Copy `dist/` to your static directory as `termlet/`, serve it over HTTP, and import from `index.mjs`:
 
 ```html
 <link rel="stylesheet" href="/termlet/termlet.css">
@@ -30,7 +30,7 @@ Serve `dist/` over HTTP and import from `index.mjs`:
 </script>
 ```
 
-During local source development you can also import from `src/index.mjs`. Do not open the example through `file://`; browser module imports normally require HTTP.
+During local source development you can also import from `src/index.mjs`, but public examples should point at `dist/` or the npm package. Do not open examples through `file://`; browser module imports normally require HTTP.
 
 ## Strict CSP
 
@@ -47,7 +47,7 @@ Then mount with `injectStyles: false`, or create the renderer manually without c
 Recommended structure:
 
 ```text
-assets/js/termlet/src/...
+assets/js/termlet/...
 assets/js/terminal-entry.js
 layouts/partials/footer/custom.html
 ```
@@ -55,7 +55,7 @@ layouts/partials/footer/custom.html
 `assets/js/terminal-entry.js`:
 
 ```js
-import { mountHugoTerminal } from './termlet/src/index.mjs';
+import { mountHugoTerminal } from './termlet/index.mjs';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const mount = document.querySelector('#terminal');

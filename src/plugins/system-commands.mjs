@@ -205,7 +205,12 @@ function packageRuntimeCommand(version) {
 }
 
 function editorCommand(editor) {
-  return ({ args }) => ok(`${editor}: interactive editing is renderer-specific; requested ${args[0] || '[No Name]'}\n`, { events: [{ type: 'editor', editor, file: args[0] || null }] });
+  return ({ args }) => {
+    const file = args[0] || null;
+    return ok(`${editor}: opened ${file || '[No Name]'} in the frontend editor preview\n`, {
+      events: [{ type: 'editor', editor, file }],
+    });
+  };
 }
 
 function pagerCommand(ctx) {

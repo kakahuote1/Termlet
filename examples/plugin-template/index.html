@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Plugin Template</title>
+  <link rel="icon" href="data:,">
   <style>
     :root {
       color-scheme: dark;
@@ -41,7 +42,7 @@
       createTerminal,
       DomTerminalRenderer,
       injectDefaultStyles,
-    } from '../../src/index.mjs';
+    } from '../../dist/index.mjs';
     import { myPlugin } from './my-plugin.mjs';
 
     injectDefaultStyles();
@@ -53,7 +54,7 @@
 
     new DomTerminalRenderer(terminal, {
       mount: '#terminal',
-      welcome: 'Try: hello, ls ~/workspace, cat ~/workspace/readme.txt\\n',
+      welcome: 'Try: hello, ls ~/workspace, cat ~/workspace/readme.txt\n',
     }).attach();
   </script>
 </body>

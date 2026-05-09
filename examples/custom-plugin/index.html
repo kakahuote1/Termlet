@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Custom Plugin Example</title>
+  <link rel="icon" href="data:,">
   <style>
     :root {
       color-scheme: dark;
@@ -44,17 +45,17 @@
       blogSandboxPreset,
       injectDefaultStyles,
       ok,
-    } from '../../src/index.mjs';
+    } from '../../dist/index.mjs';
 
     function portfolioPlugin(terminal) {
       terminal.fs.ensureDir('/home/guest/projects', { owner: 'guest', group: 'guest' });
-      terminal.fs.addFile('/home/guest/projects/readme.md', '# Projects\\n\\n- terminal-kit\\n', {
+      terminal.fs.addFile('/home/guest/projects/readme.md', '# Projects\n\n- terminal-kit\n', {
         owner: 'guest',
         group: 'guest',
       });
 
       terminal.register('about', ({ user, hostname }) => {
-        return ok(`${user}@${hostname}: frontend-only terminal simulation\\n`);
+        return ok(`${user}@${hostname}: frontend-only terminal simulation\n`);
       });
     }
 
@@ -70,7 +71,7 @@
 
     new DomTerminalRenderer(terminal, {
       mount: '#terminal',
-      welcome: 'Try: about, ls ~/projects, cat ~/projects/readme.md\\n',
+      welcome: 'Try: about, ls ~/projects, cat ~/projects/readme.md\n',
     }).attach();
   </script>
 </body>

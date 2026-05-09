@@ -6,7 +6,12 @@ Termlet 可以按“复制文件、粘贴代码、改几行配置”的方式接
 
 最简单的方式是在在线演示页下载 `termlet-drop-in.zip`。解压后会得到一个可以直接测试的 `index.html` 和 `termlet/` 目录。
 
-也可以从源码构建：
+也可以二选一：
+
+- npm / bundler 项目：`npm install termlet`，然后 `import { mountStarterTerminal } from 'termlet'`。
+- 静态站点：下载 release zip，或从源码构建 `dist/`。
+
+从源码构建：
 
 在项目里运行：
 
@@ -47,6 +52,18 @@ npm run build
 ```
 
 如果站点部署在子路径，调整 `/termlet/index.mjs` 和 `/termlet/termlet.css` 的路径即可。
+
+npm / bundler 项目可以写成：
+
+```js
+import { mountStarterTerminal } from 'termlet';
+import 'termlet/styles.css';
+
+await mountStarterTerminal({
+  mount: '#terminal',
+  injectStyles: false,
+});
+```
 
 ## 3. 改主题
 

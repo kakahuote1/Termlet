@@ -5,6 +5,7 @@
 
   <p>
     <a href="https://kakahuote1.github.io/Termlet/"><strong>在线演示</strong></a> ·
+    <a href="https://github.com/kakahuote1/Termlet/releases/latest"><strong>下载 Release</strong></a> ·
     <a href="docs/getting-started.md"><strong>快速上手</strong></a> ·
     <a href="docs/recipes.md"><strong>使用配方</strong></a> ·
     <a href="docs/api.md"><strong>API</strong></a> ·
@@ -14,6 +15,8 @@
 </div>
 
 ---
+
+![Termlet demo screenshot](docs/assets/termlet-demo.png)
 
 ## 这是什么
 
@@ -29,33 +32,87 @@ Termlet 是一个运行在浏览器中的终端引擎。不需要后端、不需
 
 你可以用它做博客彩蛋、文档 Playground、产品演示、新手教程，或者一个看起来像服务器的落地页。
 
-## 极速起步
+## 5 分钟接入
+
+### 方式 A：静态站点直接用
+
+不想配置构建工具时，直接到 [Releases](https://github.com/kakahuote1/Termlet/releases/latest) 下载 `termlet-drop-in.zip`，解压后会得到：
+
+```text
+index.html
+termlet/
+```
+
+把 `termlet/` 放进站点静态目录，然后粘贴下面这段：
 
 ```html
+<link rel="stylesheet" href="/termlet/termlet.css">
 <div id="terminal"></div>
 <script type="module">
-  import {
-    createTerminal,
-    blogSandboxPreset,
-    DomTerminalRenderer,
-    injectDefaultStyles,
-  } from './src/index.mjs';
+  import { mountStarterTerminal } from '/termlet/index.mjs';
 
-  injectDefaultStyles();
-
-  const terminal = createTerminal({
-    hostname: 'my-server',
-    plugins: [blogSandboxPreset()],
-  });
-
-  new DomTerminalRenderer(terminal, {
+  await mountStarterTerminal({
     mount: '#terminal',
-    welcome: '输入 help 查看可用命令。\n',
-  }).attach();
+    injectStyles: false,
+    theme: 'linux',
+    siteName: 'My Blog',
+    intro: 'Welcome to my terminal.',
+  });
 </script>
 ```
 
-生产环境可以直接在在线演示页下载 `termlet-drop-in.zip`，也可以本地运行 `npm run build` 后引用 `dist/` 产物：
+### 方式 B：npm / Bundler
+
+```bash
+npm install termlet
+```
+
+```js
+import { mountStarterTerminal } from 'termlet';
+import 'termlet/styles.css';
+
+await mountStarterTerminal({
+  mount: '#terminal',
+  injectStyles: false,
+  theme: 'linux',
+  siteName: 'My Blog',
+  intro: 'Welcome to my terminal.',
+});
+```
+
+### 方式 C：源码开发
+
+在仓库里改源码或运行 examples 时：
+
+```powershell
+npm run build
+python -m http.server 4177 --bind 127.0.0.1
+```
+
+然后打开 `http://127.0.0.1:4177/examples/plain-html/`。不要用 `file://` 直接打开示例，浏览器 ESM import 通常需要 HTTP。
+
+## 入口怎么选
+
+| 目标 | 推荐入口 | 说明 |
+|---|---|---|
+| 快速给博客加终端 | `mountStarterTerminal()` | 默认主题、欢迎语、当前标签页持久化、基础文件和安全命令都配好。 |
+| 需要自己控制 UI | `createTerminal()` | 只拿核心引擎，自己写 renderer。 |
+| 使用默认 DOM UI | `createTerminal()` + `DomTerminalRenderer` | 适合产品 demo、教程页和定制布局。 |
+| 接入 RSS/Atom 文章 | `mountFeedTerminal()` | 把博客 feed 映射成虚拟文件。 |
+| Hugo 博客 | `mountHugoTerminal()` | feed 默认按 Hugo 常见路径处理。 |
+| PowerShell / CMD 风格 | `createWindowsTerminal()` | 命令集和路径行为按 shell 类型区分。 |
+| 组织一组可复用命令 | `defineCommandPack()` | 把命令打包成插件。 |
+| 声明一种终端形态 | `defineProfile()` | 组合环境变量、别名、命令包和管道格式化器。 |
+
+## 常用导入
+
+npm / bundler 项目使用包名导入：
+
+```js
+import { mountStarterTerminal, createTerminal, ok } from 'termlet';
+```
+
+纯静态站点复制 `dist/` 后使用文件路径导入：
 
 ```html
 <link rel="stylesheet" href="/termlet/termlet.css">
@@ -71,6 +128,22 @@ Termlet 是一个运行在浏览器中的终端引擎。不需要后端、不需
   });
 </script>
 ```
+
+仓库内部源码开发才使用 `./src/index.mjs`。发布给别人看的示例默认引用 `dist/`。
+
+## 核心能力索引
+
+| 能力 | API / 文档 |
+|---|---|
+| 一行挂载博客终端 | `mountStarterTerminal()`，见 [快速上手](docs/getting-started.md) |
+| 自定义命令 | `terminal.register()`、`ok()`、`fail()`，见 [插件开发](docs/plugins.md) |
+| 可复用命令包 | `defineCommandPack()`，见 [扩展指南](docs/extend.md) |
+| Profile | `defineProfile()`，见 [API 参考](docs/api.md) |
+| Feed / Hugo | `createFeedTerminal()`、`mountFeedTerminal()`、`mountHugoTerminal()`，见 [博客集成](docs/integrations.md) |
+| PowerShell / CMD | `createWindowsTerminal()`、`windowsCommandsPlugin()` |
+| 当前标签页持久化 | `createSessionStorageAdapter()`、`persistVfs`、`persistTranscript` |
+| 自定义外观 | 内置主题和 `--termlet-*` CSS 变量，见 [主题](docs/theming.md) |
+| 自定义 renderer | `TerminalCore.execute()` + `CommandResult.events`，见 [渲染器契约](docs/renderer-contract.md) |
 
 如果希望刷新后仍保留当前标签页里的操作，见 [刷新不丢、关页重置](#刷新不丢关页重置)。
 
@@ -321,6 +394,7 @@ export function myPlugin(terminal) {
 - 方向键历史导航
 - `Ctrl+C` 中断 / `Ctrl+L` 清屏 / `Ctrl+D` 退出
 - 输出行数上限（`maxLines`，默认 1000）
+- `vim` / `vi` / `nano` 的只读编辑器预览兜底（可用 `editorPreview: false` 关闭）
 - 生命周期回调：`onCommand`、`onResult`、`onError`、`onEvent`
 
 可以替换为任何消费 `TerminalCore` 的渲染器实现。

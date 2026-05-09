@@ -90,9 +90,15 @@ for (const [specifier, target] of Object.entries(pkg.exports || {})) {
 }
 
 const rootModule = await import(pkg.name);
+const declaredValueExports = [...new Set(
+  [...dts.matchAll(/^export\s+(?:function|class|const)\s+([A-Za-z_$][\w$]*)/gm)].map(match => match[1]),
+)];
 for (const name of expectedRootExports) {
   assert(name in rootModule, `missing root export ${name}`);
   assert(dts.includes(` ${name}`) || dts.includes(` ${name}(`) || dts.includes(` ${name}:`), `missing declaration for ${name}`);
+}
+for (const name of declaredValueExports) {
+  assert(name in rootModule, `declared value export is missing at runtime: ${name}`);
 }
 
 for (const [subpath, names] of Object.entries(subpathExpectations)) {
@@ -106,7 +112,7 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`api smoke passed (${expectedRootExports.length} root exports, ${Object.keys(subpathExpectations).length} subpaths)`);
+console.log(`api smoke passed (${declaredValueExports.length} declared value exports, ${Object.keys(subpathExpectations).length} subpaths)`);
 
 function assert(condition, message) {
   if (!condition) failures.push(message);

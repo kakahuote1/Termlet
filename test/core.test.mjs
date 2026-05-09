@@ -276,6 +276,9 @@ test('effect plugin emits data events for custom renderers', async () => {
   const result = await terminal.execute('cmatrix --fast');
   assert.equal(result.status, 0);
   assert.deepEqual(result.events, [{ type: 'effect', name: 'cmatrix', args: ['--fast'] }]);
+
+  const editor = await terminal.execute('vim /etc/os-release');
+  assert.deepEqual(editor.events, [{ type: 'editor', editor: 'vim', args: ['/etc/os-release'], file: '/etc/os-release' }]);
 });
 
 test('feed parser handles RSS namespaces and Atom without DOMParser dependency', () => {
@@ -402,6 +405,24 @@ test('dom renderer can persist visible transcript in the same session', async ()
 
   await submitRendererCommand(secondRenderer, 'session reset');
   assert.deepEqual(adapter.load().transcript.entries, []);
+});
+
+test('dom renderer provides a default editor preview for editor events', async () => {
+  const terminal = createSubject();
+  const document = createFakeDocument();
+  const mount = document.createElement('div');
+  const renderer = new DomTerminalRenderer(terminal, {
+    document,
+    mount,
+    welcome: '',
+  }).attach();
+
+  await submitRendererCommand(renderer, 'vim /etc/os-release');
+
+  assert.match(mount.textContent, /vim: opened \/etc\/os-release in the frontend editor preview/);
+  assert.match(mount.textContent, /--- vim preview: \/etc\/os-release ---/);
+  assert.match(mount.textContent, /PRETTY_NAME="Blog Terminal Sandbox"/);
+  assert.match(mount.textContent, /--- end vim preview ---/);
 });
 
 test('starter adapter mounts a themed refresh-resistant blog terminal', async () => {

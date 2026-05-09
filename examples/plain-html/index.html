@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Blog Terminal Example</title>
+  <link rel="icon" href="data:,">
   <style>
     :root {
       color-scheme: dark;
@@ -43,7 +44,7 @@
       blogSandboxPreset,
       DomTerminalRenderer,
       injectDefaultStyles,
-    } from '../../src/index.mjs';
+    } from '../../dist/index.mjs';
 
     injectDefaultStyles();
 
@@ -51,14 +52,14 @@
       hostname: 'blog-server',
       plugins: [
         blogSandboxPreset({
-          rootSecret: 'example private content\\n',
+          rootSecret: 'example private content\n',
         }),
       ],
     });
 
     new DomTerminalRenderer(terminal, {
       mount: '#terminal',
-      welcome: 'Try: help, ls -al, tree /home/guest, sudo -l, journalctl -n 3\\n',
+      welcome: 'Try: help, ls -al, tree /home/guest, sudo -l, journalctl -n 3\n',
     }).attach();
   </script>
 </body>

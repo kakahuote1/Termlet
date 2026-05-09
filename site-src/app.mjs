@@ -70,7 +70,7 @@ const linuxTerminal = createTerminal({
 const eventStatus = document.querySelector('#event-status');
 const linuxRenderer = new DomTerminalRenderer(linuxTerminal, {
   mount: '#terminal',
-  welcome: 'Try: about, docs, help, ls -al, tree ~/lab, slow, sudo rm -rf /\\n',
+  welcome: 'Try: about, docs, help, ls -al, tree ~/lab, slow, sudo rm -rf /\n',
   maxLines: 600,
   persistTranscript: true,
   onEvent(event) {
