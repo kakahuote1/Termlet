@@ -687,7 +687,7 @@ h2 {
   height: 1px;
   opacity: var(--ring-opacity, 1);
   transform-style: preserve-3d;
-  animation: orb-output-spin var(--orbit-duration, 13s) linear infinite;
+  animation: orb-output-spin var(--orbit-duration, 5.6s) linear forwards;
 }
 
 .orb-orbit-track::before {
@@ -1213,10 +1213,15 @@ h2 {
 
 @keyframes orb-output-spin {
   from {
+    opacity: var(--ring-opacity, 1);
     transform: rotate(var(--orbit-phase, 0deg));
   }
+  82% {
+    opacity: var(--ring-opacity, 1);
+  }
   to {
-    transform: rotate(calc(var(--orbit-phase, 0deg) + 360deg));
+    opacity: 0;
+    transform: rotate(calc(var(--orbit-phase, 0deg) + 1080deg));
   }
 }
 

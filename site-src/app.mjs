@@ -178,7 +178,7 @@ function mountOrbTerminal() {
     theme: 'crt',
     prompt: () => `orb:${formatHomePath(terminal.cwd, terminal.home)}$`,
     welcome: '',
-    persistTranscript: true,
+    persistTranscript: false,
     maxLines: 220,
     autoFocus: false,
     renderInput: renderOrbInput,
@@ -209,7 +209,7 @@ function mountRainTerminal() {
     theme: 'linux',
     prompt: () => `rain:${formatHomePath(terminal.cwd, terminal.home)}$`,
     welcome: '',
-    persistTranscript: true,
+    persistTranscript: false,
     maxLines: 220,
     autoFocus: false,
     renderInput: renderRainInput,
@@ -348,6 +348,7 @@ function runInRenderer(renderer, command) {
   const row = input?.closest('.blog-terminal__input-row');
   if (!input || !row) return;
   input.value = command;
+  input.dispatchEvent(new Event('input', { bubbles: true }));
   renderer.handleKey({
     key: 'Enter',
     ctrlKey: false,
@@ -360,24 +361,44 @@ function attachOrbLiveInput(renderer) {
   preview.className = 'orb-live-preview';
   preview.setAttribute('aria-hidden', 'true');
   renderer.mount.appendChild(preview);
+  let latestNode = null;
   const render = () => {
     const input = renderer.activeInput;
-    if (!input || input.disabled) return;
-    const row = input.closest('.blog-terminal__input-row');
-    const prompt = row?.querySelector('.blog-terminal__prompt')?.textContent || renderer.prompt();
-    const value = input.value ? `${input.value}_` : '_';
-    preview.replaceChildren(createOrbOrbit(renderer.document, `${prompt} ${value}`, {
+    if (!input || input.disabled) {
+      preview.replaceChildren();
+      latestNode = null;
+      return;
+    }
+    const value = input.value.trim();
+    if (!value) {
+      preview.replaceChildren();
+      latestNode = null;
+      return;
+    }
+    const node = createOrbOrbit(renderer.document, value, {
       kind: 'live',
       className: 'orb-live-orbit',
       seed: value.length,
       maxChars: 52,
-    }));
+      duration: 3.2,
+    });
+    latestNode = node;
+    preview.replaceChildren(node);
+    window.setTimeout(() => {
+      if (latestNode === node) {
+        node.remove();
+        latestNode = null;
+      }
+    }, 3400);
   };
   renderer.mount.addEventListener('input', render);
   renderer.mount.addEventListener('keyup', render);
-  renderer.mount.addEventListener('click', render);
-  window.setInterval(render, 260);
-  render();
+  renderer.mount.addEventListener('keydown', event => {
+    if (event.key === 'Enter') {
+      preview.replaceChildren();
+      latestNode = null;
+    }
+  });
 }
 
 function resultText(result, command) {
@@ -392,10 +413,11 @@ function outputText(result) {
 function renderOrbInput({ document, prompt, command, row, restoring }) {
   row.classList.add('orb-flow', 'orb-flow--input', 'orb-output-ring');
   if (restoring) row.classList.add('is-restored');
-  return createOrbOrbit(document, `${prompt} ${command}`, {
+  return createOrbOrbit(document, command || prompt, {
     kind: 'input',
     className: 'orb-command-orbit orb-output-ring',
     seed: command.length,
+    duration: 4.8,
   });
 }
 
@@ -405,6 +427,7 @@ function renderOrbLine({ document, text, className, restoring }) {
     className: 'orb-output-ring',
     restored: restoring,
     seed: text.length,
+    duration: 5.6,
   });
 }
 
@@ -416,6 +439,7 @@ function renderOrbResult(context) {
     kind,
     className: 'orb-output-ring',
     seed: context.command.length + text.length,
+    duration: 5.6,
   }), {
     type: 'line',
     text,
@@ -458,42 +482,77 @@ function createOrbOrbit(document, text, options = {}) {
   const plain = document.createElement('span');
   plain.className = 'sr-only';
   plain.textContent = plainText;
-  const chars = tokenizeOrbCharacters(plainText, options.maxChars || (kind === 'input' ? 58 : 72));
+  const ringsData = tokenizeOrbCharacters(plainText, {
+    maxChars: options.maxChars || (kind === 'live' ? 52 : kind === 'input' ? 58 : 72),
+    ringCapacity: kind === 'live' ? 26 : kind === 'input' ? 30 : 34,
+    maxRings: 3,
+  });
   const seed = Number(options.seed || 0);
-  const ringSize = kind === 'live' ? 22 : kind === 'input' ? 24 : 26;
-  const rings = Math.max(1, Math.min(3, Math.ceil(chars.length / ringSize)));
-  for (let ringIndex = 0; ringIndex < rings; ringIndex += 1) {
+  ringsData.forEach((ringWords, ringIndex) => {
     const track = document.createElement('span');
-    const ringChars = chars.filter((_, index) => index % rings === ringIndex);
-    const count = Math.max(ringChars.length, 1);
     track.className = 'orb-orbit-track orb-output-ring__track';
     const radius = 86 + ringIndex * 31 + (kind === 'live' ? 10 : 0);
-    track.style.setProperty('--orbit-duration', `${kind === 'live' ? 8 + ringIndex * 1.4 : 12 + ringIndex * 2 + (seed % 3)}s`);
+    track.style.setProperty('--orbit-duration', `${Number(options.duration || (kind === 'live' ? 3.2 : 5.6)) + ringIndex * .35}s`);
     track.style.setProperty('--orbit-phase', `${(seed * 13 + ringIndex * 47) % 360}deg`);
     track.style.setProperty('--ring-opacity', `${Math.max(.42, 1 - ringIndex * .18)}`);
     track.style.setProperty('--ring-size', `${(radius + 5) * 2}px`);
-    ringChars.forEach((char, index) => {
+    layoutOrbRingCharacters(ringWords).forEach((item, index) => {
       const token = document.createElement('span');
-      const angle = (360 / count) * index + ((seed * 5 + ringIndex * 19) % 30);
-      token.textContent = char;
+      const angle = item.angle + ((seed * 5 + ringIndex * 19) % 24);
+      token.textContent = item.char;
       token.className = `orb-orbit-token ${kind === 'input' && index < 12 ? 'orb-orbit-token--prompt' : ''}`.trim();
       token.style.setProperty('--a', `${angle}deg`);
       token.style.setProperty('--ra', `${-angle}deg`);
-      token.style.setProperty('--d', `${radius + ((index + seed) % 2) * 3}px`);
+      token.style.setProperty('--d', `${radius}px`);
       token.style.setProperty('--i', String(index));
       track.appendChild(token);
     });
     line.appendChild(track);
-  }
+  });
   line.prepend(plain);
   return line;
 }
 
-function tokenizeOrbCharacters(text, maxChars) {
-  const chars = Array.from(String(text || '').replace(/\s+/g, ' ').trim())
-    .filter(char => char !== ' ')
-    .slice(0, maxChars);
-  return chars.length ? chars : ['_'];
+function tokenizeOrbCharacters(text, options = {}) {
+  const maxChars = Math.max(1, Number(options.maxChars || 72));
+  const ringCapacity = Math.max(8, Number(options.ringCapacity || 32));
+  const maxRings = Math.max(1, Number(options.maxRings || 3));
+  const words = String(text || '').trim().split(/\s+/).filter(Boolean);
+  const rings = [[]];
+  let used = 0;
+  let total = 0;
+  for (const rawWord of words) {
+    if (total >= maxChars) break;
+    const chars = Array.from(rawWord).slice(0, maxChars - total);
+    if (!chars.length) continue;
+    if (used && used + chars.length > ringCapacity && rings.length < maxRings) {
+      rings.push([]);
+      used = 0;
+    }
+    rings[rings.length - 1].push(chars);
+    used += chars.length + 3;
+    total += chars.length;
+  }
+  return rings.filter(ring => ring.length);
+}
+
+function layoutOrbRingCharacters(words) {
+  const gapUnits = 3.2;
+  const charUnits = words.reduce((sum, word) => sum + word.length, 0);
+  const totalUnits = Math.max(1, charUnits + Math.max(0, words.length - 1) * gapUnits);
+  const items = [];
+  let cursor = 0;
+  words.forEach((word, wordIndex) => {
+    word.forEach((char, charIndex) => {
+      items.push({
+        char,
+        angle: ((cursor + charIndex + .5) / totalUnits) * 360,
+      });
+    });
+    cursor += word.length;
+    if (wordIndex < words.length - 1) cursor += gapUnits;
+  });
+  return items;
 }
 
 function createRainDropLine(document, text, kind, index) {
