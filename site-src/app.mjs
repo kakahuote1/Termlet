@@ -1,5 +1,5 @@
 import {
-  createStorageAdapter,
+  createSessionStorageAdapter,
   createTerminal,
   createWindowsTerminal,
   blogSandboxPreset,
@@ -56,7 +56,8 @@ function demoPlugin(terminal) {
 
 const linuxTerminal = createTerminal({
   hostname: 'demo',
-  persistence: createStorageAdapter({ key: 'termlet.demo' }),
+  persistence: createSessionStorageAdapter({ key: 'termlet.demo' }),
+  persistVfs: true,
   plugins: [
     blogSandboxPreset({
       rootSecret: 'demo private content\n',

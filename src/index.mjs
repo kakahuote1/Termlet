@@ -30,7 +30,7 @@ export { blogSandboxPreset } from './presets/blog-sandbox.mjs';
 export { mountStaticTerminal } from './adapters/static-site.mjs';
 export { createFeedTerminal, mountFeedTerminal } from './adapters/feed.mjs';
 export { createHugoTerminal, mountHugoTerminal } from './adapters/hugo.mjs';
-export { createStorageAdapter, memoryPersistenceAdapter } from './adapters/persistence.mjs';
+export { createSessionStorageAdapter, createStorageAdapter, memoryPersistenceAdapter } from './adapters/persistence.mjs';
 export { DEFAULT_TERMINAL_CSS, DomTerminalRenderer, injectDefaultStyles } from './renderers/dom-renderer.mjs';
 export { ok, fail, normalizeResult } from './result.mjs';
 export { createTerminal, createWebTerminal, createBlogTerminal, createWindowsTerminal } from './factory.mjs';

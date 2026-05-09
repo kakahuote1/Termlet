@@ -5,6 +5,7 @@ import {
   createFeedTerminal,
   createWindowsTerminal,
   createTerminal,
+  createSessionStorageAdapter,
   defineCommandPack,
   defineProfile,
   blogSandboxPreset,
@@ -25,6 +26,21 @@ function createSubject(extra = {}) {
     ],
     ...extra,
   });
+}
+
+function memoryStorage() {
+  const map = new Map();
+  return {
+    getItem(key) {
+      return map.has(key) ? map.get(key) : null;
+    },
+    setItem(key, value) {
+      map.set(key, String(value));
+    },
+    removeItem(key) {
+      map.delete(key);
+    },
+  };
 }
 
 test('executes shell syntax: variables, command substitution, pipeline, control operators', async () => {
@@ -227,6 +243,31 @@ test('terminal session persistence is opt-in and bounded', async () => {
   await third.execute('export DEMO=value');
   const fourth = createTerminal({ persistence: adapter, persistEnv: ['DEMO'] });
   assert.equal((await fourth.execute('printenv DEMO')).stdout, 'value\n');
+});
+
+test('current-tab session persistence can keep VFS changes across refreshes', async () => {
+  const adapter = memoryPersistenceAdapter();
+  const first = createTerminal({ persistence: adapter, persistVfs: true });
+
+  await first.execute('mkdir -p /tmp/session && printf alpha > /tmp/session/a.txt && cd /tmp/session');
+
+  const second = createTerminal({ persistence: adapter, persistVfs: true });
+  assert.equal((await second.execute('pwd')).stdout, '/tmp/session\n');
+  assert.equal((await second.execute('cat a.txt')).stdout, 'alpha');
+
+  await second.execute('session reset');
+  const third = createTerminal({ persistence: adapter, persistVfs: true });
+  assert.equal((await third.execute('ls /tmp/session/a.txt')).status, 1);
+});
+
+test('session storage adapter uses tab-scoped storage semantics when provided', () => {
+  const storage = memoryStorage();
+  const adapter = createSessionStorageAdapter({ storage, key: 'termlet.test' });
+
+  adapter.save({ cwd: '/tmp' });
+  assert.deepEqual(adapter.load(), { cwd: '/tmp' });
+  adapter.reset();
+  assert.deepEqual(adapter.load(), {});
 });
 
 test('session command exposes reset path for persistent adapters', async () => {

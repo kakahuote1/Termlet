@@ -42,6 +42,8 @@ assert(!/<button(?![^>]*\btype=)/.test(index), 'all buttons should declare type'
 assert(!app.includes('injectDefaultStyles'), 'strict demo should not inject inline styles');
 assert(app.includes('./termlet/index.mjs'), 'demo app should import built Termlet entry');
 assert(app.includes('createWindowsTerminal'), 'demo app should mount Windows-style terminals');
+assert(app.includes('createSessionStorageAdapter'), 'demo should use current-tab session persistence');
+assert(app.includes('persistVfs: true'), 'demo should persist VFS changes across refreshes in the current tab');
 assert(app.includes('toWindowsPath'), 'demo app should show Windows-style prompts');
 assert(app.includes('Get-Item readme.txt'), 'PowerShell preview should suggest PowerShell commands');
 assert(app.includes('Where-Object Name -Like *.txt'), 'PowerShell preview should suggest object pipeline commands');

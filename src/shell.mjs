@@ -38,6 +38,7 @@ export class TerminalCore {
     this.maxHistory = options.maxHistory || 500;
     this.persistence = options.persistence || null;
     this.persistEnv = options.persistEnv || false;
+    this.persistVfs = Boolean(options.persistVfs);
     this.profileName = options.profileName || 'default';
     this.formatPipelineData = typeof options.formatPipelineData === 'function'
       ? options.formatPipelineData
@@ -45,6 +46,7 @@ export class TerminalCore {
     this.suppressNextPersist = false;
     this.pluginDisposers = [];
     (options.plugins || []).forEach(plugin => this.use(plugin));
+    this.captureInitialVfsSnapshot();
     if (options.restore !== false && this.persistence?.load) {
       this.restore(this.persistence.load());
     }
@@ -238,11 +240,15 @@ export class TerminalCore {
       aliases: { ...this.aliases },
       env: this.selectPersistedEnv(),
       lastStatus: this.lastStatus,
+      ...(this.persistVfs && this.fs.snapshot ? { vfs: this.fs.snapshot() } : {}),
     };
   }
 
   restore(state = {}) {
     if (!state || typeof state !== 'object') return this;
+    if (this.persistVfs && state.vfs && this.fs.restoreSnapshot) {
+      this.fs.restoreSnapshot(state.vfs);
+    }
     if (typeof state.cwd === 'string') {
       const stat = this.fs.stat(state.cwd);
       if (stat?.type === 'dir' && this.fs.canExecute(state.cwd, { user: this.user, groups: this.groups })) {
@@ -275,6 +281,11 @@ export class TerminalCore {
     return this;
   }
 
+  captureInitialVfsSnapshot() {
+    this.initialVfsSnapshot = this.fs.snapshot ? this.fs.snapshot() : null;
+    return this;
+  }
+
   persist() {
     if (!this.persistence?.save) return;
     try {
@@ -294,6 +305,9 @@ export class TerminalCore {
     this.history = [];
     this.aliases = {};
     this.lastStatus = 0;
+    if (this.persistVfs && this.initialVfsSnapshot && this.fs.restoreSnapshot) {
+      this.fs.restoreSnapshot(this.initialVfsSnapshot);
+    }
     this.suppressNextPersist = true;
     return this;
   }

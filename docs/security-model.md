@@ -34,7 +34,7 @@ For strict CSP sites, use the generated `dist/termlet.css` file instead of calli
 
 ## Persistence Boundary
 
-Persistence is opt-in. A persistence adapter should only save serializable state and must provide `reset()`.
+Persistence is opt-in. A persistence adapter should only save serializable state and must provide `reset()`. Use `createSessionStorageAdapter()` for current-tab state that survives refresh and naturally resets when the tab is closed. VFS snapshots are disabled unless `persistVfs: true` is set.
 
 Do not persist:
 

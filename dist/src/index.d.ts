@@ -77,6 +77,7 @@ export interface TerminalOptions {
   formatPipelineData?: (data: unknown[], context?: { terminal: TerminalCore }) => string;
   persistence?: PersistenceAdapter;
   persistEnv?: boolean | string[];
+  persistVfs?: boolean;
   restore?: boolean;
 }
 
@@ -93,6 +94,7 @@ export class TerminalCore {
   history: string[];
   lastStatus: number;
   profileName: string;
+  persistVfs: boolean;
   maxOutputBytes: number;
   commandTimeoutMs: number;
   persistence: PersistenceAdapter | null;
@@ -114,6 +116,7 @@ export class TerminalCore {
   execute(line: string, options?: { signal?: AbortSignal | null }): Promise<CommandResult>;
   snapshot(): Record<string, unknown>;
   restore(state?: Record<string, unknown>): this;
+  captureInitialVfsSnapshot(): this;
   persist(): void;
   resetSessionState(): this;
 }
@@ -157,6 +160,8 @@ export class MemoryFileSystem {
   canWrite(path: string, context?: Record<string, unknown>): boolean;
   canExecute(path: string, context?: Record<string, unknown>): boolean;
   glob(pattern: string, context?: Record<string, unknown>): string[];
+  snapshot(): Record<string, unknown>;
+  restoreSnapshot(state?: Record<string, unknown>): this;
 }
 
 export class VfsError extends Error {
@@ -230,4 +235,5 @@ export function mountFeedTerminal(options?: Record<string, unknown>): Promise<{ 
 export function createHugoTerminal(options?: Record<string, unknown>): Promise<TerminalCore>;
 export function mountHugoTerminal(options?: Record<string, unknown>): Promise<{ terminal: TerminalCore; renderer: DomTerminalRenderer }>;
 export function createStorageAdapter(options?: Record<string, unknown>): PersistenceAdapter;
+export function createSessionStorageAdapter(options?: Record<string, unknown>): PersistenceAdapter;
 export function memoryPersistenceAdapter(initialState?: Record<string, unknown>): PersistenceAdapter;

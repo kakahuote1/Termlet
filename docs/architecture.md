@@ -57,7 +57,8 @@
 `src/adapters/persistence.mjs`
 
 - Provides explicit `load`, `save`, and `reset` session adapters.
-- Persists shell metadata only; it does not persist the full VFS.
+- Provides both `localStorage` and current-tab `sessionStorage` adapters.
+- Persists shell metadata by default; `persistVfs: true` also snapshots serializable VFS files and directories.
 - Treats restored state as untrusted and bounded.
 
 `src/presets/*.mjs`

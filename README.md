@@ -70,6 +70,8 @@ Termlet 是一个运行在浏览器中的终端引擎。不需要后端、不需
 </script>
 ```
 
+如果希望刷新后仍保留当前标签页里的操作，见 [刷新不丢、关页重置](#刷新不丢关页重置)。
+
 ---
 
 ## Shell 引擎
@@ -252,6 +254,23 @@ import { mountHugoTerminal } from 'termlet';
 await mountHugoTerminal({ mount: '#terminal', feedUrl: '/index.xml' });
 ```
 
+## 刷新不丢、关页重置
+
+博客终端通常需要抗刷新，但不需要长期保存。使用当前标签页会话：
+
+```js
+import { createSessionStorageAdapter, createTerminal } from 'termlet';
+
+const terminal = createTerminal({
+  persistence: createSessionStorageAdapter({
+    key: 'my-blog-terminal',
+  }),
+  persistVfs: true,
+});
+```
+
+这样 `mkdir`、`touch`、`echo > file`、`cd` 等操作刷新后仍然保留；关闭当前标签页后，浏览器会清理 `sessionStorage`，下次打开就是新会话。用户也可以运行 `session reset` 手动清理。
+
 ## 编写插件
 
 插件是一个接收 `TerminalCore` 的函数，可以返回 disposer：
@@ -338,7 +357,7 @@ src/
 │   ├── static-site.mjs        mountStaticTerminal()
 │   ├── feed.mjs               mountFeedTerminal()
 │   ├── hugo.mjs               mountHugoTerminal()
-│   └── persistence.mjs        localStorage / 内存持久化
+│   └── persistence.mjs        localStorage / sessionStorage / 内存持久化
 └── renderers/
     └── dom-renderer.mjs       默认 DOM 渲染器
 ```

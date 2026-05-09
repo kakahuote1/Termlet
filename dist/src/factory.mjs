@@ -8,9 +8,11 @@ import { windowsCommandsPlugin } from './plugins/windows-commands.mjs';
 export function createTerminal(options = {}) {
   const prepared = mergeProfileOptions(options);
   const { commandPacks = [], plugins = [], ...coreOptions } = prepared;
+  const shouldRestore = prepared.restore !== false;
   const terminal = new TerminalCore({
     ...coreOptions,
     fs: prepared.fs || createLinuxLikeFs(prepared.fsOptions),
+    restore: false,
   });
 
   if (prepared.basicCommands !== false) {
@@ -23,6 +25,10 @@ export function createTerminal(options = {}) {
     if (Array.isArray(plugin)) terminal.use(plugin[0], plugin[1]);
     else terminal.use(plugin);
   });
+  terminal.captureInitialVfsSnapshot();
+  if (shouldRestore && terminal.persistence?.load) {
+    terminal.restore(terminal.persistence.load());
+  }
   return terminal;
 }
 

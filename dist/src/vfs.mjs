@@ -284,6 +284,40 @@ export class MemoryFileSystem {
     const matches = this.list(dir, { all: true, ...context }).filter(name => regex.test(name));
     return matches.length ? matches.map(name => dirToken + name) : [pattern];
   }
+
+  snapshot() {
+    return {
+      version: 1,
+      nodes: [...this.nodes.entries()]
+        .filter(([, node]) => typeof node.handler !== 'function')
+        .map(([path, node]) => [path, serializeNode(node)]),
+    };
+  }
+
+  restoreSnapshot(state = {}) {
+    if (!state || state.version !== 1 || !Array.isArray(state.nodes)) return this;
+    const restored = new Map();
+    for (const item of state.nodes) {
+      if (!Array.isArray(item) || item.length !== 2) continue;
+      const [path, node] = item;
+      if (typeof path !== 'string' || !path.startsWith('/') || !node || typeof node !== 'object') continue;
+      restored.set(this.normalize(path), sanitizeNode(node));
+    }
+    if (!restored.has('/')) {
+      restored.set('/', {
+        type: 'dir',
+        owner: 'root',
+        user: 'root',
+        group: 'root',
+        perm: 'drwxr-xr-x',
+        date: this.clockText,
+        size: 4096,
+        meta: {},
+      });
+    }
+    this.nodes = restored;
+    return this;
+  }
 }
 
 export class VfsError extends Error {
@@ -336,6 +370,35 @@ function copyMeta(node) {
     link: node.link,
     title: node.title,
     meta: { ...(node.meta || {}) },
+  };
+}
+
+function serializeNode(node) {
+  const {
+    handler: _handler,
+    ...rest
+  } = node;
+  return {
+    ...rest,
+    meta: { ...(rest.meta || {}) },
+  };
+}
+
+function sanitizeNode(node) {
+  const type = typeof node.type === 'string' ? node.type : 'file';
+  const content = node.content == null ? undefined : String(node.content);
+  return {
+    type,
+    owner: typeof node.owner === 'string' ? node.owner : (typeof node.user === 'string' ? node.user : 'root'),
+    user: typeof node.user === 'string' ? node.user : (typeof node.owner === 'string' ? node.owner : 'root'),
+    group: typeof node.group === 'string' ? node.group : 'root',
+    perm: typeof node.perm === 'string' ? node.perm : (type === 'dir' ? 'drwxr-xr-x' : '-rw-r--r--'),
+    date: typeof node.date === 'string' ? node.date : DEFAULT_DATE,
+    size: Number.isFinite(node.size) ? node.size : textByteLength(content || ''),
+    ...(content == null ? {} : { content }),
+    ...(typeof node.link === 'string' ? { link: node.link } : {}),
+    ...(typeof node.title === 'string' ? { title: node.title } : {}),
+    meta: node.meta && typeof node.meta === 'object' && !Array.isArray(node.meta) ? { ...node.meta } : {},
   };
 }
 

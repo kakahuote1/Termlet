@@ -50,6 +50,7 @@ const expectedRootExports = [
   'createHugoTerminal',
   'mountHugoTerminal',
   'createStorageAdapter',
+  'createSessionStorageAdapter',
   'memoryPersistenceAdapter',
 ];
 
@@ -68,7 +69,7 @@ const subpathExpectations = {
   './adapters/static-site': ['mountStaticTerminal'],
   './adapters/feed': ['createFeedTerminal', 'mountFeedTerminal'],
   './adapters/hugo': ['createHugoTerminal', 'mountHugoTerminal'],
-  './adapters/persistence': ['createStorageAdapter', 'memoryPersistenceAdapter'],
+  './adapters/persistence': ['createStorageAdapter', 'createSessionStorageAdapter', 'memoryPersistenceAdapter'],
   './renderers/dom': ['DomTerminalRenderer', 'DEFAULT_TERMINAL_CSS'],
   './dist': ['createTerminal', 'DomTerminalRenderer'],
 };

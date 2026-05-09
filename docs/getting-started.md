@@ -71,19 +71,20 @@ See `docs/recipes.md` for copyable integration recipes, `examples/plugin-templat
 
 ## Reset Path
 
-If you enable persistence, expose a reset path:
+If you want refresh-resistant state for the current tab, use `sessionStorage` and enable VFS persistence:
 
 ```js
-import { createStorageAdapter } from 'termlet';
+import { createSessionStorageAdapter } from 'termlet';
 
-const persistence = createStorageAdapter({
-  key: 'my-site-terminal',
+const terminal = createTerminal({
+  persistence: createSessionStorageAdapter({
+    key: 'my-site-terminal',
+  }),
+  persistVfs: true,
 });
-
-const terminal = createTerminal({ persistence });
 ```
 
-Users can run:
+Now `mkdir`, redirects, and `cd` survive refresh in the same tab. Closing the tab starts fresh. Users can also run:
 
 ```bash
 session reset

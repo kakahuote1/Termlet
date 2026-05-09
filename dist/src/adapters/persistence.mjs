@@ -46,6 +46,14 @@ export function createStorageAdapter(options = {}) {
   };
 }
 
+export function createSessionStorageAdapter(options = {}) {
+  return createStorageAdapter({
+    key: 'termlet.session',
+    ...options,
+    storage: options.storage || globalThis.sessionStorage,
+  });
+}
+
 function structuredCloneSafe(value) {
   if (typeof structuredClone === 'function') return structuredClone(value);
   return JSON.parse(JSON.stringify(value || {}));

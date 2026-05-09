@@ -6,5 +6,6 @@
 
 - 彩蛋入口和终端核心分离。
 - 终端输出仍然由 `DomTerminalRenderer` 负责。
-- `session reset` 可以清理本地持久化状态。
+- 使用 `createSessionStorageAdapter()` 和 `persistVfs: true`：刷新保留当前标签页操作，关闭标签页后重置。
+- `session reset` 可以手动清理本地会话状态。
 - 关闭按钮只隐藏终端，不写入不可恢复状态。

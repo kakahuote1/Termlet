@@ -222,17 +222,20 @@ new DomTerminalRenderer(terminal, {
 
 这样命令逻辑仍然可测试，页面效果也不会污染核心。
 
-## 9. 持久化与重置
+## 9. 刷新不丢、关页重置
 
 ```js
-import { createStorageAdapter, createTerminal } from '/termlet/index.mjs';
+import { createSessionStorageAdapter, createTerminal } from '/termlet/index.mjs';
 
 const terminal = createTerminal({
-  persistence: createStorageAdapter({
+  persistence: createSessionStorageAdapter({
     key: 'my-blog-terminal',
   }),
+  persistVfs: true,
 });
 ```
+
+这个配置适合博客终端：`mkdir`、`touch`、`echo > file`、`cd` 等操作在刷新后仍然保留；关闭当前标签页后，浏览器会清理 `sessionStorage`，下次打开就是新会话。
 
 建议在 UI 或命令里暴露重置路径：
 
@@ -240,7 +243,7 @@ const terminal = createTerminal({
 session reset
 ```
 
-持久化只保存会话状态，不会保存真实系统状态。
+持久化只保存浏览器里的模拟会话，不会保存真实系统状态。
 
 ## 10. 安全边界
 

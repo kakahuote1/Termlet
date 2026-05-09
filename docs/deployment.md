@@ -79,15 +79,16 @@ The reference renderer needs a browser DOM. The core can be tested in Node.
 
 ## Persistence
 
-Persistence is optional. Use a site-specific key and keep reset reachable:
+Persistence is optional. For blog terminals, prefer current-tab persistence: refresh keeps state, closing the tab starts fresh.
 
 ```js
-import { createStorageAdapter, mountStaticTerminal } from 'termlet';
+import { createSessionStorageAdapter, mountStaticTerminal } from 'termlet';
 
 await mountStaticTerminal({
   mount: '#terminal',
   terminalOptions: {
-    persistence: createStorageAdapter({ key: 'docs-terminal-v1' }),
+    persistence: createSessionStorageAdapter({ key: 'docs-terminal-v1' }),
+    persistVfs: true,
   },
 });
 ```

@@ -26,6 +26,7 @@ Useful options:
 | `systemCommands: false` | Disable simulated system commands. |
 | `persistence` | `{ load, save, reset }` adapter for session state. |
 | `persistEnv` | `false`, `true`, or a list of env names to persist. |
+| `persistVfs` | Persist VFS files and directories too; useful with `createSessionStorageAdapter()` for refresh-resistant current-tab sessions. |
 | `maxOutputBytes` | Caps command stdout/stderr to protect the page. |
 | `commandTimeoutMs` | Optional timeout for async command handlers. |
 | `caseInsensitiveCommands` | Useful for CMD/PowerShell style terminals. |
@@ -205,7 +206,21 @@ new DomTerminalRenderer(terminal, {
 - `createFeedTerminal(options)` and `mountFeedTerminal(options)` read RSS/Atom posts for generic static blogs.
 - `mountHugoTerminal(options)` can read Hugo RSS and expose posts as files.
 - `createStorageAdapter(options)` persists session state in `localStorage`.
+- `createSessionStorageAdapter(options)` persists in `sessionStorage`, so reload keeps state but closing the tab clears it.
 - `memoryPersistenceAdapter(initialState)` is useful for tests.
+
+VFS persistence is opt-in:
+
+```js
+const terminal = createTerminal({
+  persistence: createSessionStorageAdapter({
+    key: 'my-terminal-session',
+  }),
+  persistVfs: true,
+});
+```
+
+With this setup, `mkdir`, `touch`, redirects, edits, and `cd` survive refresh in the same tab. Closing the tab starts a new session. `session reset` clears the adapter and restores the initial seeded VFS.
 
 ## Feed Posts
 

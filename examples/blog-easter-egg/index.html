@@ -114,7 +114,7 @@
 
   <script type="module">
     import {
-      createStorageAdapter,
+      createSessionStorageAdapter,
       createTerminal,
       blogSandboxPreset,
       DomTerminalRenderer,
@@ -125,7 +125,8 @@
 
     const terminal = createTerminal({
       hostname: 'blog',
-      persistence: createStorageAdapter({ key: 'blog-easter-egg-terminal' }),
+      persistence: createSessionStorageAdapter({ key: 'blog-easter-egg-terminal' }),
+      persistVfs: true,
       plugins: [blogSandboxPreset()],
     });
 
