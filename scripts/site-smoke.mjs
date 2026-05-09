@@ -43,6 +43,7 @@ assert(index.includes('id="terminal-cmd"'), 'demo should include CMD terminal mo
 assert(index.includes('id="terminal-docs"'), 'demo should include docs terminal mount');
 assert(index.includes('id="terminal-orb"'), 'demo should include orb terminal mount');
 assert(index.includes('id="terminal-rain"'), 'demo should include command rain terminal mount');
+assert(index.includes('data-lab-effect-layer'), 'lab scene should include a dynamic effect layer');
 assert(index.includes('把博客变成一台安全服务器'), 'Linux scene should match promo copy');
 assert(index.includes('不只是换皮肤，命令也像'), 'PowerShell scene should match promo copy');
 assert(index.includes('复古命令行也能插进页面'), 'CMD scene should match promo copy');
@@ -84,6 +85,10 @@ assert(app.includes("shell: 'powershell'") && app.includes("shell: 'cmd'"), 'Win
 assert(app.includes("terminal.register('run-demo'"), 'docs scene should include tutorial command');
 assert(app.includes("terminal.register('orbit'"), 'lab scene should include orb-specific commands');
 assert(app.includes("terminal.register('rain'"), 'lab scene should include command-rain commands');
+assert(app.includes('playLabEffect'), 'lab scene should trigger renderer-level visual effects');
+assert(app.includes('spawnDragon'), 'lab scene should support dragon command motion');
+assert(app.includes('spawnOrbit'), 'lab scene should support orbiting IO motion');
+assert(app.includes('spawnFalling'), 'lab scene should support falling IO motion');
 assert(!app.includes('injectDefaultStyles'), 'strict demo should not inject inline styles');
 
 assert(css.includes('.scene-linux'), 'site CSS should style Linux promo scene');
@@ -93,6 +98,10 @@ assert(css.includes('.scene-docs'), 'site CSS should style docs promo scene');
 assert(css.includes('.scene-lab'), 'site CSS should style extension lab scene');
 assert(css.includes('.orb-terminal'), 'site CSS should style spherical terminal');
 assert(css.includes('.command-rain'), 'site CSS should style falling command layer');
+assert(css.includes('.lab-dragon'), 'site CSS should style dragon command motion');
+assert(css.includes('.lab-orbit'), 'site CSS should style orbiting IO motion');
+assert(css.includes('.lab-fall'), 'site CSS should style falling IO motion');
+assert(css.includes('terminal-line-drop'), 'rain terminal output should animate away instead of staying static');
 assert(css.includes('.scene-deploy'), 'site CSS should style deploy scene');
 assert(css.includes('perspective(1400px)'), 'site CSS should include tilt transform');
 assert(css.includes('@media (max-width: 720px)'), 'site CSS should include mobile layout');

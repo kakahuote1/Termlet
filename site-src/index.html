@@ -156,15 +156,16 @@
         <h2 id="lab-title">终端不一定长得像终端</h2>
         <p class="lead">同一个 core 可以换 renderer、换容器、接事件效果。圆形、悬浮、命令雨、游戏 HUD 都只是前端表现层。</p>
         <div class="quick-actions" aria-label="Lab 快速命令">
-          <button type="button" data-run-profile="orb" data-run="orbit">orbit</button>
-          <button type="button" data-run-profile="orb" data-run="gravity ls">gravity</button>
-          <button type="button" data-run-profile="rain" data-run="rain">rain</button>
-          <button type="button" data-run-profile="rain" data-run="fall help">fall help</button>
-          <button type="button" data-run-profile="orb" data-run="skin sphere">skin</button>
-          <button type="button" data-run-profile="rain" data-run="effect pulse">effect</button>
+          <button type="button" data-run-profile="orb" data-run="orbit">input dragon</button>
+          <button type="button" data-run-profile="orb" data-run="gravity ls">orbit output</button>
+          <button type="button" data-run-profile="rain" data-run="rain">falling stdout</button>
+          <button type="button" data-run-profile="rain" data-run="fall help">drop input</button>
+          <button type="button" data-run-profile="orb" data-run="skin sphere">skin event</button>
+          <button type="button" data-run-profile="rain" data-run="effect pulse">pulse event</button>
         </div>
       </div>
       <div class="lab-stage" aria-label="扩展终端实验室">
+        <div class="lab-effect-layer" data-lab-effect-layer aria-hidden="true"></div>
         <div class="orb-terminal" data-tilt-card>
           <div class="orb-glow" aria-hidden="true"></div>
           <div class="terminal-mount terminal-mount--orb" id="terminal-orb"></div>

@@ -538,8 +538,17 @@ h2 {
   gap: 26px;
 }
 
+.lab-effect-layer {
+  position: absolute;
+  inset: -68px -52px;
+  z-index: 6;
+  pointer-events: none;
+  overflow: visible;
+}
+
 .orb-terminal {
   position: relative;
+  z-index: 3;
   width: min(28vw, 405px);
   aspect-ratio: 1;
   min-width: 320px;
@@ -595,6 +604,7 @@ h2 {
 
 .rain-terminal {
   position: relative;
+  z-index: 3;
   width: min(28vw, 430px);
   min-width: 330px;
   height: 520px;
@@ -651,6 +661,85 @@ h2 {
   --termlet-muted: #9bb8aa;
   --termlet-error: #ff7291;
   font-size: 13px;
+}
+
+.terminal-mount--rain .blog-terminal__line,
+.terminal-mount--rain .blog-terminal__input-row:not(:last-child) {
+  animation: terminal-line-drop 2600ms ease-in forwards;
+}
+
+.lab-dragon {
+  position: absolute;
+  left: 48%;
+  top: 44%;
+  width: 1px;
+  height: 1px;
+  transform: translate(-50%, -50%);
+}
+
+.lab-dragon span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #ff7de6;
+  font: 950 15px/1 var(--mono);
+  white-space: nowrap;
+  text-shadow: 0 0 18px rgba(255, 125, 230, .86);
+  opacity: 0;
+  animation: dragon-token 3200ms cubic-bezier(.16,.74,.2,1) forwards;
+  animation-delay: calc(var(--i) * 55ms);
+}
+
+.lab-orbit {
+  position: absolute;
+  left: 51%;
+  top: 48%;
+  width: 1px;
+  height: 1px;
+  transform-style: preserve-3d;
+  animation: orbit-shell 5200ms linear forwards;
+}
+
+.lab-orbit span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #8dffd5;
+  font: 950 13px/1 var(--mono);
+  white-space: nowrap;
+  text-shadow: 0 0 18px rgba(141, 255, 213, .7);
+  transform: rotate(var(--a)) translateX(var(--d)) rotate(calc(-1 * var(--a)));
+}
+
+.lab-fall {
+  position: absolute;
+  top: -36px;
+  left: var(--x);
+  color: #8dffd5;
+  font: 950 14px/1 var(--mono);
+  white-space: nowrap;
+  text-shadow: 0 0 16px rgba(141,255,213,.78);
+  animation: lab-token-fall 3800ms cubic-bezier(.2,.72,.3,1) forwards;
+  animation-delay: var(--delay);
+}
+
+.lab-pulse {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 120px;
+  height: 120px;
+  display: grid;
+  place-items: center;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(255, 79, 216, .75);
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(255, 79, 216, .12);
+  box-shadow: 0 0 60px rgba(255,79,216,.55);
+  font: 950 13px/1.2 var(--mono);
+  text-align: center;
+  animation: lab-pulse 1500ms ease-out forwards;
 }
 
 .deploy-board {
@@ -895,7 +984,13 @@ h2 {
   }
 
   .orb-glow,
-  .command-rain span {
+  .command-rain span,
+  .lab-dragon span,
+  .lab-orbit,
+  .lab-fall,
+  .lab-pulse,
+  .terminal-mount--rain .blog-terminal__line,
+  .terminal-mount--rain .blog-terminal__input-row:not(:last-child) {
     animation: none;
   }
 }
@@ -920,5 +1015,87 @@ h2 {
   100% {
     transform: translateY(650px) rotate(8deg);
     opacity: 0;
+  }
+}
+
+@keyframes dragon-token {
+  0% {
+    opacity: 0;
+    transform: translate(-24px, 28px) rotate(-18deg) scale(.62);
+  }
+  16% {
+    opacity: 1;
+  }
+  58% {
+    opacity: 1;
+    transform: translate(calc(var(--x) * .76), calc(var(--y) * .76)) rotate(var(--r)) scale(1.08);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--x), var(--y)) rotate(calc(var(--r) + 56deg)) scale(.78);
+  }
+}
+
+@keyframes orbit-shell {
+  0% {
+    opacity: 0;
+    transform: rotate(0deg) scale(.72);
+  }
+  12% {
+    opacity: 1;
+  }
+  82% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(420deg) scale(1.08);
+  }
+}
+
+@keyframes lab-token-fall {
+  0% {
+    opacity: 0;
+    transform: translateY(-80px) translateX(0) rotate(-10deg);
+  }
+  12% {
+    opacity: 1;
+  }
+  78% {
+    opacity: .86;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(680px) translateX(var(--drift)) rotate(12deg);
+  }
+}
+
+@keyframes lab-pulse {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.4);
+  }
+  28% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.6);
+  }
+}
+
+@keyframes terminal-line-drop {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+  68% {
+    opacity: .75;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(92px);
+    filter: blur(2px);
   }
 }
