@@ -21,6 +21,7 @@
       <a href="#styles">终端风格</a>
       <a href="#kit">可改造点</a>
       <a href="#install">接入</a>
+      <a href="#themes">主题</a>
       <a href="https://github.com/" data-repo-link>GitHub</a>
     </nav>
   </header>
@@ -127,20 +128,55 @@
     <section class="section install" id="install" aria-labelledby="install-title">
       <div class="section-head">
         <p class="eyebrow">Drop-in usage</p>
-        <h2 id="install-title">复制这段即可开始</h2>
-        <p class="section-copy">把 `dist/` 放进站点静态目录，再挂载一个 DOM 节点。Hugo、Hexo、Jekyll、Astro、VitePress 都是同一个思路。</p>
+        <h2 id="install-title">三步接入博客</h2>
+        <p class="section-copy">下载构建产物，把 `dist/` 改名为 `termlet/` 放进站点静态目录，再复制下面这段 HTML。Hugo、Hexo、Jekyll、Astro、VitePress 都是同一个思路。</p>
       </div>
-      <pre class="code-sample"><code>&lt;link rel="stylesheet" href="/termlet/termlet.css"&gt;
+      <div class="install-steps" aria-label="接入步骤">
+        <article>
+          <span>1</span>
+          <p>运行 `npm run build`，或下载 release 里的 `dist/`。</p>
+        </article>
+        <article>
+          <span>2</span>
+          <p>把 `dist/` 复制到博客静态目录，并改名为 `termlet/`。</p>
+        </article>
+        <article>
+          <span>3</span>
+          <p>粘贴代码，修改 `siteName`、`intro` 和 `theme`。</p>
+        </article>
+      </div>
+      <div class="copy-row">
+        <button type="button" data-copy-target="starter-snippet">复制接入代码</button>
+        <span data-copy-status aria-live="polite"></span>
+      </div>
+      <pre class="code-sample"><code id="starter-snippet">&lt;link rel="stylesheet" href="/termlet/termlet.css"&gt;
 &lt;div id="terminal"&gt;&lt;/div&gt;
 &lt;script type="module"&gt;
-  import { mountStaticTerminal, blogSandboxPreset } from '/termlet/index.mjs';
+  import { mountStarterTerminal } from '/termlet/index.mjs';
 
-  await mountStaticTerminal({
+  await mountStarterTerminal({
     mount: '#terminal',
     injectStyles: false,
-    plugins: [blogSandboxPreset()],
+    theme: 'linux',
+    siteName: 'My Blog',
+    intro: 'Welcome to my terminal.',
   });
 &lt;/script&gt;</code></pre>
+    </section>
+
+    <section class="section" id="themes" aria-labelledby="themes-title">
+      <div class="section-head">
+        <p class="eyebrow">Built-in themes</p>
+        <h2 id="themes-title">换一个词就能换主题</h2>
+        <p class="section-copy">`theme` 支持 linux、powershell、cmd、light、crt。需要更细的外观时，覆盖 `--termlet-*` CSS 变量即可。</p>
+      </div>
+      <div class="theme-list" aria-label="内置主题">
+        <button type="button" data-copy-text="theme: 'linux'">linux</button>
+        <button type="button" data-copy-text="theme: 'powershell'">powershell</button>
+        <button type="button" data-copy-text="theme: 'cmd'">cmd</button>
+        <button type="button" data-copy-text="theme: 'light'">light</button>
+        <button type="button" data-copy-text="theme: 'crt'">crt</button>
+      </div>
     </section>
   </main>
 

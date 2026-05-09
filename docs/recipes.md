@@ -16,12 +16,14 @@ npm run build
 <link rel="stylesheet" href="/termlet/termlet.css">
 <div id="terminal"></div>
 <script type="module">
-  import { mountStaticTerminal, blogSandboxPreset } from '/termlet/index.mjs';
+  import { mountStarterTerminal } from '/termlet/index.mjs';
 
-  await mountStaticTerminal({
+  await mountStarterTerminal({
     mount: '#terminal',
     injectStyles: false,
-    plugins: [blogSandboxPreset()],
+    theme: 'linux',
+    siteName: 'My Blog',
+    intro: 'Welcome to my terminal.',
   });
 </script>
 ```

@@ -8,6 +8,12 @@ export const DEFAULT_TERMINAL_CSS = `
 .blog-terminal__input { flex:1; min-width:0; background:transparent; border:0; color:inherit; font:inherit; outline:0; }
 .blog-terminal__input:focus-visible { box-shadow:0 1px 0 var(--termlet-focus); }
 .blog-terminal--closed { opacity:.72; }
+.blog-terminal.termlet-theme-linux { --termlet-bg:#05080d; --termlet-fg:#c9fdd7; --termlet-border:#1f3b2d; --termlet-prompt:#2ea043; --termlet-error:#ff7b72; --termlet-muted:#7d8590; --termlet-focus:#58a6ff; }
+.blog-terminal.termlet-theme-powershell { --termlet-bg:#012456; --termlet-fg:#f2f7ff; --termlet-border:#2563eb; --termlet-prompt:#f2f7ff; --termlet-error:#ffb4b4; --termlet-muted:#9ec5ff; --termlet-focus:#ffffff; }
+.blog-terminal.termlet-theme-cmd { --termlet-bg:#000000; --termlet-fg:#d8d8d8; --termlet-border:#333333; --termlet-prompt:#d8d8d8; --termlet-error:#ff5555; --termlet-muted:#a0a0a0; --termlet-focus:#ffffff; }
+.blog-terminal.termlet-theme-light { --termlet-bg:#f8fafc; --termlet-fg:#111827; --termlet-border:#cbd5e1; --termlet-prompt:#0f766e; --termlet-error:#b91c1c; --termlet-muted:#64748b; --termlet-focus:#2563eb; }
+.blog-terminal.termlet-theme-crt { --termlet-bg:#020403; --termlet-fg:#b8ffcf; --termlet-border:#194d2b; --termlet-prompt:#39ff88; --termlet-error:#ff6b6b; --termlet-muted:#5fae7a; --termlet-focus:#c6ffdd; text-shadow:0 0 6px rgba(57,255,136,.35); }
+.blog-terminal.termlet-size-compact { font-size:12px; padding:10px; }
 `;
 
 export class DomTerminalRenderer {
@@ -21,6 +27,8 @@ export class DomTerminalRenderer {
     this.history = Array.isArray(options.history) ? [...options.history] : [...(core.history || [])];
     this.historyIndex = -1;
     this.className = options.className || 'blog-terminal';
+    this.theme = options.theme || '';
+    this.themeClass = options.themeClass || '';
     this.welcome = options.welcome ?? 'Welcome to Blog Terminal Sandbox. Type `help` or `ls`.\n';
     this.maxLines = Math.max(50, Number(options.maxLines || 1000));
     this.autoFocus = options.autoFocus !== false;
@@ -44,6 +52,7 @@ export class DomTerminalRenderer {
 
   attach() {
     this.mount.classList.add(this.className);
+    this.applyThemeClasses();
     this.output = this.document.createElement('div');
     this.output.className = `${this.className}__output`;
     this.output.setAttribute('role', 'log');
@@ -76,6 +85,12 @@ export class DomTerminalRenderer {
 
   focus() {
     if (this.autoFocus && this.activeInput && !this.activeInput.disabled) this.activeInput.focus();
+  }
+
+  applyThemeClasses() {
+    normalizeThemeClasses(this.theme, this.themeClass).forEach(className => {
+      this.mount.classList.add(className);
+    });
   }
 
   print(text, cls = '') {
@@ -319,6 +334,16 @@ function formatPromptPath(path, home) {
   if (path === home) return '~';
   if (path.startsWith(home + '/')) return '~' + path.slice(home.length);
   return path;
+}
+
+function normalizeThemeClasses(theme, themeClass) {
+  const classes = [];
+  const themeName = String(theme || '').trim();
+  if (themeName) {
+    classes.push(themeName.startsWith('termlet-') ? themeName : `termlet-theme-${themeName}`);
+  }
+  String(themeClass || '').split(/\s+/).filter(Boolean).forEach(name => classes.push(name));
+  return classes.filter(name => /^[-_A-Za-z0-9]{1,80}$/.test(name));
 }
 
 function safeLoad(adapter) {

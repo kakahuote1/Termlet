@@ -27,6 +27,7 @@ export {
   fetchHugoPosts,
 } from './plugins/hugo-adapter.mjs';
 export { blogSandboxPreset } from './presets/blog-sandbox.mjs';
+export { mountStarterTerminal } from './adapters/starter.mjs';
 export { mountStaticTerminal } from './adapters/static-site.mjs';
 export { createFeedTerminal, mountFeedTerminal } from './adapters/feed.mjs';
 export { createHugoTerminal, mountHugoTerminal } from './adapters/hugo.mjs';

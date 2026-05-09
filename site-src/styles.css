@@ -342,9 +342,92 @@ h3 {
   margin-top: 26px;
 }
 
+.install-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: 28px;
+  border: 1px solid var(--line);
+  background: var(--line);
+}
+
+.install-steps article {
+  min-height: 132px;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 20px;
+  background: var(--surface);
+}
+
+.install-steps span {
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--cyan);
+  border-radius: 50%;
+  color: var(--cyan);
+  font-weight: 700;
+}
+
+.install-steps p {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.copy-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.copy-row button,
+.theme-list button {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0 14px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.copy-row button:hover,
+.copy-row button:focus-visible,
+.theme-list button:hover,
+.theme-list button:focus-visible {
+  border-color: var(--cyan);
+  outline: none;
+}
+
+[data-copy-status] {
+  color: var(--cyan);
+  min-height: 20px;
+}
+
+.theme-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.copy-buffer {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
 @media (max-width: 900px) {
   .workspace,
-  .style-grid {
+  .style-grid,
+  .install-steps {
     grid-template-columns: 1fr;
   }
 

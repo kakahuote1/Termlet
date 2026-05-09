@@ -61,11 +61,13 @@ Termlet 是一个运行在浏览器中的终端引擎。不需要后端、不需
 <link rel="stylesheet" href="/termlet/termlet.css">
 <div id="terminal"></div>
 <script type="module">
-  import { mountStaticTerminal, blogSandboxPreset } from '/termlet/index.mjs';
-  await mountStaticTerminal({
+  import { mountStarterTerminal } from '/termlet/index.mjs';
+  await mountStarterTerminal({
     mount: '#terminal',
-    plugins: [blogSandboxPreset()],
     injectStyles: false,
+    theme: 'linux',
+    siteName: 'My Blog',
+    intro: 'Welcome to my terminal.',
   });
 </script>
 ```
@@ -359,6 +361,7 @@ src/
 ├── presets/
 │   └── blog-sandbox.mjs       博客沙箱起始预设
 ├── adapters/
+│   ├── starter.mjs            mountStarterTerminal()
 │   ├── static-site.mjs        mountStaticTerminal()
 │   ├── feed.mjs               mountFeedTerminal()
 │   ├── hugo.mjs               mountHugoTerminal()
@@ -371,6 +374,7 @@ src/
 
 | 目录 | 说明 |
 |---|---|
+| `drop-in/` | 小白开箱示例，复制文件后改几行配置即可 |
 | `plain-html/` | 最小化 HTML 接入 |
 | `hugo/` | Hugo Pipes 集成 |
 | `plugin-template/` | 插件开发起始模板 |

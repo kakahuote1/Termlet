@@ -118,6 +118,10 @@ document.querySelectorAll('[data-run]').forEach(button => {
   });
 });
 
+document.querySelectorAll('[data-copy-target], [data-copy-text]').forEach(button => {
+  button.addEventListener('click', () => copyFromButton(button));
+});
+
 const repoLink = document.querySelector('[data-repo-link]');
 if (repoLink) {
   const inferred = inferGitHubRepository(window.location);
@@ -147,6 +151,45 @@ function runInRenderer(renderer, command) {
     ctrlKey: false,
     preventDefault() {},
   }, input, row);
+}
+
+async function copyFromButton(button) {
+  const targetId = button.getAttribute('data-copy-target');
+  const target = targetId ? document.getElementById(targetId) : null;
+  const text = button.getAttribute('data-copy-text') || target?.textContent || '';
+  if (!text.trim()) return;
+  let copied = false;
+  try {
+    await navigator.clipboard.writeText(text.trim());
+    copied = true;
+  } catch (_) {
+    copied = fallbackCopy(text.trim());
+  }
+  const status = document.querySelector('[data-copy-status]');
+  if (status) status.textContent = copied ? '已复制' : '复制失败';
+  const previous = button.textContent;
+  button.textContent = copied ? '已复制' : '复制失败';
+  setTimeout(() => {
+    button.textContent = previous;
+    if (status) status.textContent = '';
+  }, 1400);
+}
+
+function fallbackCopy(text) {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.className = 'copy-buffer';
+  document.body.appendChild(textarea);
+  textarea.select();
+  let copied = false;
+  try {
+    copied = document.execCommand('copy');
+  } catch (_) {
+    copied = false;
+  }
+  textarea.remove();
+  return copied;
 }
 
 function inferGitHubRepository(location) {

@@ -69,6 +69,10 @@
       "types": "./src/index.d.ts",
       "import": "./src/adapters/static-site.mjs"
     },
+    "./adapters/starter": {
+      "types": "./src/index.d.ts",
+      "import": "./src/adapters/starter.mjs"
+    },
     "./adapters/feed": {
       "types": "./src/index.d.ts",
       "import": "./src/adapters/feed.mjs"

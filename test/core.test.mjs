@@ -6,6 +6,7 @@ import {
   createWindowsTerminal,
   createTerminal,
   createSessionStorageAdapter,
+  mountStarterTerminal,
   defineCommandPack,
   defineProfile,
   DomTerminalRenderer,
@@ -401,6 +402,33 @@ test('dom renderer can persist visible transcript in the same session', async ()
 
   await submitRendererCommand(secondRenderer, 'session reset');
   assert.deepEqual(adapter.load().transcript.entries, []);
+});
+
+test('starter adapter mounts a themed refresh-resistant blog terminal', async () => {
+  const document = createFakeDocument();
+  const mount = document.createElement('div');
+  const storage = memoryStorage();
+  const { terminal, renderer } = await mountStarterTerminal({
+    document,
+    mount,
+    injectStyles: false,
+    theme: 'crt',
+    storageKey: 'starter-test',
+    terminalOptions: {
+      persistence: createSessionStorageAdapter({ storage, key: 'starter-test' }),
+    },
+    siteName: 'Example Site',
+    intro: 'Ready.',
+    files: {
+      '/home/guest/blog/hello.txt': 'hello starter\n',
+    },
+  });
+
+  assert.equal(terminal.persistVfs, true);
+  assert.match(mount.className, /termlet-theme-crt/);
+  assert.equal((await terminal.execute('about-site')).stdout, 'Example Site\nReady.\n');
+  assert.equal((await terminal.execute('cat ~/blog/hello.txt')).stdout, 'hello starter\n');
+  assert.equal(renderer.persistTranscript, true);
 });
 
 test('session storage adapter uses tab-scoped storage semantics when provided', () => {

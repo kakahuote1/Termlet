@@ -192,6 +192,7 @@ Use user-space methods such as `makeDir`, `writeFile`, `remove`, `copy`, `move`,
 new DomTerminalRenderer(terminal, {
   mount: '#terminal',
   welcome: 'Try: help, ls -al\n',
+  theme: 'linux',
   persistTranscript: true,
   onEvent(event) {
     if (event.type === 'effect') startEffect(event.name);
@@ -203,8 +204,14 @@ new DomTerminalRenderer(terminal, {
 
 Renderer transcript persistence is optional. When `persistTranscript: true` is used with a persistence adapter, frozen prompts and command output are saved as text-only entries. Refresh restores the visible screen; `clear`, `Ctrl+L`, and `session reset` clear the transcript. Use `maxTranscriptEntries` and `maxTranscriptBytes` to tune storage limits.
 
+Theme helpers:
+
+- `theme`: built-in theme name, such as `linux`, `powershell`, `cmd`, `light`, or `crt`.
+- `themeClass`: custom class added to the terminal root for site-owned CSS.
+
 ## Adapters
 
+- `mountStarterTerminal(options)` mounts a beginner-friendly blog terminal with safe defaults, current-tab persistence, starter files, and theme support.
 - `mountStaticTerminal(options)` mounts a generic terminal.
 - `createFeedTerminal(options)` and `mountFeedTerminal(options)` read RSS/Atom posts for generic static blogs.
 - `mountHugoTerminal(options)` can read Hugo RSS and expose posts as files.

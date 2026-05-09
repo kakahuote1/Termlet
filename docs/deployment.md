@@ -16,12 +16,14 @@ Serve `dist/` over HTTP and import from `index.mjs`:
 <link rel="stylesheet" href="/termlet/termlet.css">
 <div id="terminal"></div>
 <script type="module">
-  import { mountStaticTerminal, blogSandboxPreset } from '/termlet/index.mjs';
+  import { mountStarterTerminal } from '/termlet/index.mjs';
 
-  await mountStaticTerminal({
+  await mountStarterTerminal({
     mount: '#terminal',
-    plugins: [blogSandboxPreset()],
     injectStyles: false,
+    theme: 'linux',
+    siteName: 'My Blog',
+    intro: 'Welcome to my terminal.',
   });
 </script>
 ```
@@ -80,6 +82,8 @@ The reference renderer needs a browser DOM. The core can be tested in Node.
 ## Persistence
 
 Persistence is optional. For blog terminals, prefer current-tab persistence: refresh keeps state, closing the tab starts fresh.
+
+`mountStarterTerminal()` enables this by default. For lower-level mounts, configure it manually:
 
 ```js
 import { createSessionStorageAdapter, mountStaticTerminal } from 'termlet';

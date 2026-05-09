@@ -26,7 +26,9 @@ assert(index.includes('./termlet/termlet.css'), 'demo should use external termle
 assert(index.includes('./app.mjs'), 'demo should load app.mjs as module');
 assert(index.includes('id="powershell-terminal"'), 'demo should include a PowerShell terminal preview');
 assert(index.includes('id="cmd-terminal"'), 'demo should include a CMD terminal preview');
-assert(index.includes('mountStaticTerminal'), 'demo should include a drop-in mount snippet');
+assert(index.includes('mountStarterTerminal'), 'demo should include beginner starter snippet');
+assert(index.includes('data-copy-target="starter-snippet"'), 'demo should expose a copy button for starter snippet');
+assert(index.includes("theme: 'linux'"), 'demo should show beginner theme selection');
 assert(!/GitHub Actions|workflow|Settings/.test(index), 'demo should not explain maintainer-specific GitHub Actions flow');
 assert(!/胚|玩具|你拿到|开发者/.test(index + app), 'demo copy should use neutral product language');
 assert(index.includes('基础基座'), 'demo should describe the base terminal as a foundation');
@@ -42,6 +44,7 @@ assert(!/<button(?![^>]*\btype=)/.test(index), 'all buttons should declare type'
 assert(!app.includes('injectDefaultStyles'), 'strict demo should not inject inline styles');
 assert(app.includes('./termlet/index.mjs'), 'demo app should import built Termlet entry');
 assert(app.includes('createWindowsTerminal'), 'demo app should mount Windows-style terminals');
+assert(app.includes('copyFromButton'), 'demo app should support copying starter snippets');
 assert(app.includes('createSessionStorageAdapter'), 'demo should use current-tab session persistence');
 assert(app.includes('persistVfs: true'), 'demo should persist VFS changes across refreshes in the current tab');
 assert(app.includes('persistTranscript: true'), 'demo should persist visible terminal transcript across refreshes in the current tab');

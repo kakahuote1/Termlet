@@ -1,8 +1,31 @@
 # 主题与外观
 
-Termlet 的默认 DOM renderer 只是一层参考外观。推荐优先通过 CSS 变量改主题，不要改 Shell 核心。
+Termlet 的默认 DOM renderer 只是一层参考外观。多数博客只需要改主题名或 CSS 变量，不需要改 Shell 核心。
 
-## 默认变量
+## 内置主题
+
+`DomTerminalRenderer` 和 `mountStarterTerminal()` 都支持 `theme`：
+
+```js
+await mountStarterTerminal({
+  mount: '#terminal',
+  theme: 'crt',
+});
+```
+
+可用主题：
+
+| 主题 | 适合场景 |
+|---|---|
+| `linux` | 黑绿终端，默认风格 |
+| `powershell` | PowerShell 蓝色风格 |
+| `cmd` | Windows CMD 黑白风格 |
+| `light` | 浅色博客或文档页 |
+| `crt` | 复古发光终端 |
+
+## CSS 变量
+
+所有主题都基于同一组变量：
 
 ```css
 .blog-terminal {
@@ -16,45 +39,36 @@ Termlet 的默认 DOM renderer 只是一层参考外观。推荐优先通过 CSS
 }
 ```
 
-## PowerShell 风格
+## 自定义主题类
 
 ```css
-.blog-terminal.termlet-powershell {
-  --termlet-bg: #012456;
-  --termlet-fg: #f2f7ff;
-  --termlet-border: #2563eb;
-  --termlet-prompt: #f2f7ff;
-  --termlet-error: #ffb4b4;
-  --termlet-muted: #9ec5ff;
-  --termlet-focus: #ffffff;
+.blog-terminal.my-terminal-theme {
+  --termlet-bg: #101014;
+  --termlet-fg: #f4f4f5;
+  --termlet-prompt: #38bdf8;
+  --termlet-border: #3f3f46;
 }
 ```
 
 ```js
-const renderer = new DomTerminalRenderer(terminal, {
+await mountStarterTerminal({
   mount: '#terminal',
+  themeClass: 'my-terminal-theme',
+});
+```
+
+或者使用默认 renderer：
+
+```js
+new DomTerminalRenderer(terminal, {
+  mount: '#terminal',
+  theme: 'light',
 }).attach();
-
-renderer.mount.classList.add('termlet-powershell');
 ```
 
-## CMD 风格
+## 完全替换 Renderer
 
-```css
-.blog-terminal.termlet-cmd {
-  --termlet-bg: #000000;
-  --termlet-fg: #c0c0c0;
-  --termlet-border: #333333;
-  --termlet-prompt: #c0c0c0;
-  --termlet-error: #ff5555;
-  --termlet-muted: #888888;
-  --termlet-focus: #ffffff;
-}
-```
-
-## 自定义渲染器
-
-如果默认 DOM 结构不适合你的站点，可以完全替换 renderer。替换 renderer 时保持三个约束：
+如果默认 DOM 结构不适合站点，可以完全替换 renderer。替换时保持三个约束：
 
 - `stdout` / `stderr` 按文本输出；
 - 视觉效果走 `events`；

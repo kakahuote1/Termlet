@@ -1,96 +1,107 @@
-﻿# Getting Started
+# 快速上手
 
-Termlet can be used three ways.
+Termlet 可以按“复制文件、粘贴代码、改几行配置”的方式接入静态博客。
 
-## 1. Copy The Dist Folder
+## 1. 准备文件
 
-Run:
+在项目里运行：
 
 ```powershell
 npm run build
 ```
 
-Copy `dist/` into your static site and mount:
+把生成的 `dist/` 复制到博客静态资源目录，并改名为 `termlet/`。
+
+常见位置：
+
+| 系统 | 推荐位置 |
+|---|---|
+| Hugo | `static/termlet/` |
+| Hexo | `source/termlet/` |
+| Jekyll | `assets/termlet/` |
+| Astro | `public/termlet/` |
+| VitePress | `docs/public/termlet/` |
+
+## 2. 粘贴最小代码
+
+把下面这段放到页面、局部模板或页脚模板里：
 
 ```html
 <link rel="stylesheet" href="/termlet/termlet.css">
 <div id="terminal"></div>
 <script type="module">
-  import { mountStaticTerminal, blogSandboxPreset } from '/termlet/index.mjs';
+  import { mountStarterTerminal } from '/termlet/index.mjs';
 
-  await mountStaticTerminal({
+  await mountStarterTerminal({
     mount: '#terminal',
-    plugins: [blogSandboxPreset()],
     injectStyles: false,
+    theme: 'linux',
+    siteName: 'My Blog',
+    intro: 'Welcome to my terminal.',
   });
 </script>
 ```
 
-## 2. Use As Source Modules
+如果站点部署在子路径，调整 `/termlet/index.mjs` 和 `/termlet/termlet.css` 的路径即可。
 
-For Hugo, Astro, Vite, Docusaurus, VuePress, Hexo, or another bundler-backed site, install or copy the repository source and import from the package root:
+## 3. 改主题
+
+把 `theme` 改成其中一个：
 
 ```js
-import {
-  createTerminal,
-  DomTerminalRenderer,
-  blogSandboxPreset,
-  injectDefaultStyles,
-} from 'termlet';
+theme: 'linux'
+theme: 'powershell'
+theme: 'cmd'
+theme: 'light'
+theme: 'crt'
+```
 
-injectDefaultStyles();
+更细的颜色可以覆盖 CSS 变量：
 
-const terminal = createTerminal({
-  plugins: [blogSandboxPreset()],
-});
+```css
+.blog-terminal {
+  --termlet-bg: #05080d;
+  --termlet-fg: #c9fdd7;
+  --termlet-prompt: #2ea043;
+}
+```
 
-new DomTerminalRenderer(terminal, {
+## 4. 改内容
+
+```js
+await mountStarterTerminal({
   mount: '#terminal',
-}).attach();
-```
-
-## 3. Bring Your Own Renderer
-
-The shell core has no DOM dependency:
-
-```js
-const result = await terminal.execute('echo hello | tr a-z A-Z');
-console.log(result.stdout);
-```
-
-Your renderer only needs to collect a command line, call `execute()`, render `stdout` and `stderr` as text, and react to `events`.
-
-## Recommended First Customization
-
-- Change `hostname`, `user`, and `blogSandboxPreset()` files.
-- Add one plugin for your site-specific commands.
-- Replace only the renderer CSS first.
-- Move to a custom renderer only when the default DOM renderer blocks your design.
-
-See `docs/recipes.md` for copyable integration recipes, `examples/plugin-template/` for a command plugin starting point, `examples/custom-profile/` for profile and structured-pipeline customization, `examples/blog-easter-egg/` for a blog banner that opens a terminal after three clicks, and `examples/windows-style/` for a PowerShell/CMD-style terminal.
-
-## Reset Path
-
-If you want refresh-resistant state for the current tab, use `sessionStorage`, enable VFS persistence, and let the DOM renderer persist the visible transcript:
-
-```js
-import { createSessionStorageAdapter, DomTerminalRenderer } from 'termlet';
-
-const terminal = createTerminal({
-  persistence: createSessionStorageAdapter({
-    key: 'my-site-terminal',
-  }),
-  persistVfs: true,
+  siteName: 'My Blog',
+  intro: 'Welcome to my terminal.',
+  files: {
+    '/home/guest/blog/about.txt': 'Hello from my blog.\n',
+  },
+  commands: {
+    hello: 'hello world\n',
+  },
 });
-
-new DomTerminalRenderer(terminal, {
-  mount: '#terminal',
-  persistTranscript: true,
-}).attach();
 ```
 
-Now `mkdir`, redirects, `cd`, and the visible command output survive refresh in the same tab. Closing the tab starts fresh. Users can also run:
+然后可以在终端里输入：
 
 ```bash
-session reset
+about-site
+cat ~/blog/about.txt
+hello
 ```
+
+## 5. 当前标签页持久化
+
+`mountStarterTerminal()` 默认使用当前标签页会话：
+
+- 刷新后保留当前目录、虚拟文件、输入输出；
+- 关闭标签页后重新打开会重置；
+- 输入 `session reset` 可以手动清理。
+
+## 6. 继续扩展
+
+- `docs/recipes.md`：复制即用的场景配方。
+- `docs/theming.md`：主题和外观。
+- `examples/drop-in/`：完整 drop-in 示例。
+- `examples/plugin-template/`：自定义命令插件模板。
+- `examples/windows-style/`：PowerShell / CMD 风格终端。

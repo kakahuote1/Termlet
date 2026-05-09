@@ -189,6 +189,8 @@ export class DomTerminalRenderer {
     prompt?: () => string;
     history?: string[];
     className?: string;
+    theme?: string;
+    themeClass?: string;
     welcome?: string;
     maxLines?: number;
     persistTranscript?: boolean;
@@ -237,6 +239,7 @@ export function hugoPostsPlugin(posts?: Array<Record<string, string>>, options?:
 export function fetchHugoPosts(feedUrl?: string, fetchImpl?: typeof fetch): Promise<Array<Record<string, string>>>;
 export function blogSandboxPreset(options?: Record<string, unknown>): TerminalPlugin;
 export function injectDefaultStyles(doc?: Document): void;
+export function mountStarterTerminal(options?: Record<string, unknown>): Promise<{ terminal: TerminalCore; renderer: DomTerminalRenderer }>;
 export function mountStaticTerminal(options?: Record<string, unknown>): Promise<{ terminal: TerminalCore; renderer: DomTerminalRenderer }>;
 export function createFeedTerminal(options?: Record<string, unknown>): Promise<TerminalCore>;
 export function mountFeedTerminal(options?: Record<string, unknown>): Promise<{ terminal: TerminalCore; renderer: DomTerminalRenderer }>;
