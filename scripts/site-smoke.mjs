@@ -28,6 +28,10 @@ assert(index.includes('id="powershell-terminal"'), 'demo should include a PowerS
 assert(index.includes('id="cmd-terminal"'), 'demo should include a CMD terminal preview');
 assert(index.includes('mountStaticTerminal'), 'demo should include a drop-in mount snippet');
 assert(!/GitHub Actions|workflow|Settings/.test(index), 'demo should not explain maintainer-specific GitHub Actions flow');
+assert(!/胚|玩具|你拿到|开发者/.test(index + app), 'demo copy should use neutral product language');
+assert(index.includes('基础基座'), 'demo should describe the base terminal as a foundation');
+assert(index.includes('Get-Item'), 'demo should show PowerShell-specific commands');
+assert(index.includes('ls、cat'), 'demo should show CMD compatibility commands');
 assert(!/\sstyle\s*=/.test(index), 'demo HTML should avoid inline style attributes');
 assert((index.match(/<h1\b/g) || []).length === 1, 'demo should have exactly one h1');
 assert(index.includes('aria-label="站点导航"'), 'navigation should have an aria label');
@@ -38,6 +42,8 @@ assert(!app.includes('injectDefaultStyles'), 'strict demo should not inject inli
 assert(app.includes('./termlet/index.mjs'), 'demo app should import built Termlet entry');
 assert(app.includes('createWindowsTerminal'), 'demo app should mount Windows-style terminals');
 assert(app.includes('toWindowsPath'), 'demo app should show Windows-style prompts');
+assert(app.includes('Get-Item readme.txt'), 'PowerShell preview should suggest PowerShell commands');
+assert(app.includes('dir, ls, type readme.txt'), 'CMD preview should suggest CMD and compatibility commands');
 assert(app.includes('docs/integrations.md'), 'demo app should surface integration docs');
 assert(app.includes("terminal.register('slow'"), 'demo app should expose an interruptible slow command');
 

@@ -15,7 +15,7 @@ function demoPlugin(terminal) {
   terminal.fs.addFile('/home/guest/lab/readme.md', [
     '# Termlet Lab',
     '',
-    '这是一个纯前端终端胚子。',
+    '这是一个纯前端终端基座。',
     '可以替换命令、文件系统、渲染器、主题和博客文章来源。',
     '',
   ].join('\n'), { owner: 'guest', group: 'guest' });
@@ -84,10 +84,10 @@ mountWindowsPreview({
   mount: '#powershell-terminal',
   className: 'termlet-powershell',
   shell: 'powershell',
-  welcome: 'PS demo. Try: Get-Location, dir, Get-Content readme.txt\n',
+  welcome: 'PS profile. Try: Get-Item readme.txt, Test-Path readme.txt, Get-Content readme.txt\n',
   prompt: terminal => `PS ${toWindowsPath(terminal.cwd)}>`,
   seed: terminal => {
-    terminal.fs.addFile(`${terminal.cwd}/readme.txt`, 'PowerShell style, same frontend core.\n', {
+    terminal.fs.addFile(`${terminal.cwd}/readme.txt`, 'PowerShell profile: Verb-Noun commands, no Linux ls by default.\n', {
       owner: terminal.user,
       group: terminal.user,
     });
@@ -98,10 +98,10 @@ mountWindowsPreview({
   mount: '#cmd-terminal',
   className: 'termlet-cmd',
   shell: 'cmd',
-  welcome: 'CMD demo. Try: dir, type readme.txt, cls\n',
+  welcome: 'CMD profile. Try: dir, ls, type readme.txt, cls\n',
   prompt: terminal => `${toWindowsPath(terminal.cwd)}>`,
   seed: terminal => {
-    terminal.fs.addFile(`${terminal.cwd}/readme.txt`, 'CMD style, no backend process.\n', {
+    terminal.fs.addFile(`${terminal.cwd}/readme.txt`, 'CMD profile: dir/type plus optional Linux-style compatibility commands.\n', {
       owner: terminal.user,
       group: terminal.user,
     });

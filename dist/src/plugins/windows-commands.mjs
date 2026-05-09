@@ -5,52 +5,63 @@ export function windowsCommandsPlugin(terminal, options = {}) {
   const defaultDrive = options.drive || 'C:';
   terminal.env.OS = 'Windows_NT';
   terminal.env.SHELL = shell === 'cmd' ? 'cmd.exe' : 'pwsh.exe';
+  terminal.windowsDrive = defaultDrive;
 
+  registerCommonCommands(terminal);
+  if (shell === 'cmd') registerCmdCommands(terminal);
+  else registerPowerShellCommands(terminal);
+}
+
+function registerCommonCommands(terminal) {
   terminal
     .register('cls', () => ok('', { events: [{ type: 'clear' }] }))
-    .register('Clear-Host', () => ok('', { events: [{ type: 'clear' }] }))
-    .register('clear-host', () => ok('', { events: [{ type: 'clear' }] }))
-    .register('Get-Location', ({ terminal }) => ok(`${toWindowsPath(terminal.cwd, defaultDrive)}\n`))
-    .register('get-location', ({ terminal }) => ok(`${toWindowsPath(terminal.cwd, defaultDrive)}\n`))
-    .register('Set-Location', locationCommand)
-    .register('set-location', locationCommand)
     .register('cd', locationCommand)
-    .register('chdir', locationCommand)
     .register('cd\\', ({ terminal }) => {
       terminal.cwd = '/';
       terminal.env.PWD = terminal.cwd;
       return ok('');
-    })
+    });
+}
+
+function registerPowerShellCommands(terminal) {
+  terminal
+    .register('Clear-Host', () => ok('', { events: [{ type: 'clear' }] }))
+    .register('Get-Location', ({ terminal }) => ok(`${toWindowsPath(terminal.cwd, windowsDrive(terminal))}\n`))
+    .register('Set-Location', locationCommand)
     .register('dir', directoryCommand)
     .register('Get-ChildItem', directoryCommand)
-    .register('get-childitem', directoryCommand)
+    .register('Get-Item', getItemCommand)
     .register('Get-Content', contentCommand)
-    .register('get-content', contentCommand)
-    .register('type', contentCommand)
+    .register('Set-Content', setContentCommand)
+    .register('Add-Content', addContentCommand)
+    .register('Test-Path', testPathCommand)
     .register('Write-Output', ({ args }) => ok(args.join(' ') + '\n'))
-    .register('write-output', ({ args }) => ok(args.join(' ') + '\n'))
     .register('Copy-Item', copyCommand)
-    .register('copy-item', copyCommand)
-    .register('copy', copyCommand)
     .register('Move-Item', moveCommand)
-    .register('move-item', moveCommand)
+    .register('Remove-Item', removeCommand)
+    .register('Rename-Item', renameCommand)
+    .register('New-Item', newItemCommand)
+    .register('Get-Help', getHelpCommand)
+    .register('Get-Command', ({ terminal }) => ok(terminal.commandNames().join('\n') + '\n'))
+    .register('powershell', () => ok('PowerShell 7.4.0 (simulated frontend shell)\n'))
+    .register('pwsh', () => ok('PowerShell 7.4.0 (simulated frontend shell)\n'));
+}
+
+function registerCmdCommands(terminal) {
+  terminal
+    .register('chdir', locationCommand)
+    .register('dir', directoryCommand)
+    .register('type', contentCommand)
+    .register('copy', copyCommand)
+    .register('move', moveCommand)
     .register('del', removeCommand)
     .register('erase', removeCommand)
     .register('rd', removeCommand)
     .register('rmdir', removeCommand)
-    .register('Remove-Item', removeCommand)
-    .register('remove-item', removeCommand)
     .register('ren', renameCommand)
-    .register('Rename-Item', renameCommand)
-    .register('rename-item', renameCommand)
-    .register('New-Item', newItemCommand)
-    .register('new-item', newItemCommand)
     .register('md', ctx => newItemCommand({ ...ctx, args: ['-ItemType', 'Directory', ...ctx.args] }))
-    .register('Get-Command', ({ terminal }) => ok(terminal.commandNames().join('\n') + '\n'))
-    .register('get-command', ({ terminal }) => ok(terminal.commandNames().join('\n') + '\n'))
+    .register('mkdir', ctx => newItemCommand({ ...ctx, args: ['-ItemType', 'Directory', ...ctx.args] }))
     .register('ver', () => ok('Microsoft Windows [Version 10.0.22631.0000] (simulated)\n'))
-    .register('powershell', () => ok('PowerShell 7.4.0 (simulated frontend shell)\n'))
-    .register('pwsh', () => ok('PowerShell 7.4.0 (simulated frontend shell)\n'))
     .register('cmd', () => ok('Microsoft Windows Command Prompt (simulated frontend shell)\n'));
 }
 
@@ -66,21 +77,33 @@ function locationCommand({ args, terminal, fs, home }) {
   return ok('');
 }
 
+function getItemCommand(ctx) {
+  const targetArg = firstPathArg(ctx.args) || ctx.terminal.cwd;
+  const target = ctx.fs.normalize(fromWindowsPath(targetArg), { cwd: ctx.terminal.cwd, home: ctx.home });
+  const stat = ctx.fs.stat(target);
+  if (!stat) return fail(`Get-Item: Cannot find path '${targetArg}' because it does not exist.\n`, 1);
+  return ok(`\n    Directory: ${toWindowsPath(ctx.fs.dirname(target), windowsDrive(ctx.terminal))}\n\nMode       Length Name\n----       ------ ----\n${itemRow(stat)}\n`);
+}
+
+function testPathCommand(ctx) {
+  const targetArg = firstPathArg(ctx.args);
+  if (!targetArg) return ok('False\n');
+  const target = ctx.fs.normalize(fromWindowsPath(targetArg), { cwd: ctx.terminal.cwd, home: ctx.home });
+  return ok(ctx.fs.stat(target) ? 'True\n' : 'False\n');
+}
+
 function directoryCommand(ctx) {
   const targetArg = firstPathArg(ctx.args) || ctx.terminal.cwd;
   const target = ctx.fs.normalize(fromWindowsPath(targetArg), { cwd: ctx.terminal.cwd, home: ctx.home });
   const stat = ctx.fs.stat(target);
   if (!stat) return fail(`dir: cannot find ${targetArg}\n`, 1);
   if (!ctx.fs.canRead(target, ctx)) return fail(`dir: access denied: ${targetArg}\n`, 1);
-  if (stat.type !== 'dir') return ok(`${toWindowsPath(target)}\n`);
-  const rows = ctx.fs.list(target, { all: ctx.args.includes('-Force'), cwd: ctx.terminal.cwd, home: ctx.home }).map(name => {
+  if (stat.type !== 'dir') return ok(`${toWindowsPath(target, windowsDrive(ctx.terminal))}\n`);
+  const rows = ctx.fs.list(target, { all: hasFlag(ctx.args, '-Force'), cwd: ctx.terminal.cwd, home: ctx.home }).map(name => {
     const path = target === '/' ? `/${name}` : `${target}/${name}`;
-    const node = ctx.fs.stat(path);
-    const mode = node?.type === 'dir' ? 'd----' : '-a---';
-    const size = String(node?.size || 0).padStart(10);
-    return `${mode} ${size} ${name}`;
+    return itemRow(ctx.fs.stat(path), name);
   });
-  return ok(`\n    Directory: ${toWindowsPath(target)}\n\nMode       Length Name\n----       ------ ----\n${rows.join('\n')}${rows.length ? '\n' : ''}`);
+  return ok(`\n    Directory: ${toWindowsPath(target, windowsDrive(ctx.terminal))}\n\nMode       Length Name\n----       ------ ----\n${rows.join('\n')}${rows.length ? '\n' : ''}`);
 }
 
 function contentCommand(ctx) {
@@ -92,6 +115,20 @@ function contentCommand(ctx) {
     user: ctx.user,
     groups: ctx.groups,
   })).join('\n'));
+}
+
+function setContentCommand(ctx) {
+  const path = firstPathArg(ctx.args);
+  if (!path) return fail('Set-Content: missing path\n', 1);
+  ctx.fs.writeFile(fromWindowsPath(path), contentValue(ctx.args, path), ctx);
+  return ok('');
+}
+
+function addContentCommand(ctx) {
+  const path = firstPathArg(ctx.args);
+  if (!path) return fail('Add-Content: missing path\n', 1);
+  ctx.fs.writeFile(fromWindowsPath(path), contentValue(ctx.args, path), { ...ctx, append: true });
+  return ok('');
 }
 
 function copyCommand(ctx) {
@@ -111,8 +148,8 @@ function moveCommand(ctx) {
 }
 
 function removeCommand(ctx) {
-  const recursive = ctx.args.includes('-Recurse') || ctx.args.includes('/s');
-  const force = ctx.args.includes('-Force') || ctx.args.includes('/f');
+  const recursive = hasFlag(ctx.args, '-Recurse') || hasFlag(ctx.args, '/s');
+  const force = hasFlag(ctx.args, '-Force') || hasFlag(ctx.args, '/f');
   const targets = ctx.args.filter(arg => !arg.startsWith('-') && !arg.startsWith('/'));
   if (targets.some(target => ['/', '\\', 'C:\\', 'C:/'].includes(target))) {
     return fail('Remove-Item: refusing to remove root directory in browser sandbox\n', 1);
@@ -132,20 +169,66 @@ function newItemCommand(ctx) {
   const path = firstPathArg(ctx.args);
   if (!path) return fail('New-Item: missing path\n', 1);
   const itemType = valueAfter(ctx.args, '-ItemType') || valueAfter(ctx.args, '-Type') || 'File';
-  if (/directory/i.test(itemType)) ctx.fs.makeDir(fromWindowsPath(path), { ...ctx, parents: ctx.args.includes('-Force') });
-  else ctx.fs.writeFile(fromWindowsPath(path), '', ctx);
+  if (/directory/i.test(itemType)) ctx.fs.makeDir(fromWindowsPath(path), { ...ctx, parents: hasFlag(ctx.args, '-Force') });
+  else ctx.fs.writeFile(fromWindowsPath(path), contentValue(ctx.args, path, { positional: false }), ctx);
   return ok('');
 }
 
+function getHelpCommand({ args }) {
+  const topic = args[0] || 'Termlet';
+  const help = {
+    Termlet: 'PowerShell profile commands: Get-Location, Get-ChildItem, Get-Item, Get-Content, Set-Content, Add-Content, Test-Path, New-Item, Copy-Item, Move-Item, Remove-Item, Rename-Item.\n',
+    'Get-Item': 'Get-Item [-Path] <path>\n',
+    'Set-Content': 'Set-Content [-Path] <path> [-Value] <text>\n',
+    'Test-Path': 'Test-Path [-Path] <path>\n',
+  };
+  return ok(help[topic] || `Get-Help: no help found for ${topic}\n`);
+}
+
+function itemRow(node, name = null) {
+  const mode = node?.type === 'dir' ? 'd----' : '-a---';
+  const size = String(node?.size || 0).padStart(10);
+  return `${mode} ${size} ${name || node?.path?.split('/').pop() || ''}`;
+}
+
 function firstPathArg(args) {
-  const pathIndex = args.findIndex(arg => arg === '-Path' || arg === '-LiteralPath');
+  const valueFlags = new Set(['-itemtype', '-literalpath', '-path', '-type', '-value']);
+  const pathIndex = args.findIndex(arg => ['-path', '-literalpath'].includes(arg.toLowerCase()));
   if (pathIndex >= 0) return args[pathIndex + 1];
-  return args.find(arg => !arg.startsWith('-'));
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i];
+    const lower = arg.toLowerCase();
+    if (valueFlags.has(lower)) {
+      i += 1;
+      continue;
+    }
+    if (!arg.startsWith('-')) return arg;
+  }
+  return null;
 }
 
 function valueAfter(args, flag) {
   const index = args.findIndex(arg => arg.toLowerCase() === flag.toLowerCase());
   return index >= 0 ? args[index + 1] : null;
+}
+
+function contentValue(args, path, options = {}) {
+  const valueIndex = args.findIndex(arg => arg.toLowerCase() === '-value');
+  const positional = options.positional !== false;
+  const values = valueIndex >= 0
+    ? args.slice(valueIndex + 1)
+    : (positional ? args.slice(Math.max(0, args.indexOf(path)) + 1).filter(arg => !arg.startsWith('-')) : []);
+  const text = values.join(' ');
+  return text ? `${text}\n` : '';
+}
+
+function hasFlag(args, flag) {
+  const expected = flag.toLowerCase();
+  return args.some(arg => arg.toLowerCase() === expected);
+}
+
+function windowsDrive(terminal) {
+  return terminal.windowsDrive || 'C:';
 }
 
 export function toWindowsPath(path, drive = 'C:') {

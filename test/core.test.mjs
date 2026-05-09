@@ -246,16 +246,26 @@ test('core lets renderers interrupt async commands with AbortSignal', async () =
 });
 
 test('windows terminal profile supports cmd and powershell style commands', async () => {
-  const terminal = createWindowsTerminal();
+  const powershell = createWindowsTerminal({ shell: 'powershell' });
+  powershell.fs.addFile(`${powershell.cwd}/readme.txt`, 'hello from powershell\n');
 
-  assert.equal((await terminal.execute('Write-Output hello')).stdout, 'hello\n');
-  assert.match((await terminal.execute('Get-Location')).stdout, /^C:\\/);
-  assert.match((await terminal.execute('dir')).stdout, /Directory:/);
-  assert.equal((await terminal.execute('cd C:\\tmp')).status, 0);
-  assert.match((await terminal.execute('Get-Location')).stdout, /^C:\\tmp/);
-  assert.equal((await terminal.execute('New-Item -Path demo.txt')).status, 0);
-  assert.match((await terminal.execute('type demo.txt')).stdout, /^$/);
-  assert.equal((await terminal.execute('Remove-Item C:\\')).status, 1);
-  const commandNames = terminal.commandNames().map(name => name.toLowerCase());
+  assert.equal((await powershell.execute('Write-Output hello')).stdout, 'hello\n');
+  assert.match((await powershell.execute('Get-Location')).stdout, /^C:\\/);
+  assert.match((await powershell.execute('dir')).stdout, /Directory:/);
+  assert.equal((await powershell.execute('Get-Item readme.txt')).stdout.includes('readme.txt'), true);
+  assert.equal((await powershell.execute('Test-Path readme.txt')).stdout, 'True\n');
+  assert.equal((await powershell.execute('Set-Content -Path demo.txt -Value hello')).status, 0);
+  assert.equal((await powershell.execute('Get-Content demo.txt')).stdout, 'hello\n');
+  assert.equal((await powershell.execute('ls')).status, 127);
+  assert.equal((await powershell.execute('Remove-Item C:\\')).status, 1);
+
+  const cmd = createWindowsTerminal({ shell: 'cmd' });
+  cmd.fs.addFile(`${cmd.cwd}/readme.txt`, 'hello from cmd\n');
+  assert.match((await cmd.execute('dir')).stdout, /Directory:/);
+  assert.match((await cmd.execute('ls')).stdout, /readme\.txt/);
+  assert.equal((await cmd.execute('type readme.txt')).stdout, 'hello from cmd\n');
+  assert.equal((await cmd.execute('Get-Item readme.txt')).status, 127);
+
+  const commandNames = powershell.commandNames().map(name => name.toLowerCase());
   assert.equal(new Set(commandNames).size, commandNames.length);
 });

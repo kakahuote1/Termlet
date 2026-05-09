@@ -146,6 +146,7 @@ h3 {
 
 .lead,
 .section-copy,
+.style-panel p,
 .capability-grid p {
   color: var(--muted);
   line-height: 1.75;

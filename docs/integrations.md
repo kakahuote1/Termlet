@@ -108,6 +108,8 @@ new DomTerminalRenderer(terminal, {
 }).attach();
 ```
 
+PowerShell profile 默认使用 `Get-Location`、`Get-Item`、`Test-Path`、`Set-Content` 等命令，不自动加载 Linux 命令。
+
 CMD 风格：
 
 ```js
@@ -118,6 +120,8 @@ new DomTerminalRenderer(terminal, {
   prompt: () => `${toWindowsPath(terminal.cwd)}>`,
 }).attach();
 ```
+
+CMD profile 默认使用 `dir`、`type`、`copy` 等命令，并保留 `ls`、`cat` 等常用兼容命令。
 
 ## 接入原则
 

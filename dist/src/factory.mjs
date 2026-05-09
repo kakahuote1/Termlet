@@ -34,18 +34,29 @@ export function createBlogTerminal(options = {}) {
 
 export function createWindowsTerminal(options = {}) {
   const shell = options.shell || 'powershell';
+  const {
+    basicCommands = shell === 'cmd',
+    env = {},
+    hostname,
+    plugins = [],
+    systemCommands = shell === 'cmd',
+    windowsCommands = {},
+    ...coreOptions
+  } = options;
   return createTerminal({
-    hostname: options.hostname || (shell === 'cmd' ? 'DESKTOP' : 'termlet-win'),
+    hostname: hostname || (shell === 'cmd' ? 'DESKTOP' : 'termlet-win'),
     caseInsensitiveCommands: true,
     backslashEscapes: false,
     env: {
       USERPROFILE: 'C:\\Users\\guest',
-      ...(options.env || {}),
+      ...env,
     },
-    ...options,
+    basicCommands,
+    systemCommands,
+    ...coreOptions,
     plugins: [
-      [windowsCommandsPlugin, { shell, ...(options.windowsCommands || {}) }],
-      ...(options.plugins || []),
+      [windowsCommandsPlugin, { shell, ...windowsCommands }],
+      ...plugins,
     ],
   });
 }

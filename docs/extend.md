@@ -160,6 +160,8 @@ function interrupt() {
 Termlet 不把“终端外观”写死在核心里。Windows 风格终端通常只需要：
 
 - `createWindowsTerminal()` 提供 Windows 命令和大小写不敏感命令查找；
+- `shell: 'powershell'` 默认使用 `Get-Item`、`Test-Path`、`Set-Content` 等 PowerShell 命令集，不自动加载 Linux 命令；
+- `shell: 'cmd'` 默认使用 `dir`、`type`、`copy` 等 CMD 命令，并保留 `ls`、`cat` 等常用兼容命令；
 - 自定义 `prompt` 显示 `PS C:\...>` 或 `C:\...>`；
 - 根据需要覆盖 CSS。
 

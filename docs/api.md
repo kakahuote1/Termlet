@@ -169,4 +169,6 @@ const terminal = createWindowsTerminal({
 });
 ```
 
-This installs Windows-style commands such as `dir`, `cls`, `cd`, `type`, `Get-Location`, `Set-Location`, `Get-Content`, `New-Item`, `Copy-Item`, `Move-Item`, and `Remove-Item`.
+The PowerShell profile installs Verb-Noun commands such as `Get-Location`, `Get-ChildItem`, `Get-Item`, `Get-Content`, `Set-Content`, `Add-Content`, `Test-Path`, `New-Item`, `Copy-Item`, `Move-Item`, and `Remove-Item`. It does not install the Linux command plugin by default.
+
+The CMD profile installs `dir`, `type`, `copy`, `move`, `del`, `ren`, `md`, `mkdir`, `cls`, and `ver`. It keeps the basic Linux-style compatibility commands enabled by default, so commands such as `ls` and `cat` can still be available in CMD-style demos.
