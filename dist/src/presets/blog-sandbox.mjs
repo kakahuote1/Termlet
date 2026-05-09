@@ -21,6 +21,6 @@ export function blogSandboxPreset(options = {}) {
     fs.addFile('/etc/hosts', '127.0.0.1 localhost\n127.0.1.1 blog-server\n10.0.2.15 blog-server.internal\n');
     fs.addFile('/var/log/syslog', 'May 08 10:01:01 blog-server systemd[1]: Started static blog service.\nMay 08 10:01:02 blog-server nginx[901]: GET / 200\n');
     fs.addFile('/var/log/auth.log', 'May 08 10:02:01 blog-server sudo: guest : command not allowed ; TTY=pts/0 ; PWD=/home/guest ; USER=root ; COMMAND=/bin/cat /etc/shadow\n', { owner: 'root', group: 'adm', perm: '-rw-r-----' });
-    fs.addFile('/root/secret.txt', options.rootSecret || options.rootFlag || 'replace this private demo content\n', { owner: 'root', group: 'root', perm: '-rw-------' });
+    fs.addFile('/root/secret.txt', options.rootSecret || 'replace this private demo content\n', { owner: 'root', group: 'root', perm: '-rw-------' });
   };
 }

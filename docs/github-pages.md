@@ -27,12 +27,6 @@ GitHub Pages 的项目页地址通常是：
 https://<username>.github.io/<repository>/
 ```
 
-当前仓库对应：
-
-```text
-https://kakahuote1.github.io/Termlet/
-```
-
 ## 本地预览
 
 ```powershell

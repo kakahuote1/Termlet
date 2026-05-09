@@ -385,7 +385,7 @@ src/
 - [博客集成](docs/integrations.md) · [主题](docs/theming.md) · [渲染器契约](docs/renderer-contract.md)
 - [架构](docs/architecture.md) · [部署](docs/deployment.md) · [GitHub Pages](docs/github-pages.md)
 - [安全模型](docs/security-model.md) · [加固清单](docs/hardening-checklist.md) · [质量门禁](docs/quality-gates.md)
-- [博客迁移](docs/migration-from-current-blog.md)
+- [旧终端迁移](docs/migration-from-legacy-terminal.md)
 
 ## 开发
 

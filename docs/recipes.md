@@ -60,7 +60,7 @@ await mountHugoTerminal({
 import { createTerminal, DomTerminalRenderer, injectDefaultStyles, ok } from '/termlet/index.mjs';
 
 function siteCommands(terminal) {
-  terminal.register('about-site', () => ok('这是我的博客。\n'));
+  terminal.register('about-site', () => ok('这是示例站点。\n'));
 }
 
 injectDefaultStyles();
