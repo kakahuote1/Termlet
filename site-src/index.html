@@ -4,203 +4,195 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
-  <title>Termlet Demo</title>
-  <meta name="description" content="Termlet 是纯前端、可插拔、可扩展的网页伪终端基础库。">
+  <title>Termlet - 可插拔网页伪终端基座</title>
+  <meta name="description" content="Termlet 是一个纯前端、零依赖、可插拔、可扩展的网页伪终端基座，适合静态博客和前端项目快速接入。">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./termlet/termlet.css">
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <header class="topbar">
+  <div class="runtime-warning" data-runtime-warning role="status">
+    交互正在加载。如果这条提示一直显示，请通过 HTTP 服务访问构建后的 site/ 目录；直接打开 site-src/index.html 不会加载 Termlet 产物。
+  </div>
+  <header class="site-chrome">
     <a class="brand" href="./" aria-label="Termlet 首页">
       <span class="brand-mark" aria-hidden="true"></span>
-      <span>Termlet</span>
+      <span>TERMLET</span>
     </a>
-    <nav class="nav" aria-label="站点导航">
-      <a href="#demo">基础基座</a>
-      <a href="#styles">终端风格</a>
-      <a href="#kit">可改造点</a>
-      <a href="#install">接入</a>
-      <a href="#themes">主题</a>
-      <a href="https://github.com/" data-repo-link>GitHub</a>
+    <nav class="scene-nav" aria-label="场景切换">
+      <button type="button" aria-pressed="true" data-scene-button="linux">linux</button>
+      <button type="button" aria-pressed="false" data-scene-button="powershell">powershell</button>
+      <button type="button" aria-pressed="false" data-scene-button="cmd">cmd</button>
+      <button type="button" aria-pressed="false" data-scene-button="docs">docs</button>
+      <button type="button" aria-pressed="false" data-scene-button="deploy">deploy</button>
     </nav>
   </header>
 
   <main>
-    <section class="workspace" id="demo" aria-labelledby="title">
-      <div class="intro">
-        <p class="eyebrow">Browser-only terminal kit</p>
-        <h1 id="title">把伪终端插进任何静态站点</h1>
-        <p class="lead">
-          Termlet 提供一个安全的前端终端基座：Shell 解析、虚拟文件系统、命令插件、终端渲染器和主题都可以自由组合。
-        </p>
-        <div class="command-strip" aria-label="快速命令">
-          <button type="button" data-run="about">about</button>
-          <button type="button" data-run="ls -al /home/guest">ls</button>
-          <button type="button" data-run="tree ~/lab">tree</button>
-          <button type="button" data-run="cat ~/lab/readme.md">cat</button>
-          <button type="button" data-run="slow">slow</button>
-          <button type="button" data-run="sudo rm -rf /">safe rm</button>
+    <section class="scene scene-linux is-active" id="scene-linux" data-scene="linux" aria-labelledby="linux-title">
+      <div class="scene-copy">
+        <p class="eyebrow">Linux blog terminal</p>
+        <h1 id="linux-title">把博客变成一台安全服务器</h1>
+        <p class="lead">Shell 解析、虚拟文件系统、权限模型和命令生态都在浏览器里完成，不需要后端 shell。</p>
+        <div class="quick-actions" aria-label="Linux 快速命令">
+          <button type="button" data-run-profile="linux" data-run="about">zero backend</button>
+          <button type="button" data-run-profile="linux" data-run="sudo rm -rf /">safe rm</button>
+          <button type="button" data-run-profile="linux" data-run="ls -al ~/blog">VFS</button>
+          <button type="button" data-run-profile="linux" data-run="cat ~/lab/plugin.js">plugins</button>
         </div>
       </div>
-
-      <div class="terminal-shell hero-terminal" aria-label="交互式终端演示">
+      <div class="terminal-card terminal-card--linux" data-tilt-card>
         <div class="terminal-titlebar">
-          <span class="window-dot red" aria-hidden="true"></span>
-          <span class="window-dot yellow" aria-hidden="true"></span>
-          <span class="window-dot green" aria-hidden="true"></span>
-          <span class="terminal-title">Linux sandbox · guest@demo:~</span>
-          <span class="terminal-status" id="event-status">ready</span>
+          <span class="dot red" aria-hidden="true"></span>
+          <span class="dot yellow" aria-hidden="true"></span>
+          <span class="dot green" aria-hidden="true"></span>
+          <span class="window-title">guest@blog:~/workspace</span>
+          <span class="window-state" id="linux-status">session ready</span>
         </div>
-        <div id="terminal"></div>
+        <div class="terminal-mount" id="terminal-linux"></div>
       </div>
+      <p class="scene-foot scene-foot-left">Termlet · frontend-only pseudo terminal</p>
+      <a class="scene-foot scene-foot-right" href="https://github.com/" data-repo-link>github.com/kakahuote1/Termlet</a>
     </section>
 
-    <section class="section" id="styles" aria-labelledby="styles-title">
-      <div class="section-head">
-        <p class="eyebrow">Same core, different shells</p>
-        <h2 id="styles-title">同一个基座，可以切换不同终端</h2>
-        <p class="section-copy">下面不是截图，都是浏览器里运行的 Termlet 实例。外观、prompt、命令集、主题和文件系统都能独立配置。</p>
-      </div>
-      <div class="style-grid" aria-label="终端风格演示">
-        <article class="style-panel">
-          <div class="style-panel__head">
-            <h3>PowerShell 风格</h3>
-            <code>createWindowsTerminal({ shell: 'powershell' })</code>
-            <p>提供 Get-Location、Get-Item、Test-Path、Set-Content 等 Verb-Noun 命令，也支持对象管道。</p>
-          </div>
-          <div class="terminal-shell compact-terminal" aria-label="PowerShell 风格终端演示">
-            <div class="terminal-titlebar">
-              <span class="terminal-title">PowerShell</span>
-            </div>
-            <div id="powershell-terminal"></div>
-          </div>
-        </article>
-        <article class="style-panel">
-          <div class="style-panel__head">
-            <h3>CMD 风格</h3>
-            <code>createWindowsTerminal({ shell: 'cmd' })</code>
-            <p>提供 dir、type、copy、del 等 CMD 命令，并可保留 ls、cat 等常用兼容命令。</p>
-          </div>
-          <div class="terminal-shell compact-terminal" aria-label="CMD 风格终端演示">
-            <div class="terminal-titlebar">
-              <span class="terminal-title">Command Prompt</span>
-            </div>
-            <div id="cmd-terminal"></div>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <section class="section" id="kit" aria-labelledby="kit-title">
-      <div class="section-head">
-        <p class="eyebrow">Composable parts</p>
-        <h2 id="kit-title">可随心修改的终端基座</h2>
-      </div>
-      <div class="capability-grid">
-        <article>
-          <h3>命令插件</h3>
-          <p>用 command pack 组合命令集，用 `register()` 加命令，也可以返回 disposer 清理插件。</p>
-        </article>
-        <article>
-          <h3>结构化管道</h3>
-          <p>命令可以返回对象数组，后续命令用 `input` 继续过滤、排序、投影和渲染。</p>
-        </article>
-        <article>
-          <h3>虚拟文件系统</h3>
-          <p>文章、线索、配置、只读文件都能映射进去，不会碰真实机器。</p>
-        </article>
-        <article>
-          <h3>主题与渲染器</h3>
-          <p>默认 DOM renderer 可以直接用，也可以换成弹窗、横幅、全屏或框架组件。</p>
-        </article>
-        <article>
-          <h3>博客适配</h3>
-          <p>支持 Hugo，也支持通用 RSS/Atom feed，把文章变成终端里的文件。</p>
-        </article>
-        <article>
-          <h3>安全边界</h3>
-          <p>不连真实 shell，不执行用户代码；危险命令只在模拟层失败。</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="section install" id="install" aria-labelledby="install-title">
-      <div class="section-head">
-        <p class="eyebrow">Drop-in usage</p>
-        <h2 id="install-title">三步接入博客</h2>
-        <p class="section-copy">下载构建产物，把 `dist/` 改名为 `termlet/` 放进站点静态目录，再复制下面这段 HTML。Hugo、Hexo、Jekyll、Astro、VitePress 都是同一个思路。</p>
-      </div>
-      <div class="download-panel">
-        <a class="download-button" href="./downloads/termlet-drop-in.zip" download>下载 drop-in zip</a>
-        <p>压缩包里已经包含 `index.html` 和 `termlet/`，解压后可以直接放进静态站点测试。</p>
-      </div>
-      <div class="install-steps" aria-label="接入步骤">
-        <article>
-          <span>1</span>
-          <p>运行 `npm run build`，或下载 release 里的 `dist/`。</p>
-        </article>
-        <article>
-          <span>2</span>
-          <p>把 `dist/` 复制到博客静态目录，并改名为 `termlet/`。</p>
-        </article>
-        <article>
-          <span>3</span>
-          <p>粘贴代码，修改 `siteName`、`intro` 和 `theme`。</p>
-        </article>
-      </div>
-      <div class="starter-config" aria-label="生成接入代码">
-        <label>
-          <span>站点名称</span>
-          <input type="text" value="My Blog" data-config-field="siteName" autocomplete="off">
-        </label>
-        <label>
-          <span>欢迎语</span>
-          <input type="text" value="Welcome to my terminal." data-config-field="intro" autocomplete="off">
-        </label>
-        <div class="theme-picker" aria-label="选择主题">
-          <button type="button" data-theme-choice="linux" aria-pressed="true">linux</button>
-          <button type="button" data-theme-choice="powershell" aria-pressed="false">powershell</button>
-          <button type="button" data-theme-choice="cmd" aria-pressed="false">cmd</button>
-          <button type="button" data-theme-choice="light" aria-pressed="false">light</button>
-          <button type="button" data-theme-choice="crt" aria-pressed="false">crt</button>
+    <section class="scene scene-powershell" id="scene-powershell" data-scene="powershell" aria-labelledby="powershell-title" hidden>
+      <div class="scene-copy">
+        <p class="eyebrow">PowerShell-style profile</p>
+        <h2 id="powershell-title">不只是换皮肤，命令也像</h2>
+        <p class="lead">Profile 可以定义路径、prompt、命令集和对象管道，PowerShell / CMD / Linux 都能做出不同内核体验。</p>
+        <div class="quick-actions" aria-label="PowerShell 快速命令">
+          <button type="button" data-run-profile="powershell" data-run="Get-Item readme.txt">Get-Item</button>
+          <button type="button" data-run-profile="powershell" data-run="Get-ChildItem | Where-Object Type -EQ file | Select-Object Name,Length | Format-Table">Where-Object</button>
+          <button type="button" data-run-profile="powershell" data-run="Get-ChildItem | Select-Object Name,Length | Format-Table">Format-Table</button>
+          <button type="button" data-run-profile="powershell" data-run="Get-Help Get-Item">profiles</button>
         </div>
       </div>
-      <div class="copy-row">
-        <button type="button" data-copy-target="starter-snippet">复制接入代码</button>
-        <span data-copy-status aria-live="polite"></span>
+      <div class="terminal-card terminal-card--powershell" data-tilt-card>
+        <div class="terminal-titlebar">
+          <span class="dot red" aria-hidden="true"></span>
+          <span class="dot yellow" aria-hidden="true"></span>
+          <span class="dot green" aria-hidden="true"></span>
+          <span class="window-title">PS C:\Users\guest\blog</span>
+          <span class="window-state">objects flowing</span>
+        </div>
+        <div class="terminal-mount" id="terminal-powershell"></div>
       </div>
-      <pre class="code-sample"><code id="starter-snippet">&lt;link rel="stylesheet" href="/termlet/termlet.css"&gt;
+      <p class="scene-foot scene-foot-left">Termlet · structured object pipelines</p>
+      <a class="scene-foot scene-foot-right" href="https://github.com/" data-repo-link>github.com/kakahuote1/Termlet</a>
+    </section>
+
+    <section class="scene scene-cmd" id="scene-cmd" data-scene="cmd" aria-labelledby="cmd-title" hidden>
+      <div class="scene-copy">
+        <p class="eyebrow">CMD retro mode</p>
+        <h2 id="cmd-title">复古命令行也能插进页面</h2>
+        <p class="lead">同一个基座可以切成 Windows CMD 风格，适合工具站、教程页、游戏彩蛋和产品演示。</p>
+        <div class="quick-actions" aria-label="CMD 快速命令">
+          <button type="button" data-run-profile="cmd" data-run="dir">dir</button>
+          <button type="button" data-run-profile="cmd" data-run="type readme.txt">type</button>
+          <button type="button" data-run-profile="cmd" data-run="cls">cls</button>
+          <button type="button" data-run-profile="cmd" data-run="ls">compat</button>
+        </div>
+      </div>
+      <div class="terminal-card terminal-card--cmd" data-tilt-card>
+        <div class="terminal-titlebar">
+          <span class="dot red" aria-hidden="true"></span>
+          <span class="dot yellow" aria-hidden="true"></span>
+          <span class="dot green" aria-hidden="true"></span>
+          <span class="window-title">C:\TERMLET\BLOG</span>
+          <span class="window-state">no backend</span>
+        </div>
+        <div class="terminal-mount" id="terminal-cmd"></div>
+      </div>
+      <p class="scene-foot scene-foot-left">Termlet · embeddable terminal base</p>
+      <a class="scene-foot scene-foot-right" href="https://github.com/" data-repo-link>github.com/kakahuote1/Termlet</a>
+    </section>
+
+    <section class="scene scene-docs" id="scene-docs" data-scene="docs" aria-labelledby="docs-title" hidden>
+      <div class="scene-copy">
+        <p class="eyebrow">Docs playground</p>
+        <h2 id="docs-title">把交互教程做成终端</h2>
+        <p class="lead">轻主题适合文档、课程、产品帮助中心。命令、文件和输出都可以按教程章节定制。</p>
+        <div class="quick-actions" aria-label="Docs 快速命令">
+          <button type="button" data-run-profile="docs" data-run="cat steps.md">tutorials</button>
+          <button type="button" data-run-profile="docs" data-run="tree ~/lesson">docs</button>
+          <button type="button" data-run-profile="docs" data-run="run-demo">copy-ready</button>
+          <button type="button" data-run-profile="docs" data-run="session reset">session</button>
+        </div>
+      </div>
+      <div class="terminal-card terminal-card--docs" data-tilt-card>
+        <div class="terminal-titlebar">
+          <span class="dot red" aria-hidden="true"></span>
+          <span class="dot yellow" aria-hidden="true"></span>
+          <span class="dot green" aria-hidden="true"></span>
+          <span class="window-title">termlet docs · /lesson/start</span>
+          <span class="window-state">copy ready</span>
+        </div>
+        <div class="terminal-mount" id="terminal-docs"></div>
+      </div>
+      <p class="scene-foot scene-foot-left">Termlet · static-site friendly</p>
+      <a class="scene-foot scene-foot-right" href="https://github.com/" data-repo-link>github.com/kakahuote1/Termlet</a>
+    </section>
+
+    <section class="scene scene-deploy" id="scene-deploy" data-scene="deploy" aria-labelledby="deploy-title" hidden>
+      <div class="scene-copy">
+        <p class="eyebrow">Quick deployment</p>
+        <h2 id="deploy-title">三步插进静态博客</h2>
+        <p class="lead">下载构建产物，放进站点静态目录，复制一段 HTML。Hugo、Hexo、Jekyll、Astro 和普通静态页都可以用同一套方式。</p>
+        <div class="quick-actions" aria-label="部署方式">
+          <a href="./downloads/termlet-drop-in.zip" download>download zip</a>
+          <button type="button" data-copy-target="snippet-dropin">copy html</button>
+          <button type="button" data-copy-target="snippet-hugo">copy hugo</button>
+          <button type="button" data-copy-target="snippet-npm">copy npm</button>
+        </div>
+        <p class="copy-status" data-copy-status aria-live="polite"></p>
+      </div>
+      <div class="terminal-card terminal-card--deploy" data-tilt-card>
+        <div class="terminal-titlebar">
+          <span class="dot red" aria-hidden="true"></span>
+          <span class="dot yellow" aria-hidden="true"></span>
+          <span class="dot green" aria-hidden="true"></span>
+          <span class="window-title">deploy guide · copy and paste</span>
+          <span class="window-state">static ready</span>
+        </div>
+        <div class="deploy-board">
+          <article>
+            <strong>1. 放入资源</strong>
+            <pre><code id="snippet-hugo">static/
+  termlet/
+    index.mjs
+    termlet.css</code></pre>
+          </article>
+          <article>
+            <strong>2. 粘贴 HTML</strong>
+            <pre><code id="snippet-dropin">&lt;link rel="stylesheet" href="/termlet/termlet.css"&gt;
 &lt;div id="terminal"&gt;&lt;/div&gt;
 &lt;script type="module"&gt;
   import { mountStarterTerminal } from '/termlet/index.mjs';
-
   await mountStarterTerminal({
     mount: '#terminal',
     injectStyles: false,
     theme: 'linux',
     siteName: 'My Blog',
-    intro: 'Welcome to my terminal.',
   });
 &lt;/script&gt;</code></pre>
-    </section>
+          </article>
+          <article>
+            <strong>3. 前端工程</strong>
+            <pre><code id="snippet-npm">npm install termlet
 
-    <section class="section" id="themes" aria-labelledby="themes-title">
-      <div class="section-head">
-        <p class="eyebrow">Built-in themes</p>
-        <h2 id="themes-title">换一个词就能换主题</h2>
-        <p class="section-copy">`theme` 支持 linux、powershell、cmd、light、crt。需要更细的外观时，覆盖 `--termlet-*` CSS 变量即可。</p>
+import { mountStarterTerminal } from 'termlet';
+import 'termlet/termlet.css';
+
+await mountStarterTerminal({ mount: '#terminal' });</code></pre>
+          </article>
+        </div>
       </div>
-      <div class="theme-list" aria-label="内置主题">
-        <button type="button" data-theme-choice="linux">linux</button>
-        <button type="button" data-theme-choice="powershell">powershell</button>
-        <button type="button" data-theme-choice="cmd">cmd</button>
-        <button type="button" data-theme-choice="light">light</button>
-        <button type="button" data-theme-choice="crt">crt</button>
-      </div>
+      <p class="scene-foot scene-foot-left">Termlet · quick drop-in deployment</p>
+      <a class="scene-foot scene-foot-right" href="https://github.com/" data-repo-link>github.com/kakahuote1/Termlet</a>
     </section>
   </main>
 
+  <textarea class="copy-buffer" aria-hidden="true" tabindex="-1"></textarea>
   <script type="module" src="./app.mjs"></script>
 </body>
 </html>

@@ -1,169 +1,315 @@
-import {
-  createSessionStorageAdapter,
-  createTerminal,
-  createWindowsTerminal,
-  blogSandboxPreset,
-  DomTerminalRenderer,
-  effectEventsPlugin,
-  fail,
-  ok,
-  toWindowsPath,
-} from './termlet/index.mjs';
+let DomTerminalRenderer;
+let blogSandboxPreset;
+let createSessionStorageAdapter;
+let createTerminal;
+let createWindowsTerminal;
+let effectEventsPlugin;
+let fail;
+let ok;
+let toWindowsPath;
 
-function demoPlugin(terminal) {
-  terminal.fs.ensureDir('/home/guest/lab', { owner: 'guest', group: 'guest' });
-  terminal.fs.addFile('/home/guest/lab/readme.md', [
-    '# Termlet Lab',
-    '',
-    '这是一个纯前端终端基座。',
-    '可以替换命令、文件系统、渲染器、主题和博客文章来源。',
-    '',
-  ].join('\n'), { owner: 'guest', group: 'guest' });
-  terminal.fs.addFile('/home/guest/lab/plugin.js', [
-    "import { ok } from 'termlet';",
-    '',
-    'export function myPlugin(terminal) {',
-    "  terminal.register('hello', ({ user }) => ok(`hello ${user}\\n`));",
-    '}',
-    '',
-  ].join('\n'), { owner: 'guest', group: 'guest' });
+const terminals = new Map();
+let activeScene = 'linux';
 
-  terminal.register('about', () => ok([
-    'Termlet',
-    'Browser-only pseudo terminal kit.',
-    'No backend shell. No real command execution. Just composable frontend primitives.',
-    '',
-  ].join('\n')));
-
-  terminal.register('docs', () => ok([
-    'README.md              项目入口',
-    'docs/extend.md         扩展教程',
-    'docs/integrations.md   博客系统适配',
-    'docs/theming.md        主题与外观',
-    'examples/custom-profile profile 与结构化管道示例',
-    'examples/windows-style PowerShell/CMD 示例',
-    '',
-  ].join('\n')));
-
-  terminal.register('slow', ({ signal }) => new Promise(resolve => {
-    const timer = setTimeout(() => resolve(ok('slow: done\n')), 4000);
-    signal?.addEventListener('abort', () => {
-      clearTimeout(timer);
-      resolve(fail('slow: interrupted\n', 130));
-    }, { once: true });
-  }));
-}
-
-const linuxTerminal = createTerminal({
-  hostname: 'demo',
-  persistence: createSessionStorageAdapter({ key: 'termlet.demo' }),
-  persistVfs: true,
-  plugins: [
-    blogSandboxPreset({
-      rootSecret: 'demo private content\n',
-    }),
-    demoPlugin,
+try {
+  ({
+    DomTerminalRenderer,
+    blogSandboxPreset,
+    createSessionStorageAdapter,
+    createTerminal,
+    createWindowsTerminal,
     effectEventsPlugin,
-  ],
-});
-
-const eventStatus = document.querySelector('#event-status');
-const linuxRenderer = new DomTerminalRenderer(linuxTerminal, {
-  mount: '#terminal',
-  welcome: 'Try: about, docs, help, ls -al, tree ~/lab, slow, sudo rm -rf /\n',
-  maxLines: 600,
-  persistTranscript: true,
-  onEvent(event) {
-    if (!eventStatus) return;
-    if (event.type === 'effect') eventStatus.textContent = `effect:${event.name}`;
-    else eventStatus.textContent = event.type || 'event';
-  },
-  onResult(result) {
-    if (eventStatus && result.events.length === 0) eventStatus.textContent = `exit ${result.status}`;
-  },
-}).attach();
-
-mountWindowsPreview({
-  mount: '#powershell-terminal',
-  className: 'termlet-powershell',
-  shell: 'powershell',
-  welcome: 'PS profile. Try: Get-Item readme.txt, Get-ChildItem | Where-Object Name -Like *.txt | Select-Object Name,Length | Format-Table\n',
-  prompt: terminal => `PS ${toWindowsPath(terminal.cwd)}>`,
-  seed: terminal => {
-    terminal.fs.addFile(`${terminal.cwd}/readme.txt`, 'PowerShell profile: Verb-Noun commands, no Linux ls by default.\n', {
-      owner: terminal.user,
-      group: terminal.user,
-    });
-  },
-});
-
-mountWindowsPreview({
-  mount: '#cmd-terminal',
-  className: 'termlet-cmd',
-  shell: 'cmd',
-  welcome: 'CMD profile. Try: dir, ls, type readme.txt, cls\n',
-  prompt: terminal => `${toWindowsPath(terminal.cwd)}>`,
-  seed: terminal => {
-    terminal.fs.addFile(`${terminal.cwd}/readme.txt`, 'CMD profile: dir/type plus optional Linux-style compatibility commands.\n', {
-      owner: terminal.user,
-      group: terminal.user,
-    });
-  },
-});
-
-document.querySelectorAll('[data-run]').forEach(button => {
-  button.addEventListener('click', () => {
-    const command = button.getAttribute('data-run') || '';
-    runInRenderer(linuxRenderer, command);
-  });
-});
-
-const starterConfig = {
-  siteName: 'My Blog',
-  intro: 'Welcome to my terminal.',
-  theme: 'linux',
-};
-
-document.querySelectorAll('[data-copy-target]').forEach(button => {
-  button.addEventListener('click', () => copyFromButton(button));
-});
-document.querySelectorAll('[data-config-field]').forEach(input => {
-  input.addEventListener('input', () => {
-    starterConfig[input.getAttribute('data-config-field')] = input.value;
-    updateStarterSnippet();
-  });
-});
-document.querySelectorAll('[data-theme-choice]').forEach(button => {
-  button.addEventListener('click', () => {
-    starterConfig.theme = button.getAttribute('data-theme-choice') || 'linux';
-    updateStarterSnippet();
-    updateThemeButtons();
-  });
-});
-updateStarterSnippet();
-updateThemeButtons();
-
-const repoLink = document.querySelector('[data-repo-link]');
-if (repoLink) {
-  const inferred = inferGitHubRepository(window.location);
-  if (inferred) repoLink.href = inferred;
+    fail,
+    ok,
+    toWindowsPath,
+  } = await loadTermlet());
+  mountTerminals();
+  wireSceneButtons();
+  wireQuickCommands();
+  wireCopyButtons();
+  wireTiltCards();
+  inferRepositoryLinks();
+  document.body.dataset.activeScene = activeScene;
+  hideRuntimeWarning();
+} catch (error) {
+  showRuntimeWarning(error);
+  console.error(error);
 }
 
-function mountWindowsPreview(options) {
-  const terminal = createWindowsTerminal({ shell: options.shell });
-  options.seed?.(terminal);
+async function loadTermlet() {
+  const candidates = [
+    './termlet/index.mjs',
+    '../dist/index.mjs',
+  ];
+  let lastError = null;
+  for (const url of candidates) {
+    try {
+      return await import(url);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw new Error(`Termlet runtime failed to load. Build the site first or serve the repository root over HTTP. ${lastError?.message || ''}`);
+}
+
+function mountTerminals() {
+  terminals.set('linux', mountLinuxTerminal());
+  terminals.set('powershell', mountPowerShellTerminal());
+  terminals.set('cmd', mountCmdTerminal());
+  terminals.set('docs', mountDocsTerminal());
+}
+
+function mountLinuxTerminal() {
+  const terminal = createTerminal({
+    hostname: 'blog',
+    cwd: '/home/guest/workspace',
+    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.linux' }),
+    persistVfs: true,
+    plugins: [
+      blogSandboxPreset({ hostname: 'blog' }),
+      linuxShowcasePlugin,
+      effectEventsPlugin,
+    ],
+  });
+
   const renderer = new DomTerminalRenderer(terminal, {
-    mount: options.mount,
-    welcome: options.welcome,
-    maxLines: 120,
-    prompt: () => options.prompt(terminal),
+    mount: '#terminal-linux',
+    theme: 'linux',
+    prompt: () => `guest@blog ${formatHomePath(terminal.cwd, terminal.home)}$`,
+    welcome: [
+      'Try: help, ls -al, tree ~/blog, sudo rm -rf /',
+      'guest@blog ~/workspace$ ls -al ~/blog',
+      'drwxr-xr-x guest guest 4096 Jan  1 about/',
+      '-rw-r--r-- guest guest  820 Jan  1 README.md',
+      '-rw-r--r-- guest guest  214 Jan  1 deploy-notes.txt',
+      'guest@blog ~/workspace$ cat ~/blog/deploy-notes.txt',
+      'Termlet runs entirely in the browser.',
+      'No websocket. No real shell. No command injection.',
+      'guest@blog ~/workspace$ sudo rm -rf /',
+      'rm: refusing to remove root directory in browser sandbox',
+    ].join('\n'),
+    persistTranscript: true,
+    maxLines: 560,
+    autoFocus: false,
+    onEvent: event => updateStatus('linux', event.type === 'effect' ? `effect:${event.name}` : event.type),
+    onResult: result => updateStatus('linux', `exit ${result.status}`),
   }).attach();
-  renderer.mount.classList.add(options.className);
+
   return { terminal, renderer };
 }
 
+function mountPowerShellTerminal() {
+  const terminal = createWindowsTerminal({
+    shell: 'powershell',
+    home: '/Users/guest',
+    cwd: '/Users/guest/blog',
+    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.powershell' }),
+    persistVfs: true,
+    plugins: [windowsShowcaseFiles],
+  });
+
+  const renderer = new DomTerminalRenderer(terminal, {
+    mount: '#terminal-powershell',
+    theme: 'powershell',
+    prompt: () => `PS ${toWindowsPath(terminal.cwd, terminal.windowsDrive)}>`,
+    welcome: [
+      'PowerShell profile. Try: Get-ChildItem | Where-Object Type -EQ file',
+      'PS C:\\Users\\guest\\blog> Get-ChildItem | Where-Object Type -EQ file |',
+      'Select-Object Name,Length | Format-Table',
+      '',
+      'Name             Length',
+      '----             ------',
+      'readme.txt          128',
+      'release-note.md     942',
+      'terminal.json       336',
+      '',
+      'PS C:\\Users\\guest\\blog> ls',
+      'ls: command not found',
+      'Linux-style ls is not available in this PowerShell profile.',
+      'PS C:\\Users\\guest\\blog> Get-Help Get-Item',
+      'Get-Item [-Path] <string>  Returns a virtual filesystem item.',
+    ].join('\n'),
+    persistTranscript: true,
+    maxLines: 520,
+    autoFocus: false,
+    onResult: result => updateStatus('powershell', `exit ${result.status}`),
+  }).attach();
+
+  return { terminal, renderer };
+}
+
+function mountCmdTerminal() {
+  const terminal = createWindowsTerminal({
+    shell: 'cmd',
+    home: '/Users/guest',
+    cwd: '/Users/guest/blog',
+    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.cmd' }),
+    persistVfs: true,
+    plugins: [windowsShowcaseFiles],
+  });
+
+  const renderer = new DomTerminalRenderer(terminal, {
+    mount: '#terminal-cmd',
+    theme: 'cmd',
+    prompt: () => `${toWindowsPath(terminal.cwd, terminal.windowsDrive)}>`,
+    welcome: [
+      'Microsoft Windows [Version 10.0.26000]',
+      'C:\\Users\\guest\\blog> dir',
+      ' Directory of C:\\Users\\guest\\blog',
+      '',
+      '05/09/2026  18:40    <DIR>          posts',
+      '05/09/2026  18:40             1,024 readme.txt',
+      '05/09/2026  18:40               512 terminal.ini',
+      '               2 File(s)          1,536 bytes',
+      '',
+      'C:\\Users\\guest\\blog> type readme.txt',
+      'Frontend terminal. Safe by default. Easy to customize.',
+      'C:\\Users\\guest\\blog> npm install',
+      'npm: package scripts are disabled in this frontend sandbox',
+    ].join('\n'),
+    persistTranscript: true,
+    maxLines: 520,
+    autoFocus: false,
+    onResult: result => updateStatus('cmd', `exit ${result.status}`),
+  }).attach();
+
+  return { terminal, renderer };
+}
+
+function mountDocsTerminal() {
+  const terminal = createTerminal({
+    hostname: 'termlet',
+    user: 'docs',
+    home: '/home/docs',
+    cwd: '/home/docs/lesson',
+    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.docs' }),
+    persistVfs: true,
+    plugins: [docsShowcasePlugin],
+  });
+
+  const renderer = new DomTerminalRenderer(terminal, {
+    mount: '#terminal-docs',
+    theme: 'light',
+    prompt: () => `docs@termlet ${formatHomePath(terminal.cwd, terminal.home)}$`,
+    welcome: [
+      'Lesson 01: build a custom command pack',
+      'docs@termlet ~/lesson$ cat steps.md',
+      "1. import { defineCommandPack, ok } from 'termlet'",
+      '2. register your command',
+      '3. mount the terminal anywhere',
+      '',
+      'docs@termlet ~/lesson$ run-demo',
+      'Created command: hello',
+      'Created file: /home/guest/workspace/readme.txt',
+      '',
+      'docs@termlet ~/lesson$ hello reader',
+      'hello reader',
+      'docs@termlet ~/lesson$ session reset',
+      'session reset complete',
+    ].join('\n'),
+    persistTranscript: true,
+    maxLines: 520,
+    autoFocus: false,
+    onResult: result => updateStatus('docs', `exit ${result.status}`),
+  }).attach();
+
+  return { terminal, renderer };
+}
+
+function linuxShowcasePlugin(terminal) {
+  const owner = terminal.user;
+  terminal.fs.ensureDir('/home/guest/workspace', { owner, group: owner });
+  terminal.fs.ensureDir('/home/guest/blog/about', { owner, group: owner });
+  terminal.fs.ensureDir('/home/guest/lab', { owner, group: owner });
+  terminal.fs.addFile('/home/guest/blog/README.md', [
+    '# Termlet Blog Terminal',
+    '',
+    'A safe browser terminal for static sites and blogs.',
+    '',
+  ].join('\n'), { owner, group: owner });
+  terminal.fs.addFile('/home/guest/blog/deploy-notes.txt', [
+    'Termlet runs entirely in the browser.',
+    'No websocket. No real shell. No command injection.',
+    '',
+  ].join('\n'), { owner, group: owner });
+  terminal.fs.addFile('/home/guest/lab/plugin.js', [
+    "import { ok } from 'termlet';",
+    '',
+    'export function helloPlugin(terminal) {',
+    "  terminal.register('hello', ({ args }) => ok(`hello ${args[0] || 'reader'}\\n`));",
+    '}',
+    '',
+  ].join('\n'), { owner, group: owner });
+
+  terminal.register('about', () => ok([
+    'Termlet',
+    'frontend-only pseudo terminal base',
+    'commands, VFS, renderer and themes are composable',
+    '',
+  ].join('\n')));
+}
+
+function windowsShowcaseFiles(terminal) {
+  const owner = terminal.user;
+  terminal.fs.ensureDir('/Users/guest/blog/posts', { owner, group: owner });
+  terminal.fs.addFile('/Users/guest/blog/readme.txt', 'Frontend terminal. Safe by default. Easy to customize.\n', { owner, group: owner });
+  terminal.fs.addFile('/Users/guest/blog/release-note.md', '# Release note\nStructured profiles, commands and themes.\n', { owner, group: owner });
+  terminal.fs.addFile('/Users/guest/blog/terminal.json', '{ "profile": "windows", "safe": true }\n', { owner, group: owner });
+  terminal.fs.addFile('/Users/guest/blog/terminal.ini', '[termlet]\nmode=cmd\nsafe=true\n', { owner, group: owner });
+}
+
+function docsShowcasePlugin(terminal) {
+  const owner = terminal.user;
+  terminal.fs.ensureDir('/home/docs/lesson', { owner, group: owner });
+  terminal.fs.addFile('/home/docs/lesson/steps.md', [
+    "1. import { defineCommandPack, ok } from 'termlet'",
+    '2. register your command',
+    '3. mount the terminal anywhere',
+    '',
+  ].join('\n'), { owner, group: owner });
+  terminal.fs.addFile('/home/docs/lesson/deploy.md', [
+    'copy dist to /termlet',
+    'import mountStarterTerminal',
+    'customize theme and commands',
+    '',
+  ].join('\n'), { owner, group: owner });
+  terminal.register('run-demo', () => ok('Created command: hello\nCreated file: /home/guest/workspace/readme.txt\n'));
+  terminal.register('hello', ({ args }) => ok(`hello ${args[0] || 'reader'}\n`));
+}
+
+function wireSceneButtons() {
+  document.querySelectorAll('[data-scene-button]').forEach(button => {
+    button.addEventListener('click', () => activateScene(button.getAttribute('data-scene-button')));
+  });
+}
+
+function activateScene(scene) {
+  if (!scene || scene === activeScene) return;
+  activeScene = scene;
+  document.body.dataset.activeScene = scene;
+  document.querySelectorAll('[data-scene]').forEach(panel => {
+    const active = panel.getAttribute('data-scene') === scene;
+    panel.hidden = !active;
+    panel.classList.toggle('is-active', active);
+  });
+  document.querySelectorAll('[data-scene-button]').forEach(button => {
+    button.setAttribute('aria-pressed', button.getAttribute('data-scene-button') === scene ? 'true' : 'false');
+  });
+  terminals.get(scene)?.renderer?.focus();
+}
+
+function wireQuickCommands() {
+  document.querySelectorAll('[data-run-profile]').forEach(button => {
+    button.addEventListener('click', () => {
+      const profile = button.getAttribute('data-run-profile');
+      activateScene(profile);
+      runInRenderer(terminals.get(profile)?.renderer, button.getAttribute('data-run') || '');
+    });
+  });
+}
+
 function runInRenderer(renderer, command) {
-  const input = renderer.activeInput;
+  const input = renderer?.activeInput;
   const row = input?.closest('.blog-terminal__input-row');
   if (!input || !row) return;
   input.value = command;
@@ -174,9 +320,14 @@ function runInRenderer(renderer, command) {
   }, input, row);
 }
 
+function wireCopyButtons() {
+  document.querySelectorAll('[data-copy-target]').forEach(button => {
+    button.addEventListener('click', () => copyFromButton(button));
+  });
+}
+
 async function copyFromButton(button) {
-  const targetId = button.getAttribute('data-copy-target');
-  const target = targetId ? document.getElementById(targetId) : null;
+  const target = document.getElementById(button.getAttribute('data-copy-target'));
   const text = target?.textContent || '';
   if (!text.trim()) return;
   let copied = false;
@@ -187,56 +338,18 @@ async function copyFromButton(button) {
     copied = fallbackCopy(text.trim());
   }
   const status = document.querySelector('[data-copy-status]');
-  if (status) status.textContent = copied ? '已复制' : '复制失败';
+  if (status) status.textContent = copied ? 'copied' : 'copy failed';
   const previous = button.textContent;
-  button.textContent = copied ? '已复制' : '复制失败';
+  button.textContent = copied ? 'copied' : 'copy failed';
   setTimeout(() => {
     button.textContent = previous;
     if (status) status.textContent = '';
   }, 1400);
 }
 
-function updateStarterSnippet() {
-  const target = document.querySelector('#starter-snippet');
-  if (!target) return;
-  target.textContent = makeStarterSnippet(starterConfig);
-}
-
-function updateThemeButtons() {
-  document.querySelectorAll('[data-theme-choice]').forEach(button => {
-    const active = button.getAttribute('data-theme-choice') === starterConfig.theme;
-    button.setAttribute('aria-pressed', active ? 'true' : 'false');
-  });
-}
-
-function makeStarterSnippet(config) {
-  return [
-    '<link rel="stylesheet" href="/termlet/termlet.css">',
-    '<div id="terminal"></div>',
-    '<script type="module">',
-    "  import { mountStarterTerminal } from '/termlet/index.mjs';",
-    '',
-    '  await mountStarterTerminal({',
-    "    mount: '#terminal',",
-    '    injectStyles: false,',
-    `    theme: ${jsString(config.theme)},`,
-    `    siteName: ${jsString(config.siteName)},`,
-    `    intro: ${jsString(config.intro)},`,
-    '  });',
-    '</script>',
-  ].join('\n');
-}
-
-function jsString(value) {
-  return JSON.stringify(String(value || ''));
-}
-
 function fallbackCopy(text) {
-  const textarea = document.createElement('textarea');
+  const textarea = document.querySelector('.copy-buffer') || document.createElement('textarea');
   textarea.value = text;
-  textarea.setAttribute('readonly', '');
-  textarea.className = 'copy-buffer';
-  document.body.appendChild(textarea);
   textarea.select();
   let copied = false;
   try {
@@ -244,8 +357,59 @@ function fallbackCopy(text) {
   } catch (_) {
     copied = false;
   }
-  textarea.remove();
   return copied;
+}
+
+function wireTiltCards() {
+  document.querySelectorAll('[data-tilt-card]').forEach(card => {
+    card.addEventListener('pointermove', event => {
+      const rect = card.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
+      const x = (event.clientX - rect.left) / rect.width - .5;
+      const y = (event.clientY - rect.top) / rect.height - .5;
+      card.style.setProperty('--tilt-x', `${(-y * 2.2).toFixed(2)}deg`);
+      card.style.setProperty('--tilt-y', `${(x * 2.8).toFixed(2)}deg`);
+      card.style.setProperty('--press-y', '8px');
+    });
+    card.addEventListener('pointerleave', () => {
+      card.style.removeProperty('--tilt-x');
+      card.style.removeProperty('--tilt-y');
+      card.style.removeProperty('--press-y');
+    });
+  });
+}
+
+function hideRuntimeWarning() {
+  const warning = document.querySelector('[data-runtime-warning]');
+  if (warning) warning.hidden = true;
+}
+
+function showRuntimeWarning(error) {
+  const warning = document.querySelector('[data-runtime-warning]');
+  if (!warning) return;
+  warning.hidden = false;
+  warning.textContent = [
+    '交互脚本没有加载成功。',
+    '请先运行 npm run site:build，再用 HTTP 服务打开 site/；如果预览 site-src/，请从仓库根目录启动 HTTP 服务。',
+    error?.message || '',
+  ].filter(Boolean).join(' ');
+}
+
+function updateStatus(profile, text) {
+  const status = document.getElementById(`${profile}-status`);
+  if (status) status.textContent = text || 'ready';
+}
+
+function formatHomePath(path, home) {
+  const value = String(path || '');
+  return value === home ? '~' : value.startsWith(`${home}/`) ? `~${value.slice(home.length)}` : value;
+}
+
+function inferRepositoryLinks() {
+  const inferred = inferGitHubRepository(window.location) || 'https://github.com/kakahuote1/Termlet';
+  document.querySelectorAll('[data-repo-link]').forEach(link => {
+    link.href = inferred;
+  });
 }
 
 function inferGitHubRepository(location) {
