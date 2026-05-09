@@ -72,6 +72,7 @@ const linuxRenderer = new DomTerminalRenderer(linuxTerminal, {
   mount: '#terminal',
   welcome: 'Try: about, docs, help, ls -al, tree ~/lab, slow, sudo rm -rf /\\n',
   maxLines: 600,
+  persistTranscript: true,
   onEvent(event) {
     if (!eventStatus) return;
     if (event.type === 'effect') eventStatus.textContent = `effect:${event.name}`;

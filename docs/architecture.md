@@ -53,12 +53,13 @@
 - Interpret `events`.
 - Can be replaced by a custom blog renderer, modal renderer, xterm-like renderer, or game-styled renderer.
 - Must keep output text-safe by default.
+- May persist a bounded text-only transcript when `persistTranscript: true` is enabled.
 
 `src/adapters/persistence.mjs`
 
 - Provides explicit `load`, `save`, and `reset` session adapters.
 - Provides both `localStorage` and current-tab `sessionStorage` adapters.
-- Persists shell metadata by default; `persistVfs: true` also snapshots serializable VFS files and directories.
+- Persists shell metadata by default; `persistVfs: true` also snapshots serializable VFS files and directories, while renderers can store visible transcript data in the same adapter.
 - Treats restored state as untrusted and bounded.
 
 `src/presets/*.mjs`

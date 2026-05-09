@@ -259,7 +259,7 @@ await mountHugoTerminal({ mount: '#terminal', feedUrl: '/index.xml' });
 博客终端通常需要抗刷新，但不需要长期保存。使用当前标签页会话：
 
 ```js
-import { createSessionStorageAdapter, createTerminal } from 'termlet';
+import { createSessionStorageAdapter, createTerminal, DomTerminalRenderer } from 'termlet';
 
 const terminal = createTerminal({
   persistence: createSessionStorageAdapter({
@@ -267,9 +267,14 @@ const terminal = createTerminal({
   }),
   persistVfs: true,
 });
+
+new DomTerminalRenderer(terminal, {
+  mount: '#terminal',
+  persistTranscript: true,
+}).attach();
 ```
 
-这样 `mkdir`、`touch`、`echo > file`、`cd` 等操作刷新后仍然保留；关闭当前标签页后，浏览器会清理 `sessionStorage`，下次打开就是新会话。用户也可以运行 `session reset` 手动清理。
+这样 `mkdir`、`touch`、`echo > file`、`cd` 等操作和屏幕上的输入输出都会在刷新后保留；关闭当前标签页后，浏览器会清理 `sessionStorage`，下次打开就是新会话。用户也可以运行 `session reset` 手动清理。
 
 ## 编写插件
 

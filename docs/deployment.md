@@ -90,10 +90,13 @@ await mountStaticTerminal({
     persistence: createSessionStorageAdapter({ key: 'docs-terminal-v1' }),
     persistVfs: true,
   },
+  rendererOptions: {
+    persistTranscript: true,
+  },
 });
 ```
 
-Users can run `session reset`. A custom UI can also call `terminal.resetSessionState()`.
+Users can run `session reset`. A custom UI can also call `terminal.resetSessionState()`. With `persistTranscript: true`, the rendered command transcript is restored after refresh in the same tab and cleared with the session.
 
 ## Custom Renderer
 

@@ -140,7 +140,7 @@ function sessionCommand({ args, terminal }) {
   }
   if (action === 'reset') {
     terminal.resetSessionState();
-    return ok('session: state reset\n', { events: [{ type: 'clear' }] });
+    return ok('session: state reset\n', { events: [{ type: 'clear' }, { type: 'session-reset' }] });
   }
   return fail('session: usage: session [status|save|reset]\n', 2);
 }

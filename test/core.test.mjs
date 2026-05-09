@@ -8,6 +8,7 @@ import {
   createSessionStorageAdapter,
   defineCommandPack,
   defineProfile,
+  DomTerminalRenderer,
   blogSandboxPreset,
   effectEventsPlugin,
   formatRecords,
@@ -41,6 +42,112 @@ function memoryStorage() {
       map.delete(key);
     },
   };
+}
+
+function createFakeDocument() {
+  const document = {
+    head: null,
+    createElement(tagName) {
+      return new FakeElement(tagName);
+    },
+    querySelector() {
+      return null;
+    },
+    getElementById() {
+      return null;
+    },
+  };
+  document.head = new FakeElement('head');
+  return document;
+}
+
+class FakeElement {
+  constructor(tagName) {
+    this.tagName = String(tagName).toUpperCase();
+    this.childNodes = [];
+    this.parentNode = null;
+    this.attributes = new Map();
+    this.className = '';
+    this.value = '';
+    this.disabled = false;
+    this.scrollTop = 0;
+    this.tabIndex = 0;
+    this._textContent = '';
+    this.listeners = new Map();
+    this.classList = {
+      add: (...names) => {
+        const values = new Set(this.className.split(/\s+/).filter(Boolean));
+        names.forEach(name => values.add(name));
+        this.className = [...values].join(' ');
+      },
+    };
+  }
+
+  get firstChild() {
+    return this.childNodes[0] || null;
+  }
+
+  get scrollHeight() {
+    return this.childNodes.length;
+  }
+
+  get textContent() {
+    if (this.childNodes.length) return this.childNodes.map(child => child.textContent).join('');
+    return this._textContent;
+  }
+
+  set textContent(value) {
+    this.childNodes = [];
+    this._textContent = String(value ?? '');
+  }
+
+  append(...children) {
+    children.forEach(child => this.appendChild(child));
+  }
+
+  appendChild(child) {
+    child.parentNode = this;
+    this.childNodes.push(child);
+    this._textContent = '';
+    return child;
+  }
+
+  removeChild(child) {
+    const index = this.childNodes.indexOf(child);
+    if (index >= 0) this.childNodes.splice(index, 1);
+    child.parentNode = null;
+    return child;
+  }
+
+  setAttribute(name, value) {
+    this.attributes.set(name, String(value));
+  }
+
+  hasAttribute(name) {
+    return this.attributes.has(name);
+  }
+
+  addEventListener(type, listener) {
+    if (!this.listeners.has(type)) this.listeners.set(type, new Set());
+    this.listeners.get(type).add(listener);
+  }
+
+  removeEventListener(type, listener) {
+    this.listeners.get(type)?.delete(listener);
+  }
+
+  focus() {}
+}
+
+async function submitRendererCommand(renderer, command) {
+  const input = renderer.activeInput;
+  const row = input.parentNode;
+  input.value = command;
+  await renderer.handleKey({
+    key: 'Enter',
+    ctrlKey: false,
+    preventDefault() {},
+  }, input, row);
 }
 
 test('executes shell syntax: variables, command substitution, pipeline, control operators', async () => {
@@ -258,6 +365,42 @@ test('current-tab session persistence can keep VFS changes across refreshes', as
   await second.execute('session reset');
   const third = createTerminal({ persistence: adapter, persistVfs: true });
   assert.equal((await third.execute('ls /tmp/session/a.txt')).status, 1);
+});
+
+test('dom renderer can persist visible transcript in the same session', async () => {
+  const adapter = memoryPersistenceAdapter();
+  const first = createTerminal({ persistence: adapter, persistVfs: true });
+  const document = createFakeDocument();
+  const firstMount = document.createElement('div');
+  const firstRenderer = new DomTerminalRenderer(first, {
+    document,
+    mount: firstMount,
+    welcome: 'welcome\n',
+    persistTranscript: true,
+  }).attach();
+
+  await submitRendererCommand(firstRenderer, 'printf alpha');
+
+  const saved = adapter.load();
+  assert.equal(saved.transcript.version, 1);
+  assert.ok(saved.transcript.entries.some(entry => entry.type === 'input' && entry.command === 'printf alpha'));
+  assert.ok(saved.transcript.entries.some(entry => entry.type === 'line' && entry.text === 'alpha'));
+
+  const second = createTerminal({ persistence: adapter, persistVfs: true });
+  const secondMount = document.createElement('div');
+  const secondRenderer = new DomTerminalRenderer(second, {
+    document,
+    mount: secondMount,
+    welcome: 'fresh welcome\n',
+    persistTranscript: true,
+  }).attach();
+
+  assert.match(secondMount.textContent, /printf alpha/);
+  assert.match(secondMount.textContent, /alpha/);
+  assert.doesNotMatch(secondMount.textContent, /fresh welcome/);
+
+  await submitRendererCommand(secondRenderer, 'session reset');
+  assert.deepEqual(adapter.load().transcript.entries, []);
 });
 
 test('session storage adapter uses tab-scoped storage semantics when provided', () => {

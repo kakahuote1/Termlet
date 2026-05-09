@@ -1,5 +1,6 @@
 export type TerminalEvent =
   | { type: 'clear' }
+  | { type: 'session-reset' }
   | { type: 'exit' }
   | { type: 'effect'; name: string; args?: string[] }
   | { type: 'editor'; editor: string; file?: string | null }
@@ -190,6 +191,10 @@ export class DomTerminalRenderer {
     className?: string;
     welcome?: string;
     maxLines?: number;
+    persistTranscript?: boolean;
+    restoreTranscript?: boolean;
+    maxTranscriptEntries?: number;
+    maxTranscriptBytes?: number;
     autoFocus?: boolean;
     ariaLabel?: string;
     onEvent?: (event: TerminalEvent, renderer: DomTerminalRenderer) => void;
@@ -202,6 +207,9 @@ export class DomTerminalRenderer {
   focus(): void;
   print(text: string, cls?: string): void;
   printBlock(text: string, cls?: string): void;
+  restoreTranscript(): boolean;
+  clearTranscript(): void;
+  saveTranscript(): void;
   handleEvents(events?: TerminalEvent[]): void;
   abortRunning(): boolean;
 }

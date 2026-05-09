@@ -192,6 +192,7 @@ Use user-space methods such as `makeDir`, `writeFile`, `remove`, `copy`, `move`,
 new DomTerminalRenderer(terminal, {
   mount: '#terminal',
   welcome: 'Try: help, ls -al\n',
+  persistTranscript: true,
   onEvent(event) {
     if (event.type === 'effect') startEffect(event.name);
   },
@@ -199,6 +200,8 @@ new DomTerminalRenderer(terminal, {
 ```
 
 `DomTerminalRenderer` is a reference implementation. Production sites can replace it without changing command plugins.
+
+Renderer transcript persistence is optional. When `persistTranscript: true` is used with a persistence adapter, frozen prompts and command output are saved as text-only entries. Refresh restores the visible screen; `clear`, `Ctrl+L`, and `session reset` clear the transcript. Use `maxTranscriptEntries` and `maxTranscriptBytes` to tune storage limits.
 
 ## Adapters
 
@@ -221,6 +224,15 @@ const terminal = createTerminal({
 ```
 
 With this setup, `mkdir`, `touch`, redirects, edits, and `cd` survive refresh in the same tab. Closing the tab starts a new session. `session reset` clears the adapter and restores the initial seeded VFS.
+
+To keep the visible input/output across refresh too:
+
+```js
+new DomTerminalRenderer(terminal, {
+  mount: '#terminal',
+  persistTranscript: true,
+}).attach();
+```
 
 ## Feed Posts
 

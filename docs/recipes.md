@@ -225,7 +225,7 @@ new DomTerminalRenderer(terminal, {
 ## 9. 刷新不丢、关页重置
 
 ```js
-import { createSessionStorageAdapter, createTerminal } from '/termlet/index.mjs';
+import { createSessionStorageAdapter, createTerminal, DomTerminalRenderer } from '/termlet/index.mjs';
 
 const terminal = createTerminal({
   persistence: createSessionStorageAdapter({
@@ -233,9 +233,14 @@ const terminal = createTerminal({
   }),
   persistVfs: true,
 });
+
+new DomTerminalRenderer(terminal, {
+  mount: '#terminal',
+  persistTranscript: true,
+}).attach();
 ```
 
-这个配置适合博客终端：`mkdir`、`touch`、`echo > file`、`cd` 等操作在刷新后仍然保留；关闭当前标签页后，浏览器会清理 `sessionStorage`，下次打开就是新会话。
+这个配置适合博客终端：`mkdir`、`touch`、`echo > file`、`cd` 等操作，以及已经显示出来的输入输出，都会在刷新后保留；关闭当前标签页后，浏览器会清理 `sessionStorage`，下次打开就是新会话。
 
 建议在 UI 或命令里暴露重置路径：
 

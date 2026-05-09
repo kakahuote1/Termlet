@@ -143,6 +143,7 @@
         renderer = new DomTerminalRenderer(terminal, {
           mount: '#terminal',
           welcome: 'Try: help, ls -al, cat /etc/os-release, session reset\\n',
+          persistTranscript: true,
         }).attach();
       }
       renderer.focus();

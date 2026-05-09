@@ -18,7 +18,7 @@ export class DomTerminalRenderer {
     this.mount = typeof options.mount === 'string' ? doc.querySelector(options.mount) : options.mount;
     if (!this.mount) throw new Error('mount element not found');
     this.prompt = options.prompt || (() => `[${core.user}@${core.hostname} ${formatPromptPath(core.cwd, core.home)}]$`);
-    this.history = Array.isArray(options.history) ? [...options.history] : [];
+    this.history = Array.isArray(options.history) ? [...options.history] : [...(core.history || [])];
     this.historyIndex = -1;
     this.className = options.className || 'blog-terminal';
     this.welcome = options.welcome ?? 'Welcome to Blog Terminal Sandbox. Type `help` or `ls`.\n';
@@ -29,6 +29,13 @@ export class DomTerminalRenderer {
     this.onCommand = options.onCommand || null;
     this.onResult = options.onResult || null;
     this.onError = options.onError || null;
+    this.persistTranscript = Boolean(options.persistTranscript);
+    this.restoreTranscriptOnAttach = options.restoreTranscript !== false;
+    this.maxTranscriptEntries = Math.max(50, Number(options.maxTranscriptEntries || options.maxLines || 1000));
+    this.maxTranscriptBytes = Math.max(4096, Number(options.maxTranscriptBytes || 256 * 1024));
+    this.transcript = [];
+    this.suspendTranscriptSave = false;
+    this.restoringTranscript = false;
     this.activeInput = null;
     this.runningAbort = null;
     this.disposers = [];
@@ -55,7 +62,8 @@ export class DomTerminalRenderer {
     };
     this.mount.addEventListener('keydown', interruptHandler);
     this.disposers.push(() => this.mount.removeEventListener('keydown', interruptHandler));
-    if (this.welcome) this.print(this.welcome, 'muted');
+    const restored = this.restoreTranscriptOnAttach ? this.restoreTranscript() : false;
+    if (!restored && this.welcome) this.print(this.welcome, 'muted');
     this.newInput();
     return this;
   }
@@ -75,12 +83,21 @@ export class DomTerminalRenderer {
     line.className = `${this.className}__line ${cls}`.trim();
     line.textContent = String(text ?? '').replace(/\n$/, '');
     this.output.appendChild(line);
+    this.recordTranscript({
+      type: 'line',
+      text: line.textContent,
+      className: cls,
+    });
     this.trimOutput();
     this.output.scrollTop = this.output.scrollHeight;
   }
 
   printBlock(text, cls = '') {
+    const previous = this.suspendTranscriptSave;
+    this.suspendTranscriptSave = true;
     String(text || '').replace(/\n$/, '').split('\n').forEach(line => this.print(line, cls));
+    this.suspendTranscriptSave = previous;
+    this.saveTranscript();
   }
 
   newInput() {
@@ -128,8 +145,9 @@ export class DomTerminalRenderer {
           if (this.onCommand) this.onCommand(command, this.core);
           const result = await this.core.execute(command, { signal: this.runningAbort?.signal || null });
           this.handleEvents(result.events);
-          if (result.stdout) this.printBlock(result.stdout);
-          if (result.stderr) this.printBlock(result.stderr, 'error');
+          const resetSession = result.events.some(event => event.type === 'session-reset');
+          if (!resetSession && result.stdout) this.printBlock(result.stdout);
+          if (!resetSession && result.stderr) this.printBlock(result.stderr, 'error');
           if (this.onResult) this.onResult(result, command, this.core);
         } catch (error) {
           if (this.onError) this.onError(error, command, this.core);
@@ -137,12 +155,14 @@ export class DomTerminalRenderer {
         } finally {
           this.running = false;
           this.runningAbort = null;
+          this.saveTranscript();
         }
       }
+      this.saveTranscript();
       this.newInput();
       event.preventDefault();
     } else if (event.ctrlKey && event.key.toLowerCase() === 'l') {
-      this.output.textContent = '';
+      this.clearTranscript();
       this.newInput();
       event.preventDefault();
     } else if (event.ctrlKey && event.key.toLowerCase() === 'c') {
@@ -181,7 +201,7 @@ export class DomTerminalRenderer {
   handleEvents(events = []) {
     events.forEach(event => {
       if (this.onEvent) this.onEvent(event, this);
-      if (event.type === 'clear') this.output.textContent = '';
+      if (event.type === 'clear') this.clearTranscript();
       if (event.type === 'exit') this.mount.classList.add(`${this.className}--closed`);
     });
   }
@@ -202,12 +222,88 @@ export class DomTerminalRenderer {
     text.className = `${this.className}__command`;
     text.textContent = ` ${command}`;
     row.append(prompt, text);
+    this.recordTranscript({
+      type: 'input',
+      prompt: prompt.textContent,
+      command: String(command ?? ''),
+    });
   }
 
   trimOutput() {
     while (this.output.childNodes.length > this.maxLines) {
       this.output.removeChild(this.output.firstChild);
     }
+  }
+
+  restoreTranscript() {
+    if (!this.persistTranscript || !this.core.persistence?.load) return false;
+    const state = safeLoad(this.core.persistence);
+    const entries = sanitizeTranscript(state.transcript, this.maxTranscriptEntries, this.maxTranscriptBytes);
+    if (!entries.length) return false;
+    this.transcript = entries;
+    this.restoringTranscript = true;
+    try {
+      entries.forEach(entry => this.renderTranscriptEntry(entry));
+    } finally {
+      this.restoringTranscript = false;
+    }
+    this.output.scrollTop = this.output.scrollHeight;
+    return true;
+  }
+
+  renderTranscriptEntry(entry) {
+    if (entry.type === 'input') {
+      const row = this.document.createElement('div');
+      row.className = `${this.className}__input-row`;
+      const prompt = this.document.createElement('span');
+      prompt.className = `${this.className}__prompt`;
+      prompt.textContent = entry.prompt;
+      const text = this.document.createElement('span');
+      text.className = `${this.className}__command`;
+      text.textContent = ` ${entry.command}`;
+      row.append(prompt, text);
+      this.output.appendChild(row);
+      return;
+    }
+    const line = this.document.createElement('div');
+    line.className = `${this.className}__line ${entry.className || ''}`.trim();
+    line.textContent = entry.text;
+    this.output.appendChild(line);
+  }
+
+  clearTranscript() {
+    if (this.output) this.output.textContent = '';
+    this.transcript = [];
+    this.saveTranscript();
+  }
+
+  recordTranscript(entry) {
+    if (!this.persistTranscript || this.restoringTranscript) return;
+    const normalized = normalizeTranscriptEntry(entry);
+    if (!normalized) return;
+    this.transcript.push(normalized);
+    this.trimTranscript();
+    if (!this.suspendTranscriptSave) this.saveTranscript();
+  }
+
+  trimTranscript() {
+    this.transcript = sanitizeTranscript(
+      { version: 1, entries: this.transcript },
+      this.maxTranscriptEntries,
+      this.maxTranscriptBytes,
+    );
+  }
+
+  saveTranscript() {
+    if (!this.persistTranscript || this.suspendTranscriptSave || !this.core.persistence?.save) return;
+    try {
+      const state = this.core.snapshot ? this.core.snapshot() : safeLoad(this.core.persistence);
+      state.transcript = {
+        version: 1,
+        entries: this.transcript,
+      };
+      this.core.persistence.save(state);
+    } catch (_) {}
   }
 }
 
@@ -223,4 +319,46 @@ function formatPromptPath(path, home) {
   if (path === home) return '~';
   if (path.startsWith(home + '/')) return '~' + path.slice(home.length);
   return path;
+}
+
+function safeLoad(adapter) {
+  try {
+    return adapter.load?.() || {};
+  } catch (_) {
+    return {};
+  }
+}
+
+function normalizeTranscriptEntry(entry) {
+  if (!entry || typeof entry !== 'object') return null;
+  if (entry.type === 'input') {
+    return {
+      type: 'input',
+      prompt: String(entry.prompt ?? '').slice(0, 400),
+      command: String(entry.command ?? '').slice(0, 4000),
+    };
+  }
+  if (entry.type === 'line') {
+    return {
+      type: 'line',
+      text: String(entry.text ?? '').slice(0, 20000),
+      className: sanitizeClassName(entry.className),
+    };
+  }
+  return null;
+}
+
+function sanitizeTranscript(state, maxEntries, maxBytes) {
+  const source = state?.version === 1 && Array.isArray(state.entries) ? state.entries : [];
+  const entries = source.map(normalizeTranscriptEntry).filter(Boolean).slice(-maxEntries);
+  while (entries.length && transcriptByteLength(entries) > maxBytes) entries.shift();
+  return entries;
+}
+
+function sanitizeClassName(value) {
+  return String(value || '').split(/\s+/).filter(name => /^[A-Za-z0-9_-]{1,64}$/.test(name)).join(' ');
+}
+
+function transcriptByteLength(entries) {
+  return entries.reduce((total, entry) => total + JSON.stringify(entry).length, 0);
 }

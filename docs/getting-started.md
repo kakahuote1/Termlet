@@ -71,10 +71,10 @@ See `docs/recipes.md` for copyable integration recipes, `examples/plugin-templat
 
 ## Reset Path
 
-If you want refresh-resistant state for the current tab, use `sessionStorage` and enable VFS persistence:
+If you want refresh-resistant state for the current tab, use `sessionStorage`, enable VFS persistence, and let the DOM renderer persist the visible transcript:
 
 ```js
-import { createSessionStorageAdapter } from 'termlet';
+import { createSessionStorageAdapter, DomTerminalRenderer } from 'termlet';
 
 const terminal = createTerminal({
   persistence: createSessionStorageAdapter({
@@ -82,9 +82,14 @@ const terminal = createTerminal({
   }),
   persistVfs: true,
 });
+
+new DomTerminalRenderer(terminal, {
+  mount: '#terminal',
+  persistTranscript: true,
+}).attach();
 ```
 
-Now `mkdir`, redirects, and `cd` survive refresh in the same tab. Closing the tab starts fresh. Users can also run:
+Now `mkdir`, redirects, `cd`, and the visible command output survive refresh in the same tab. Closing the tab starts fresh. Users can also run:
 
 ```bash
 session reset
