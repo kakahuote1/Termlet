@@ -57,13 +57,15 @@ function mountTerminals() {
   terminals.set('powershell', mountPowerShellTerminal());
   terminals.set('cmd', mountCmdTerminal());
   terminals.set('docs', mountDocsTerminal());
+  terminals.set('orb', mountOrbTerminal());
+  terminals.set('rain', mountRainTerminal());
 }
 
 function mountLinuxTerminal() {
   const terminal = createTerminal({
     hostname: 'blog',
     cwd: '/home/guest/workspace',
-    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.linux' }),
+    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.clean.linux' }),
     persistVfs: true,
     plugins: [
       blogSandboxPreset({ hostname: 'blog' }),
@@ -76,18 +78,7 @@ function mountLinuxTerminal() {
     mount: '#terminal-linux',
     theme: 'linux',
     prompt: () => `guest@blog ${formatHomePath(terminal.cwd, terminal.home)}$`,
-    welcome: [
-      'Try: help, ls -al, tree ~/blog, sudo rm -rf /',
-      'guest@blog ~/workspace$ ls -al ~/blog',
-      'drwxr-xr-x guest guest 4096 Jan  1 about/',
-      '-rw-r--r-- guest guest  820 Jan  1 README.md',
-      '-rw-r--r-- guest guest  214 Jan  1 deploy-notes.txt',
-      'guest@blog ~/workspace$ cat ~/blog/deploy-notes.txt',
-      'Termlet runs entirely in the browser.',
-      'No websocket. No real shell. No command injection.',
-      'guest@blog ~/workspace$ sudo rm -rf /',
-      'rm: refusing to remove root directory in browser sandbox',
-    ].join('\n'),
+    welcome: '',
     persistTranscript: true,
     maxLines: 560,
     autoFocus: false,
@@ -103,7 +94,7 @@ function mountPowerShellTerminal() {
     shell: 'powershell',
     home: '/Users/guest',
     cwd: '/Users/guest/blog',
-    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.powershell' }),
+    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.clean.powershell' }),
     persistVfs: true,
     plugins: [windowsShowcaseFiles],
   });
@@ -112,23 +103,7 @@ function mountPowerShellTerminal() {
     mount: '#terminal-powershell',
     theme: 'powershell',
     prompt: () => `PS ${toWindowsPath(terminal.cwd, terminal.windowsDrive)}>`,
-    welcome: [
-      'PowerShell profile. Try: Get-ChildItem | Where-Object Type -EQ file',
-      'PS C:\\Users\\guest\\blog> Get-ChildItem | Where-Object Type -EQ file |',
-      'Select-Object Name,Length | Format-Table',
-      '',
-      'Name             Length',
-      '----             ------',
-      'readme.txt          128',
-      'release-note.md     942',
-      'terminal.json       336',
-      '',
-      'PS C:\\Users\\guest\\blog> ls',
-      'ls: command not found',
-      'Linux-style ls is not available in this PowerShell profile.',
-      'PS C:\\Users\\guest\\blog> Get-Help Get-Item',
-      'Get-Item [-Path] <string>  Returns a virtual filesystem item.',
-    ].join('\n'),
+    welcome: '',
     persistTranscript: true,
     maxLines: 520,
     autoFocus: false,
@@ -143,7 +118,7 @@ function mountCmdTerminal() {
     shell: 'cmd',
     home: '/Users/guest',
     cwd: '/Users/guest/blog',
-    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.cmd' }),
+    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.clean.cmd' }),
     persistVfs: true,
     plugins: [windowsShowcaseFiles],
   });
@@ -152,21 +127,7 @@ function mountCmdTerminal() {
     mount: '#terminal-cmd',
     theme: 'cmd',
     prompt: () => `${toWindowsPath(terminal.cwd, terminal.windowsDrive)}>`,
-    welcome: [
-      'Microsoft Windows [Version 10.0.26000]',
-      'C:\\Users\\guest\\blog> dir',
-      ' Directory of C:\\Users\\guest\\blog',
-      '',
-      '05/09/2026  18:40    <DIR>          posts',
-      '05/09/2026  18:40             1,024 readme.txt',
-      '05/09/2026  18:40               512 terminal.ini',
-      '               2 File(s)          1,536 bytes',
-      '',
-      'C:\\Users\\guest\\blog> type readme.txt',
-      'Frontend terminal. Safe by default. Easy to customize.',
-      'C:\\Users\\guest\\blog> npm install',
-      'npm: package scripts are disabled in this frontend sandbox',
-    ].join('\n'),
+    welcome: '',
     persistTranscript: true,
     maxLines: 520,
     autoFocus: false,
@@ -182,7 +143,7 @@ function mountDocsTerminal() {
     user: 'docs',
     home: '/home/docs',
     cwd: '/home/docs/lesson',
-    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.docs' }),
+    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.clean.docs' }),
     persistVfs: true,
     plugins: [docsShowcasePlugin],
   });
@@ -191,26 +152,61 @@ function mountDocsTerminal() {
     mount: '#terminal-docs',
     theme: 'light',
     prompt: () => `docs@termlet ${formatHomePath(terminal.cwd, terminal.home)}$`,
-    welcome: [
-      'Lesson 01: build a custom command pack',
-      'docs@termlet ~/lesson$ cat steps.md',
-      "1. import { defineCommandPack, ok } from 'termlet'",
-      '2. register your command',
-      '3. mount the terminal anywhere',
-      '',
-      'docs@termlet ~/lesson$ run-demo',
-      'Created command: hello',
-      'Created file: /home/guest/workspace/readme.txt',
-      '',
-      'docs@termlet ~/lesson$ hello reader',
-      'hello reader',
-      'docs@termlet ~/lesson$ session reset',
-      'session reset complete',
-    ].join('\n'),
+    welcome: '',
     persistTranscript: true,
     maxLines: 520,
     autoFocus: false,
     onResult: result => updateStatus('docs', `exit ${result.status}`),
+  }).attach();
+
+  return { terminal, renderer };
+}
+
+function mountOrbTerminal() {
+  const terminal = createTerminal({
+    hostname: 'sphere',
+    user: 'lab',
+    home: '/home/lab',
+    cwd: '/home/lab/orbit',
+    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.clean.orb' }),
+    persistVfs: true,
+    plugins: [labShowcasePlugin],
+  });
+
+  const renderer = new DomTerminalRenderer(terminal, {
+    mount: '#terminal-orb',
+    theme: 'crt',
+    prompt: () => `orb:${formatHomePath(terminal.cwd, terminal.home)}$`,
+    welcome: '',
+    persistTranscript: true,
+    maxLines: 220,
+    autoFocus: false,
+    onResult: result => updateStatus('orb', `exit ${result.status}`),
+  }).attach();
+
+  return { terminal, renderer };
+}
+
+function mountRainTerminal() {
+  const terminal = createTerminal({
+    hostname: 'rain',
+    user: 'fx',
+    home: '/home/fx',
+    cwd: '/home/fx/cloud',
+    persistence: createSessionStorageAdapter({ key: 'termlet.showcase.clean.rain' }),
+    persistVfs: true,
+    plugins: [labShowcasePlugin],
+  });
+
+  const renderer = new DomTerminalRenderer(terminal, {
+    mount: '#terminal-rain',
+    theme: 'linux',
+    prompt: () => `rain:${formatHomePath(terminal.cwd, terminal.home)}$`,
+    welcome: '',
+    persistTranscript: true,
+    maxLines: 220,
+    autoFocus: false,
+    onResult: result => updateStatus('rain', `exit ${result.status}`),
   }).attach();
 
   return { terminal, renderer };
@@ -232,6 +228,8 @@ function linuxShowcasePlugin(terminal) {
     'No websocket. No real shell. No command injection.',
     '',
   ].join('\n'), { owner, group: owner });
+  terminal.fs.addFile('/home/guest/blog/about/team.md', 'Designers, writers and engineers can all customize the same terminal base.\n', { owner, group: owner });
+  terminal.fs.addFile('/home/guest/blog/posts.md', 'terminal-foundation.md\nstatic-blog-integration.md\nsafe-browser-shell.md\n', { owner, group: owner });
   terminal.fs.addFile('/home/guest/lab/plugin.js', [
     "import { ok } from 'termlet';",
     '',
@@ -247,6 +245,8 @@ function linuxShowcasePlugin(terminal) {
     'commands, VFS, renderer and themes are composable',
     '',
   ].join('\n')));
+  terminal.register('stack', () => ok('core -> shell parser -> command packs -> VFS -> renderer -> site effects\n'));
+  terminal.register('effects', () => ok('available effects: snow, confetti, shake, pulse, command-rain, orbit\n'));
 }
 
 function windowsShowcaseFiles(terminal) {
@@ -256,6 +256,7 @@ function windowsShowcaseFiles(terminal) {
   terminal.fs.addFile('/Users/guest/blog/release-note.md', '# Release note\nStructured profiles, commands and themes.\n', { owner, group: owner });
   terminal.fs.addFile('/Users/guest/blog/terminal.json', '{ "profile": "windows", "safe": true }\n', { owner, group: owner });
   terminal.fs.addFile('/Users/guest/blog/terminal.ini', '[termlet]\nmode=cmd\nsafe=true\n', { owner, group: owner });
+  terminal.fs.addFile('/Users/guest/blog/scripts.ps1', 'Get-ChildItem | Where-Object Type -EQ file | Format-Table\n', { owner, group: owner });
 }
 
 function docsShowcasePlugin(terminal) {
@@ -273,8 +274,30 @@ function docsShowcasePlugin(terminal) {
     'customize theme and commands',
     '',
   ].join('\n'), { owner, group: owner });
+  terminal.fs.addFile('/home/docs/lesson/theme.md', [
+    'theme = renderer + css variables + profile copy',
+    'try light, crt, cmd, powershell or a fully custom container',
+    '',
+  ].join('\n'), { owner, group: owner });
+  terminal.register('guide', () => ok('steps.md\ndeploy.md\ntheme.md\nplugin.md\n'));
   terminal.register('run-demo', () => ok('Created command: hello\nCreated file: /home/guest/workspace/readme.txt\n'));
   terminal.register('hello', ({ args }) => ok(`hello ${args[0] || 'reader'}\n`));
+}
+
+function labShowcasePlugin(terminal) {
+  const owner = terminal.user;
+  terminal.fs.ensureDir(`${terminal.home}/orbit`, { owner, group: owner });
+  terminal.fs.ensureDir(`${terminal.home}/cloud`, { owner, group: owner });
+  terminal.fs.addFile(`${terminal.home}/orbit/renderer.txt`, 'A renderer can be round, floating, tiny, full-screen, game-like or embedded in prose.\n', { owner, group: owner });
+  terminal.fs.addFile(`${terminal.home}/cloud/commands.txt`, 'help\nls -al\npipe\ntheme\nplugin\ndeploy\n', { owner, group: owner });
+  terminal.register('orbit', () => ok('sphere renderer online\nmount: #terminal-orb\nsurface: radial shell\ninput: normal Termlet core\n'));
+  terminal.register('gravity', ({ args }) => ok(`gravity well captured command: ${args.join(' ') || 'none'}\nrenderer event can decide what this looks like\n`));
+  terminal.register('rain', () => ok('command rain active\nfalling tokens are just DOM around the same terminal core\n'));
+  terminal.register('fall', ({ args }) => ok(`drop sequence: ${(args.length ? args : ['help', 'ls', 'theme']).join(' -> ')}\n`));
+  terminal.register('skin', ({ args }) => ok(`skin switched: ${args[0] || 'default'}\nCSS variables and container geometry do the visual work\n`));
+  terminal.register('effect', ({ args }) => ok(`effect event emitted: ${args[0] || 'pulse'}\ncustom renderers can subscribe and animate anything\n`, {
+    events: [{ type: 'effect', name: args[0] || 'pulse' }],
+  }));
 }
 
 function wireSceneButtons() {
@@ -302,7 +325,8 @@ function wireQuickCommands() {
   document.querySelectorAll('[data-run-profile]').forEach(button => {
     button.addEventListener('click', () => {
       const profile = button.getAttribute('data-run-profile');
-      activateScene(profile);
+      const scene = button.closest('[data-scene]')?.getAttribute('data-scene') || profile;
+      activateScene(scene);
       runInRenderer(terminals.get(profile)?.renderer, button.getAttribute('data-run') || '');
     });
   });

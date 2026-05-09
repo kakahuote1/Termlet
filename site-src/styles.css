@@ -61,6 +61,16 @@ body[data-active-scene="deploy"] {
   --button-line: rgba(15, 130, 120, .32);
 }
 
+body[data-active-scene="lab"] {
+  --accent: #ff4fd8;
+  --accent-soft: rgba(255, 79, 216, .18);
+  --grid: rgba(255, 255, 255, .07);
+  --panel: #07030d;
+  --panel-line: rgba(255, 79, 216, .34);
+  --button-bg: rgba(255, 79, 216, .08);
+  --button-line: rgba(255, 255, 255, .2);
+}
+
 .runtime-warning {
   position: fixed;
   z-index: 80;
@@ -241,6 +251,17 @@ main {
     linear-gradient(90deg, rgba(230, 236, 241, .72) 0%, rgba(196, 205, 214, .82) 100%);
 }
 
+.scene-lab {
+  background: #08020d;
+}
+
+.scene-lab::after {
+  background:
+    radial-gradient(circle at 72% 20%, rgba(255, 79, 216, .28), transparent 34%),
+    radial-gradient(circle at 46% 82%, rgba(78, 255, 202, .18), transparent 32%),
+    linear-gradient(90deg, rgba(8, 2, 13, .97) 0%, rgba(24, 8, 38, .94) 100%);
+}
+
 .scene-copy {
   position: relative;
   z-index: 2;
@@ -322,14 +343,11 @@ h2 {
   transform: translateY(1px);
 }
 
-.terminal-card {
+.terminal-card,
+.orb-terminal,
+.rain-terminal {
   justify-self: end;
-  width: min(52vw, 835px);
-  height: min(65vh, 592px);
-  min-height: 500px;
   border: 1px solid var(--panel-line);
-  border-radius: 9px;
-  overflow: hidden;
   background: var(--panel);
   box-shadow: var(--shadow);
   transform: perspective(1400px) translateY(var(--press-y, 0)) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
@@ -338,7 +356,17 @@ h2 {
   will-change: transform;
 }
 
-.terminal-card:hover {
+.terminal-card {
+  width: min(52vw, 835px);
+  height: min(65vh, 592px);
+  min-height: 500px;
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.terminal-card:hover,
+.orb-terminal:hover,
+.rain-terminal:hover {
   border-color: var(--accent);
   box-shadow: 0 38px 84px rgba(0, 0, 0, .46);
 }
@@ -499,6 +527,132 @@ h2 {
   --termlet-error: #a21c2b;
 }
 
+.lab-stage {
+  justify-self: end;
+  width: min(53vw, 850px);
+  min-height: 610px;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(300px, 410px) minmax(320px, 1fr);
+  align-items: center;
+  gap: 26px;
+}
+
+.orb-terminal {
+  position: relative;
+  width: min(28vw, 405px);
+  aspect-ratio: 1;
+  min-width: 320px;
+  justify-self: center;
+  overflow: hidden;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 34% 24%, rgba(255,255,255,.2), transparent 16%),
+    radial-gradient(circle at 50% 52%, rgba(31, 255, 174, .18), transparent 58%),
+    #04070a;
+}
+
+.orb-terminal::before,
+.orb-terminal::after {
+  content: "";
+  position: absolute;
+  inset: 12%;
+  border: 1px solid rgba(92, 255, 219, .22);
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.orb-terminal::after {
+  inset: 23%;
+  transform: rotate(62deg);
+  border-color: rgba(255, 79, 216, .28);
+}
+
+.orb-glow {
+  position: absolute;
+  inset: -24%;
+  background: conic-gradient(from 120deg, transparent, rgba(255,79,216,.3), transparent, rgba(66,255,196,.22), transparent);
+  animation: orb-spin 12s linear infinite;
+  opacity: .72;
+}
+
+.terminal-mount--orb.blog-terminal {
+  position: absolute;
+  inset: 18%;
+  z-index: 2;
+  height: auto;
+  min-height: 0;
+  border-radius: 999px;
+  padding: 58px 38px;
+  --termlet-bg: rgba(0, 0, 0, .54);
+  --termlet-fg: #d7ffe9;
+  --termlet-prompt: #ff7de6;
+  --termlet-muted: #83ffd8;
+  --termlet-error: #ff7890;
+  font-size: 12px;
+  text-align: left;
+}
+
+.rain-terminal {
+  position: relative;
+  width: min(28vw, 430px);
+  min-width: 330px;
+  height: 520px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #030508;
+}
+
+.rain-titlebar {
+  position: relative;
+  z-index: 2;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+  color: #8dffd5;
+  background: rgba(255,255,255,.04);
+  font: 900 13px/1 var(--mono);
+}
+
+.command-rain {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.command-rain span {
+  position: absolute;
+  top: -48px;
+  color: rgba(141, 255, 213, .34);
+  font: 900 15px/1 var(--mono);
+  text-shadow: 0 0 16px rgba(141,255,213,.35);
+  animation: command-fall 8s linear infinite;
+}
+
+.command-rain span:nth-child(1) { left: 8%; animation-delay: 0s; }
+.command-rain span:nth-child(2) { left: 22%; animation-delay: -3.1s; }
+.command-rain span:nth-child(3) { left: 34%; animation-delay: -1.4s; }
+.command-rain span:nth-child(4) { left: 48%; animation-delay: -5.2s; }
+.command-rain span:nth-child(5) { left: 61%; animation-delay: -2.6s; }
+.command-rain span:nth-child(6) { left: 72%; animation-delay: -6.4s; }
+.command-rain span:nth-child(7) { left: 81%; animation-delay: -4.2s; }
+.command-rain span:nth-child(8) { left: 90%; animation-delay: -7.1s; }
+
+.terminal-mount--rain.blog-terminal {
+  position: relative;
+  z-index: 2;
+  height: calc(100% - 42px);
+  --termlet-bg: rgba(0, 0, 0, .42);
+  --termlet-fg: #d9ffe9;
+  --termlet-prompt: #8dffd5;
+  --termlet-muted: #9bb8aa;
+  --termlet-error: #ff7291;
+  font-size: 13px;
+}
+
 .deploy-board {
   height: calc(100% - 56px);
   overflow: auto;
@@ -595,6 +749,18 @@ h2 {
     width: 100%;
     height: 560px;
   }
+
+  .lab-stage {
+    justify-self: stretch;
+    width: 100%;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .orb-terminal,
+  .rain-terminal {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 @media (max-width: 720px) {
@@ -645,6 +811,22 @@ h2 {
     min-height: 480px;
   }
 
+  .lab-stage {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .orb-terminal {
+    width: min(100%, 380px);
+    min-width: 0;
+  }
+
+  .rain-terminal {
+    width: 100%;
+    min-width: 0;
+    height: 460px;
+  }
+
   .terminal-titlebar {
     grid-template-columns: auto auto auto minmax(0, 1fr);
   }
@@ -689,6 +871,11 @@ h2 {
     min-height: 440px;
   }
 
+  .terminal-mount--orb.blog-terminal {
+    padding: 46px 30px;
+    font-size: 11px;
+  }
+
   .scene-foot-right {
     display: none;
   }
@@ -700,8 +887,38 @@ h2 {
   }
 
   .terminal-card,
+  .orb-terminal,
+  .rain-terminal,
   .quick-actions button,
   .quick-actions a {
     transition: none;
+  }
+
+  .orb-glow,
+  .command-rain span {
+    animation: none;
+  }
+}
+
+@keyframes orb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes command-fall {
+  0% {
+    transform: translateY(-80px) rotate(-8deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: .55;
+  }
+  90% {
+    opacity: .25;
+  }
+  100% {
+    transform: translateY(650px) rotate(8deg);
+    opacity: 0;
   }
 }
