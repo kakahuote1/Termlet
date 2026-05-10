@@ -1,20 +1,22 @@
-import { createWebTerminal } from '../factory.mjs';
-import { DomTerminalRenderer, injectDefaultStyles } from '../renderers/dom-renderer.mjs';
+import { createTerminal } from '../factory.mjs';
+import { createTerminalSession } from '../protocol/session.mjs';
+import { createDomTerminalAdapter, injectDefaultStyles } from './dom.mjs';
 
 export async function mountStaticTerminal(options = {}) {
   const {
     mount,
-    renderer = DomTerminalRenderer,
+    adapterFactory = createDomTerminalAdapter,
     injectStyles = true,
     terminalOptions = {},
-    rendererOptions = {},
+    sessionOptions = {},
+    adapterOptions = {},
     plugins = [],
   } = options;
 
   if (!mount) throw new Error('mountStaticTerminal requires a mount element or selector');
   if (injectStyles) injectDefaultStyles(options.document || globalThis.document);
 
-  const terminal = createWebTerminal({
+  const terminal = createTerminal({
     ...terminalOptions,
     plugins: [
       ...(terminalOptions.plugins || []),
@@ -22,10 +24,12 @@ export async function mountStaticTerminal(options = {}) {
     ],
   });
 
-  const instance = new renderer(terminal, {
+  const session = createTerminalSession(terminal, sessionOptions);
+  const adapter = adapterFactory({
     mount,
-    ...rendererOptions,
-  }).attach();
+    document: options.document,
+    ...adapterOptions,
+  }).mount(session);
 
-  return { terminal, renderer: instance };
+  return { terminal, session, adapter };
 }

@@ -1,6 +1,6 @@
 ﻿{
   "name": "termlet",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "type": "module",
   "description": "Pure frontend, pluggable pseudo-terminal kit for static sites and blogs.",
   "license": "MIT",
@@ -22,79 +22,147 @@
       "import": "./src/index.mjs"
     },
     "./factory": {
-      "types": "./src/index.d.ts",
+      "types": "./src/factory.d.ts",
       "import": "./src/factory.mjs"
     },
+    "./kernel": {
+      "types": "./src/kernel.d.ts",
+      "import": "./src/kernel.mjs"
+    },
     "./shell": {
-      "types": "./src/index.d.ts",
+      "types": "./src/shell.d.ts",
       "import": "./src/shell.mjs"
     },
     "./extension": {
-      "types": "./src/index.d.ts",
+      "types": "./src/extension.d.ts",
       "import": "./src/extension.mjs"
     },
     "./vfs": {
-      "types": "./src/index.d.ts",
+      "types": "./src/vfs.d.ts",
       "import": "./src/vfs.mjs"
     },
+    "./diagnostics": {
+      "types": "./src/diagnostics.d.ts",
+      "import": "./src/diagnostics.mjs"
+    },
+    "./session": {
+      "types": "./src/session.d.ts",
+      "import": "./src/session.mjs"
+    },
+    "./protocol": {
+      "types": "./src/protocol/schema.d.ts",
+      "import": "./src/protocol/schema.mjs"
+    },
+    "./protocol/errors": {
+      "types": "./src/protocol/errors.d.ts",
+      "import": "./src/protocol/errors.mjs"
+    },
+    "./state/transcript": {
+      "types": "./src/state/transcript.d.ts",
+      "import": "./src/state/transcript.mjs"
+    },
+    "./toolbox": {
+      "types": "./src/toolbox/index.d.ts",
+      "import": "./src/toolbox/index.mjs"
+    },
+    "./toolbox/transcript": {
+      "types": "./src/state/transcript.d.ts",
+      "import": "./src/state/transcript.mjs"
+    },
+    "./toolbox/input": {
+      "types": "./src/toolbox/input-controller.d.ts",
+      "import": "./src/toolbox/input-controller.mjs"
+    },
+    "./toolbox/completion": {
+      "types": "./src/toolbox/completion.d.ts",
+      "import": "./src/toolbox/completion.mjs"
+    },
+    "./toolbox/output-stream": {
+      "types": "./src/toolbox/output-stream.d.ts",
+      "import": "./src/toolbox/output-stream.mjs"
+    },
+    "./toolbox/mode": {
+      "types": "./src/toolbox/mode-machine.d.ts",
+      "import": "./src/toolbox/mode-machine.mjs"
+    },
+    "./toolbox/format": {
+      "types": "./src/toolbox/format.d.ts",
+      "import": "./src/toolbox/format.mjs"
+    },
+    "./toolbox/capability": {
+      "types": "./src/toolbox/capability.d.ts",
+      "import": "./src/toolbox/capability.mjs"
+    },
+    "./toolbox/visual": {
+      "types": "./src/toolbox/visual.d.ts",
+      "import": "./src/toolbox/visual.mjs"
+    },
+    "./testkit": {
+      "types": "./src/testkit/contract.d.ts",
+      "import": "./src/testkit/contract.mjs"
+    },
     "./plugins/basic": {
-      "types": "./src/index.d.ts",
+      "types": "./src/plugins/basic-commands.d.ts",
       "import": "./src/plugins/basic-commands.mjs"
     },
     "./plugins/system": {
-      "types": "./src/index.d.ts",
+      "types": "./src/plugins/system-commands.d.ts",
       "import": "./src/plugins/system-commands.mjs"
     },
     "./plugins/effects": {
-      "types": "./src/index.d.ts",
+      "types": "./src/plugins/effect-events.d.ts",
       "import": "./src/plugins/effect-events.mjs"
     },
     "./plugins/windows": {
-      "types": "./src/index.d.ts",
+      "types": "./src/plugins/windows-commands.d.ts",
       "import": "./src/plugins/windows-commands.mjs"
     },
     "./plugins/feed": {
-      "types": "./src/index.d.ts",
+      "types": "./src/plugins/feed-posts.d.ts",
       "import": "./src/plugins/feed-posts.mjs"
     },
     "./plugins/hugo": {
-      "types": "./src/index.d.ts",
+      "types": "./src/plugins/hugo-adapter.d.ts",
       "import": "./src/plugins/hugo-adapter.mjs"
     },
     "./presets/blog-sandbox": {
-      "types": "./src/index.d.ts",
+      "types": "./src/presets/blog-sandbox.d.ts",
       "import": "./src/presets/blog-sandbox.mjs"
     },
     "./adapters/static-site": {
-      "types": "./src/index.d.ts",
+      "types": "./src/adapters/static-site.d.ts",
       "import": "./src/adapters/static-site.mjs"
     },
     "./adapters/starter": {
-      "types": "./src/index.d.ts",
+      "types": "./src/adapters/starter.d.ts",
       "import": "./src/adapters/starter.mjs"
     },
     "./adapters/feed": {
-      "types": "./src/index.d.ts",
+      "types": "./src/adapters/feed.d.ts",
       "import": "./src/adapters/feed.mjs"
     },
     "./adapters/hugo": {
-      "types": "./src/index.d.ts",
+      "types": "./src/adapters/hugo.d.ts",
       "import": "./src/adapters/hugo.mjs"
     },
     "./adapters/persistence": {
-      "types": "./src/index.d.ts",
+      "types": "./src/adapters/persistence.d.ts",
       "import": "./src/adapters/persistence.mjs"
     },
-    "./renderers/dom": {
-      "types": "./src/index.d.ts",
-      "import": "./src/renderers/dom-renderer.mjs"
+    "./adapters/dom": {
+      "types": "./src/adapters/dom.d.ts",
+      "import": "./src/adapters/dom.mjs"
     },
-    "./renderers/kit": {
-      "types": "./src/index.d.ts",
-      "import": "./src/renderers/renderer-kit.mjs"
+    "./bundle": {
+      "types": "./src/bundle.d.ts",
+      "import": "./dist/termlet.bundle.mjs"
+    },
+    "./browser-global": {
+      "types": "./src/bundle.d.ts",
+      "import": "./dist/browser-global.bundle.mjs"
     },
     "./dist": {
-      "types": "./src/index.d.ts",
+      "types": "./src/bundle.d.ts",
       "import": "./dist/index.mjs"
     },
     "./styles.css": "./dist/termlet.css"
@@ -103,15 +171,17 @@
     "build": "node scripts/build.mjs",
     "site:build": "npm run build && node scripts/build-site.mjs",
     "api:smoke": "node scripts/api-smoke.mjs",
-    "check": "node scripts/check.mjs",
+    "check": "node scripts/check.mjs && node scripts/lint.mjs",
+    "lint": "node scripts/lint.mjs",
     "examples:smoke": "node scripts/examples-smoke.mjs",
+    "types:smoke": "node scripts/types-smoke.mjs",
     "bench": "node scripts/bench.mjs",
     "docs:smoke": "node scripts/docs-smoke.mjs",
     "package:smoke": "node scripts/package-smoke.mjs",
     "security:scan": "node scripts/security-scan.mjs",
     "site:smoke": "node scripts/site-smoke.mjs",
     "test": "node scripts/run-tests.mjs",
-    "verify": "npm run check && npm test && npm run bench && npm run docs:smoke && npm run examples:smoke && npm run security:scan && npm run site:build && npm run site:smoke"
+    "verify": "npm run check && npm test && npm run api:smoke && npm run types:smoke && npm run package:smoke && npm run bench && npm run docs:smoke && npm run examples:smoke && npm run security:scan && npm run site:build && npm run site:smoke"
   },
   "files": [
     "src",

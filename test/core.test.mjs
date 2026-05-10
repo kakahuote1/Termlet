@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  createBlogTerminal,
   createFeedTerminal,
   createWindowsTerminal,
   createTerminal,
@@ -9,24 +8,19 @@ import {
   mountStarterTerminal,
   defineCommandPack,
   defineProfile,
-  DomTerminalRenderer,
   blogSandboxPreset,
-  composeRenderers,
-  createOrbitRenderer,
-  createRainRenderer,
-  createTokenLayer,
   effectEventsPlugin,
   formatRecords,
-  defineRenderer,
   hugoPostsPlugin,
   ok,
   parseFeedPosts,
   discoverFeedUrl,
   memoryPersistenceAdapter,
 } from '../src/index.mjs';
+import { createFakeDocument } from './helpers/fake-dom.mjs';
 
 function createSubject(extra = {}) {
-  return createBlogTerminal({
+  return createTerminal({
     plugins: [
       blogSandboxPreset({ rootSecret: 'unit test private content\n' }),
       hugoPostsPlugin([{ title: 'Hello Terminal', content: '# Hello\nTerminal post\n' }]),
@@ -48,126 +42,6 @@ function memoryStorage() {
       map.delete(key);
     },
   };
-}
-
-function createFakeDocument() {
-  const document = {
-    head: null,
-    createElement(tagName) {
-      return new FakeElement(tagName);
-    },
-    querySelector() {
-      return null;
-    },
-    getElementById() {
-      return null;
-    },
-  };
-  document.head = new FakeElement('head');
-  return document;
-}
-
-class FakeElement {
-  constructor(tagName) {
-    this.tagName = String(tagName).toUpperCase();
-    this.childNodes = [];
-    this.parentNode = null;
-    this.attributes = new Map();
-    this.className = '';
-    this.value = '';
-    this.disabled = false;
-    this.scrollTop = 0;
-    this.tabIndex = 0;
-    this.style = {
-      values: new Map(),
-      setProperty: (name, value) => this.style.values.set(name, String(value)),
-      getPropertyValue: name => this.style.values.get(name) || '',
-    };
-    this._textContent = '';
-    this.listeners = new Map();
-    this.classList = {
-      add: (...names) => {
-        const values = new Set(this.className.split(/\s+/).filter(Boolean));
-        names.forEach(name => values.add(name));
-        this.className = [...values].join(' ');
-      },
-    };
-  }
-
-  get firstChild() {
-    return this.childNodes[0] || null;
-  }
-
-  get scrollHeight() {
-    return this.childNodes.length;
-  }
-
-  get textContent() {
-    if (this.childNodes.length) return this.childNodes.map(child => child.textContent).join('');
-    return this._textContent;
-  }
-
-  set textContent(value) {
-    this.childNodes = [];
-    this._textContent = String(value ?? '');
-  }
-
-  append(...children) {
-    children.forEach(child => this.appendChild(child));
-  }
-
-  appendChild(child) {
-    child.parentNode = this;
-    this.childNodes.push(child);
-    this._textContent = '';
-    return child;
-  }
-
-  removeChild(child) {
-    const index = this.childNodes.indexOf(child);
-    if (index >= 0) this.childNodes.splice(index, 1);
-    child.parentNode = null;
-    return child;
-  }
-
-  replaceChildren(...children) {
-    this.childNodes.forEach(child => {
-      child.parentNode = null;
-    });
-    this.childNodes = [];
-    this._textContent = '';
-    children.forEach(child => this.appendChild(child));
-  }
-
-  setAttribute(name, value) {
-    this.attributes.set(name, String(value));
-  }
-
-  hasAttribute(name) {
-    return this.attributes.has(name);
-  }
-
-  addEventListener(type, listener) {
-    if (!this.listeners.has(type)) this.listeners.set(type, new Set());
-    this.listeners.get(type).add(listener);
-  }
-
-  removeEventListener(type, listener) {
-    this.listeners.get(type)?.delete(listener);
-  }
-
-  focus() {}
-}
-
-async function submitRendererCommand(renderer, command) {
-  const input = renderer.activeInput;
-  const row = input.parentNode;
-  input.value = command;
-  await renderer.handleKey({
-    key: 'Enter',
-    ctrlKey: false,
-    preventDefault() {},
-  }, input, row);
 }
 
 test('executes shell syntax: variables, command substitution, pipeline, control operators', async () => {
@@ -216,7 +90,7 @@ test('ships system command ecosystem and adapters', async () => {
   assert.equal((await terminal.execute('cut -d : -f 1 /etc/passwd')).stdout, 'root\nguest\n');
 });
 
-test('returns renderer-friendly events without mutating the real page', async () => {
+test('returns protocol-friendly events without mutating the real page', async () => {
   const terminal = createSubject();
   const result = await terminal.execute('clear');
 
@@ -224,7 +98,7 @@ test('returns renderer-friendly events without mutating the real page', async ()
   assert.deepEqual(result.events, [{ type: 'clear' }]);
 });
 
-test('exposes generic factory aliases for non-blog users', async () => {
+test('exposes the generic terminal factory for non-blog users', async () => {
   const terminal = createTerminal();
   assert.equal((await terminal.execute('echo portable')).stdout, 'portable\n');
 });
@@ -287,7 +161,7 @@ test('feed adapter creates a generic blog terminal from posts', async () => {
   assert.match((await terminal.execute('ls /home/guest/blog')).stdout, /Feed_Adapter\.md/);
 });
 
-test('effect plugin emits data events for custom renderers', async () => {
+test('effect plugin emits data events for custom protocol consumers', async () => {
   const terminal = createTerminal({
     plugins: [effectEventsPlugin],
   });
@@ -340,7 +214,7 @@ test('feed parser handles RSS namespaces and Atom without DOMParser dependency',
   assert.equal(discoverFeedUrl(doc, 'https://example.test/blog/'), 'https://example.test/atom.xml');
 });
 
-test('core exposes command and path completion for renderers', () => {
+test('core exposes command and path completion for adapters', () => {
   const terminal = createSubject();
 
   assert.ok(terminal.complete('ec').includes('echo'));
@@ -390,207 +264,11 @@ test('current-tab session persistence can keep VFS changes across refreshes', as
   assert.equal((await third.execute('ls /tmp/session/a.txt')).status, 1);
 });
 
-test('dom renderer can persist visible transcript in the same session', async () => {
-  const adapter = memoryPersistenceAdapter();
-  const first = createTerminal({ persistence: adapter, persistVfs: true });
-  const document = createFakeDocument();
-  const firstMount = document.createElement('div');
-  const firstRenderer = new DomTerminalRenderer(first, {
-    document,
-    mount: firstMount,
-    welcome: 'welcome\n',
-    persistTranscript: true,
-  }).attach();
-
-  await submitRendererCommand(firstRenderer, 'printf alpha');
-
-  const saved = adapter.load();
-  assert.equal(saved.transcript.version, 1);
-  assert.ok(saved.transcript.entries.some(entry => entry.type === 'input' && entry.command === 'printf alpha'));
-  assert.ok(saved.transcript.entries.some(entry => entry.type === 'line' && entry.text === 'alpha'));
-
-  const second = createTerminal({ persistence: adapter, persistVfs: true });
-  const secondMount = document.createElement('div');
-  const secondRenderer = new DomTerminalRenderer(second, {
-    document,
-    mount: secondMount,
-    welcome: 'fresh welcome\n',
-    persistTranscript: true,
-  }).attach();
-
-  assert.match(secondMount.textContent, /printf alpha/);
-  assert.match(secondMount.textContent, /alpha/);
-  assert.doesNotMatch(secondMount.textContent, /fresh welcome/);
-
-  await submitRendererCommand(secondRenderer, 'session reset');
-  assert.deepEqual(adapter.load().transcript.entries, []);
-});
-
-test('dom renderer provides a default editor preview for editor events', async () => {
-  const terminal = createSubject();
-  const document = createFakeDocument();
-  const mount = document.createElement('div');
-  const renderer = new DomTerminalRenderer(terminal, {
-    document,
-    mount,
-    welcome: '',
-  }).attach();
-
-  await submitRendererCommand(renderer, 'vim /etc/os-release');
-
-  assert.match(mount.textContent, /vim: opened \/etc\/os-release in the frontend editor preview/);
-  assert.match(mount.textContent, /--- vim preview: \/etc\/os-release ---/);
-  assert.match(mount.textContent, /PRETTY_NAME="Blog Terminal Sandbox"/);
-  assert.match(mount.textContent, /--- end vim preview ---/);
-});
-
-test('renderer extension hooks can rewrite input rows, lines, and whole command results', async () => {
-  const terminal = createTerminal();
-  terminal.register('paint', () => ok('alpha\nbeta\n'));
-  const document = createFakeDocument();
-  const mount = document.createElement('div');
-  const customRenderer = defineRenderer('custom-hooks', {
-    renderInput({ document, prompt, command }) {
-      const node = document.createElement('section');
-      node.className = 'custom-input';
-      node.textContent = `input:${prompt}:${command}`;
-      return node;
-    },
-    renderLine({ document, text, className }) {
-      const node = document.createElement('article');
-      node.className = `custom-line ${className}`.trim();
-      node.textContent = `line:${className || 'normal'}:${text}`;
-      return node;
-    },
-    renderResult({ document, result }) {
-      const node = document.createElement('aside');
-      node.className = 'custom-result';
-      node.textContent = `result:${result.stdout.trim().replace(/\n/g, '|')}`;
-      return node;
-    },
-  });
-  const renderer = new DomTerminalRenderer(terminal, {
-    document,
-    mount,
-    welcome: '',
-    renderer: customRenderer,
-  }).attach();
-
-  renderer.print('manual', 'muted');
-  await submitRendererCommand(renderer, 'paint');
-
-  assert.match(mount.textContent, /line:muted:manual/);
-  assert.match(mount.textContent, /input:\[guest@blog-server ~\]\$:paint/);
-  assert.match(mount.textContent, /result:alpha\|beta/);
-  assert.doesNotMatch(mount.textContent, /line:normal:alpha/);
-});
-
-test('renderer extensions compose lifecycle, live input, and result rendering', async () => {
-  const terminal = createTerminal();
-  terminal.register('paint', () => ok('alpha\n'));
-  const document = createFakeDocument();
-  const mount = document.createElement('div');
-  const events = [];
-  const lifecycle = defineRenderer('lifecycle', {
-    onMount() {
-      events.push('mount');
-      return () => events.push('dispose');
-    },
-    onInputCreated({ row }) {
-      row.classList.add('from-extension');
-      events.push('input-created');
-    },
-    renderLiveInput({ value }) {
-      events.push(`live:${value}`);
-    },
-    onCommand({ command }) {
-      events.push(`command:${command}`);
-    },
-    onResult({ result }) {
-      events.push(`result:${result.status}`);
-    },
-  });
-  const painter = defineRenderer('painter', {
-    renderResult({ result, append }) {
-      append(`painted:${result.stdout.trim()}`, {
-        type: 'line',
-        text: `painted:${result.stdout.trim()}`,
-      });
-      return true;
-    },
-  });
-  const renderer = new DomTerminalRenderer(terminal, {
-    document,
-    mount,
-    welcome: '',
-    renderer: composeRenderers(lifecycle, painter),
-  }).attach();
-
-  renderer.activeInput.value = 'pa';
-  renderer.activeInput.listeners.get('input').forEach(listener => listener({ type: 'input' }));
-  await submitRendererCommand(renderer, 'paint');
-  renderer.destroy();
-
-  assert.match(mount.childNodes[0].childNodes[0].className, /from-extension/);
-  assert.match(mount.textContent, /painted:alpha/);
-  assert.deepEqual(events, [
-    'mount',
-    'input-created',
-    'live:pa',
-    'live:',
-    'command:paint',
-    'result:0',
-    'input-created',
-    'dispose',
-  ]);
-});
-
-test('official token, orbit, and rain renderers are DOM-safe extension primitives', async () => {
-  const document = createFakeDocument();
-  const layerHost = document.createElement('div');
-  const layer = createTokenLayer(layerHost, { document });
-  layer.emit('<b>alpha</b> beta', { mode: 'words', maxTokens: 4 });
-
-  assert.equal(layerHost.textContent, 'balpha/bbeta');
-  assert.equal(layerHost.childNodes[0].className, 'termlet-token-layer');
-
-  const orbitTerminal = createTerminal();
-  orbitTerminal.register('paint', () => ok('orbit output\n'));
-  const orbitMount = document.createElement('div');
-  const orbitRenderer = new DomTerminalRenderer(orbitTerminal, {
-    document,
-    mount: orbitMount,
-    welcome: '',
-    renderer: createOrbitRenderer({ liveInput: true, radius: 40 }),
-  }).attach();
-  orbitRenderer.activeInput.value = 'spin';
-  orbitRenderer.activeInput.listeners.get('input').forEach(listener => listener({ type: 'input' }));
-  assert.match(orbitMount.textContent, /spin/);
-  await submitRendererCommand(orbitRenderer, 'paint');
-
-  assert.match(orbitMount.className, /termlet-renderer-orbit/);
-  assert.match(orbitMount.textContent, /orbitoutput/);
-
-  const rainTerminal = createTerminal();
-  rainTerminal.register('drop', () => ok('rain output\n'));
-  const rainMount = document.createElement('div');
-  const rainRenderer = new DomTerminalRenderer(rainTerminal, {
-    document,
-    mount: rainMount,
-    welcome: '',
-    renderer: createRainRenderer({ maxTokens: 8 }),
-  }).attach();
-  await submitRendererCommand(rainRenderer, 'drop');
-
-  assert.match(rainMount.className, /termlet-renderer-rain/);
-  assert.match(rainMount.textContent, /rainoutput/);
-});
-
 test('starter adapter mounts a themed refresh-resistant blog terminal', async () => {
   const document = createFakeDocument();
   const mount = document.createElement('div');
   const storage = memoryStorage();
-  const { terminal, renderer } = await mountStarterTerminal({
+  const { terminal, session, adapter } = await mountStarterTerminal({
     document,
     mount,
     injectStyles: false,
@@ -610,7 +288,8 @@ test('starter adapter mounts a themed refresh-resistant blog terminal', async ()
   assert.match(mount.className, /termlet-theme-crt/);
   assert.equal((await terminal.execute('about-site')).stdout, 'Example Site\nReady.\n');
   assert.equal((await terminal.execute('cat ~/blog/hello.txt')).stdout, 'hello starter\n');
-  assert.equal(renderer.persistTranscript, true);
+  assert.equal(session.getState().mode, 'line');
+  assert.equal(adapter.capabilities.transcript, true);
 });
 
 test('session storage adapter uses tab-scoped storage semantics when provided', () => {
@@ -649,7 +328,7 @@ test('core caps oversized output and times out async commands', async () => {
   assert.match(slow.stderr, /timed out/);
 });
 
-test('core lets renderers interrupt async commands with AbortSignal', async () => {
+test('core lets sessions interrupt async commands with AbortSignal', async () => {
   const terminal = createTerminal();
   let receivedSignal = false;
   let markStarted;

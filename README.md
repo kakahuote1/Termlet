@@ -1,511 +1,222 @@
-<div align="center">
-  <h1>💻 Termlet</h1>
-  <p><strong>纯前端 · 零依赖 · 可插拔</strong></p>
-  <p>在浏览器里跑一个真正能用的伪终端——带 Shell 解析、虚拟文件系统、结构化管道和插件生命周期。</p>
+# Termlet
 
-  <p>
-    <a href="https://kakahuote1.github.io/Termlet/"><strong>在线演示</strong></a> ·
-    <a href="https://github.com/kakahuote1/Termlet/releases/latest"><strong>下载 Release</strong></a> ·
-    <a href="docs/getting-started.md"><strong>快速上手</strong></a> ·
-    <a href="docs/recipes.md"><strong>使用配方</strong></a> ·
-    <a href="docs/api.md"><strong>API</strong></a> ·
-    <a href="docs/plugins.md"><strong>插件</strong></a> ·
-    <a href="docs/extend.md"><strong>扩展</strong></a>
-  </p>
-</div>
+Termlet 是一个安全、纯前端、可插拔的网页伪终端基座。它不连接真实 shell，不执行宿主命令，适合放进静态站、博客、教程、产品演示和互动页面。
 
----
+你可以把它当成三件东西：
 
-![Termlet demo screenshot](docs/assets/termlet-demo.png)
+- **终端语义**：命令、Shell 解析、虚拟文件系统、权限、管道、重定向、Profile。
+- **开放协议**：用 action/event 驱动终端，不绑定 DOM，Canvas、SVG、WebGL、游戏 HUD 都能接管。
+- **可复用工具箱**：输入控制、补全、输出流、格式化、视觉图层、持久化、博客挂载。
 
-## 这是什么
-
-Termlet 是一个运行在浏览器中的终端引擎。不需要后端、不需要 WebSocket、不需要任何服务器进程。
-
-它在一个浏览器标签页内完成：
-
-- 解析真实的 Shell 语法（管道、重定向、变量替换、命令替换、Glob）
-- 运行 70+ 个内置 Linux/PowerShell/CMD 命令
-- 维护一套带权限校验的内存 POSIX 文件系统
-- 通过**结构化管道**在命令间传递对象数据（不仅是文本）
-- 支持通过 Profile 和 Command Pack 做声明式配置
-- 通过 Renderer Kit 组合输入、输出、动效和容器形态
-
-你可以用它做博客彩蛋、文档 Playground、产品演示、新手教程，或者一个看起来像服务器的落地页。
-
-## 5 分钟接入
-
-### 方式 A：静态站点直接用
-
-不想配置构建工具时，直接到 [Releases](https://github.com/kakahuote1/Termlet/releases/latest) 下载 `termlet-drop-in.zip`，解压后会得到：
-
-```text
-index.html
-termlet/
-```
-
-把 `termlet/` 放进站点静态目录，然后粘贴下面这段：
+## 30 秒看到效果
 
 ```html
-<link rel="stylesheet" href="/termlet/termlet.css">
 <div id="terminal"></div>
 <script type="module">
-  import { mountStarterTerminal } from '/termlet/index.mjs';
+  import { mountStarterTerminal } from 'https://cdn.jsdelivr.net/npm/termlet/dist/index.mjs';
 
   await mountStarterTerminal({
     mount: '#terminal',
-    injectStyles: false,
-    theme: 'linux',
     siteName: 'My Blog',
     intro: 'Welcome to my terminal.',
+    files: {
+      '/home/guest/blog/about.txt': 'hello from my blog\n',
+    },
+    commands: {
+      hello: 'hello from Termlet\n',
+    },
   });
 </script>
 ```
 
-### 方式 B：npm / Bundler
-
-```bash
-npm install termlet
-```
+如果希望 CDN 或静态托管只发起一个 JS 请求，可以把入口换成单文件 bundle：
 
 ```js
-import { mountStarterTerminal } from 'termlet';
-import 'termlet/styles.css';
-
-await mountStarterTerminal({
-  mount: '#terminal',
-  injectStyles: false,
-  theme: 'linux',
-  siteName: 'My Blog',
-  intro: 'Welcome to my terminal.',
-});
+import { mountStarterTerminal } from 'https://cdn.jsdelivr.net/npm/termlet/dist/termlet.bundle.mjs';
 ```
 
-### 方式 C：源码开发
-
-在仓库里改源码或运行 examples 时：
+本地仓库示例：
 
 ```powershell
+npm install
 npm run build
 python -m http.server 4177 --bind 127.0.0.1
 ```
 
-然后打开 `http://127.0.0.1:4177/examples/plain-html/`。不要用 `file://` 直接打开示例，浏览器 ESM import 通常需要 HTTP。
+打开 `http://127.0.0.1:4177/examples/plain-html/` 或 `examples/drop-in/`。
 
-## 入口怎么选
+## 常用入口
 
-| 目标 | 推荐入口 | 说明 |
-|---|---|---|
-| 快速给博客加终端 | `mountStarterTerminal()` | 默认主题、欢迎语、当前标签页持久化、基础文件和安全命令都配好。 |
-| 需要自己控制 UI | `createTerminal()` | 只拿核心引擎，自己写 renderer。 |
-| 使用默认 DOM UI | `createTerminal()` + `DomTerminalRenderer` | 适合产品 demo、教程页和定制布局。 |
-| 接入 RSS/Atom 文章 | `mountFeedTerminal()` | 把博客 feed 映射成虚拟文件。 |
-| Hugo 博客 | `mountHugoTerminal()` | feed 默认按 Hugo 常见路径处理。 |
-| PowerShell / CMD 风格 | `createWindowsTerminal()` | 命令集和路径行为按 shell 类型区分。 |
-| 组织一组可复用命令 | `defineCommandPack()` | 把命令打包成插件。 |
-| 声明一种终端形态 | `defineProfile()` | 组合环境变量、别名、命令包和管道格式化器。 |
-| 改造外观和动效 | `defineRenderer()` / `createOrbitRenderer()` / `createRainRenderer()` | 把输入、输出、事件和动效做成可组合 renderer。 |
-
-## 常用导入
-
-npm / bundler 项目使用包名导入：
-
-```js
-import { mountStarterTerminal, createTerminal, ok } from 'termlet';
-```
-
-纯静态站点复制 `dist/` 后使用文件路径导入：
-
-```html
-<link rel="stylesheet" href="/termlet/termlet.css">
-<div id="terminal"></div>
-<script type="module">
-  import { mountStarterTerminal } from '/termlet/index.mjs';
-  await mountStarterTerminal({
-    mount: '#terminal',
-    injectStyles: false,
-    theme: 'linux',
-    siteName: 'My Blog',
-    intro: 'Welcome to my terminal.',
-  });
-</script>
-```
-
-仓库内部源码开发才使用 `./src/index.mjs`。发布给别人看的示例默认引用 `dist/`。
-
-## 核心能力索引
-
-| 能力 | API / 文档 |
+| 场景 | 入口 |
 |---|---|
-| 一行挂载博客终端 | `mountStarterTerminal()`，见 [快速上手](docs/getting-started.md) |
-| 自定义命令 | `terminal.register()`、`ok()`、`fail()`，见 [插件开发](docs/plugins.md) |
-| 可复用命令包 | `defineCommandPack()`，见 [扩展指南](docs/extend.md) |
-| Profile | `defineProfile()`，见 [API 参考](docs/api.md) |
-| Feed / Hugo | `createFeedTerminal()`、`mountFeedTerminal()`、`mountHugoTerminal()`，见 [博客集成](docs/integrations.md) |
-| PowerShell / CMD | `createWindowsTerminal()`、`windowsCommandsPlugin()` |
-| 当前标签页持久化 | `createSessionStorageAdapter()`、`persistVfs`、`persistTranscript` |
-| 自定义外观 | 内置主题和 `--termlet-*` CSS 变量，见 [主题](docs/theming.md) |
-| 自定义 renderer | `defineRenderer()`、`composeRenderers()`、`createTokenLayer()`，见 [渲染器契约](docs/renderer-contract.md) |
+| 直接放进博客 | `mountStarterTerminal()` |
+| 静态 HTML / GitHub Pages | `mountStaticTerminal()` |
+| Hugo 站点 | `mountHugoTerminal()` |
+| RSS/Atom 文章终端 | `mountFeedTerminal()` |
+| 只使用终端语义 | `createTerminal()` |
+| 自己做 UI | `createTerminalSession()` |
+| 默认 DOM UI | `createDomTerminalAdapter()` |
+| 高级视觉积木 | `createVisualHost()`、`emitPathText()`、`createPath()`、`createLayer()`、`createTimeline()` |
 
-如果希望刷新后仍保留当前标签页里的操作，见 [刷新不丢、关页重置](#刷新不丢关页重置)。
-
----
-
-## Renderer Kit
-
-Renderer Kit 是 0.3 起推荐的外观扩展层。命令、权限、文件系统仍由 Termlet core 处理，renderer 只接收安全的文本、事件和生命周期上下文，然后用 DOM/CSS 决定它看起来像 Linux 终端、CMD、HUD、圆形轨道、命令雨，还是完全不同的交互装置。
+## 添加命令
 
 ```js
-import {
-  createTerminal,
-  DomTerminalRenderer,
-  createOrbitRenderer,
-  createRainRenderer,
-  composeRenderers,
-} from 'termlet';
+import { createTerminal, createTerminalSession, createDomTerminalAdapter, ok } from 'termlet';
 
 const terminal = createTerminal();
 
-new DomTerminalRenderer(terminal, {
+terminal.register('about', () => ok('pure frontend terminal\n'));
+
+const session = createTerminalSession(terminal);
+createDomTerminalAdapter({
   mount: '#terminal',
-  welcome: '',
-  renderer: composeRenderers(
-    createOrbitRenderer({ liveInput: true, turns: 3 }),
-    createRainRenderer({ maxTokens: 18 }),
-  ),
-}).attach();
+  welcome: 'Try: about, help, ls\n',
+}).mount(session);
 ```
 
-需要从零创造形态时，用 `defineRenderer()` 定义生命周期和渲染点，用 `createTokenLayer()` 管理安全的字符/单词层。全部 API 都只写 `textContent` 和 CSS 变量，不使用 `eval`、`innerHTML`、WebSocket 或真实 shell。
-
----
-
-## Shell 引擎
-
-一个真正的解析器（不是 `split(' ')`），支持：
-
-| 特性 | 示例 |
-|---|---|
-| 管道 | `cat log.txt \| grep error \| wc -l` |
-| 重定向 | `echo data > file.txt`，`echo more >> file.txt` |
-| 控制流 | `cmd1 && cmd2`，`cmd1 \|\| cmd2`，`cmd1 ; cmd2` |
-| 变量 | `export K=V`，`echo $K`，`echo $?` |
-| 命令替换 | `echo "dir is $(pwd)"` |
-| Glob | `ls *.md`，`find -name "*.txt"` |
-| 别名 | `alias ll="ls -al"` |
-| Tab 补全 | 命令名 + 文件路径 |
-| 历史记录 | 方向键翻阅，可跨会话持久化 |
-
-安全护栏：最大输出字节数（`maxOutputBytes`，默认 256 KB）、异步命令超时（`commandTimeoutMs`）、`AbortSignal` 中断。
-
-## 结构化管道
-
-这是 Termlet 最新引入的核心能力。命令不仅可以传递文本，还可以通过 `data` 字段传递**结构化对象数组**——类似 PowerShell 的对象管道。
-
-下游命令通过 `ctx.input` 接收上游的结构化数据，通过返回 `{ data: [...] }` 向下游传递：
+## 改成自己的博客终端
 
 ```js
-// 一个返回结构化数据的命令
-terminal.register('items', () => ok('', {
-  data: [
-    { Name: 'decoder', Kind: 'tool', Score: 8 },
-    { Name: 'release-note', Kind: 'note', Score: 3 },
-  ],
-}));
+import { mountStarterTerminal } from 'termlet';
 
-// 一个消费上游结构化数据的命令
-terminal.register('only', ({ args, input }) => {
-  return ok('', {
-    data: filterRecords(input || [], args[0], 'eq', args[1]),
+await mountStarterTerminal({
+  mount: '#terminal',
+  theme: 'crt',
+  siteName: 'My Blog',
+  intro: 'Frontend only. No backend shell.',
+  files: {
+    '/home/guest/blog/README.md': '# My Blog\n',
+    '/home/guest/blog/contact.txt': 'mail@example.com\n',
+  },
+  commands: {
+    whoami: 'blog owner\n',
+  },
+});
+```
+
+刷新保留、关闭标签页重置：
+
+```js
+import {
+  createSessionStorageAdapter,
+  createTerminal,
+  createTerminalSession,
+  createDomTerminalAdapter,
+} from 'termlet';
+
+const terminal = createTerminal({
+  persistence: createSessionStorageAdapter({ key: 'my-terminal.core' }),
+  persistVfs: true,
+});
+
+const session = createTerminalSession(terminal, {
+  persistence: createSessionStorageAdapter({ key: 'my-terminal.session' }),
+});
+
+createDomTerminalAdapter({ mount: '#terminal' }).mount(session);
+```
+
+## 不只是换皮肤
+
+PowerShell / CMD / Linux 的差异由 Profile 和 Command Pack 决定：
+
+```js
+import {
+  createWindowsTerminal,
+  createTerminalSession,
+  createDomTerminalAdapter,
+  toWindowsPath,
+} from 'termlet';
+
+const terminal = createWindowsTerminal({ shell: 'powershell' });
+const session = createTerminalSession(terminal, {
+  prompt: () => `PS ${toWindowsPath(terminal.cwd)}>`,
+});
+
+createDomTerminalAdapter({
+  mount: '#terminal',
+  theme: 'powershell',
+  welcome: 'Try: Get-Location, Get-ChildItem, Get-Item readme.txt\n',
+}).mount(session);
+```
+
+## 用 Protocol 做任意形态
+
+Adapter 不需要继承官方 UI，只要消费 session event：
+
+```js
+import { createTerminal, createTerminalSession } from 'termlet';
+
+const terminal = createTerminal();
+const session = createTerminalSession(terminal);
+
+session.subscribe(event => {
+  drawToCanvasOrGameHud(event);
+});
+
+session.dispatch({ type: 'input.insert', text: 'ls' });
+session.dispatch({ type: 'input.submit' });
+```
+
+视觉效果可以用通用工具箱，而不是固定 hook：
+
+```js
+import { createVisualHost, createPath } from 'termlet/toolbox/visual';
+
+const host = createVisualHost(document.querySelector('#terminal'));
+const orbit = createPath({ type: 'orbit', rx: 180, ry: 70, step: .055 });
+
+session.subscribe(event => {
+  if (event.type !== 'output.chunk') return;
+  host.emitPathText('orbit', event.text, orbit, {
+    className: 'orbit-token',
+    advance: 9,
+    spaceAdvance: 24,
   });
 });
 ```
 
-当管道末端有未消费的结构化数据时，引擎会调用 `formatPipelineData` 将其自动格式化为可读的表格输出。
+## 安全边界
 
-PowerShell 模式下已内置四个管道 Cmdlet：
+Termlet 默认：
 
-| Cmdlet | 功能 |
-|---|---|
-| `Where-Object` | 按属性过滤记录（`-EQ`、`-NE`、`-Like`、`-GT` 等） |
-| `Select-Object` | 投影指定属性列 |
-| `Sort-Object` | 按属性排序（支持 `-Descending`） |
-| `Format-Table` | 强制以表格格式输出 |
+- 不连接真实 shell。
+- 不使用 `eval` / `Function`。
+- 不把命令输出写入 `innerHTML`。
+- 不默认访问网络、剪贴板或宿主进程。
+- VFS、权限、输出上限、session restore 都有边界。
+- 危险能力必须通过 Capability Broker 显式注入。
 
-```
-PS C:\> Get-ChildItem | Where-Object Type -EQ dir | Sort-Object Name | Format-Table Name,Length
-```
+它是浏览器里的模拟终端，不是 WebShell。
 
-## 虚拟文件系统
+## API 分层
 
-内存中的类 POSIX 文件系统：
-
-- 目录、文件、可执行节点三种类型
-- 每个节点有 `owner` / `group` / `perm`，在 `readFile`、`writeFile`、`remove`、`chmod`、`chown` 中强制校验
-- Glob 展开基于 VFS 树
-- 根目录删除双重拦截（命令层 + VFS 层，`sudo rm /` 也会被拒绝）
-- 预置 `/etc`、`/var/log`、`/home`、`/dev/null`、`/tmp`
-
-## 70+ 内置命令
-
-由 `basicCommandsPlugin` 和 `systemCommandsPlugin` 提供，均可关闭：
-
-| 分类 | 命令 |
-|---|---|
-| 文件 | `ls` `cat` `grep` `find` `mkdir` `cp` `mv` `rm` `chmod` `chown` `touch` `tee` `head` `tail` `tree` `stat` `du` `file` `basename` `dirname` `realpath` |
-| 文本 | `sed` `awk` `cut` `tr` `rev` `sort` `uniq` `wc` `strings` |
-| 编码 | `base64` `xxd` `od` `sha256sum` `md5sum` |
-| 系统 | `uname` `uptime` `ps` `top` `df` `free` `id` `groups` `who` `w` `lscpu` `lsblk` `mount` `ip` `ss` `ping` `dig` `nslookup` |
-| 服务 | `systemctl` `journalctl` `service` |
-| 权限 | `sudo` `su` `passwd` — 全部以真实格式拒绝 |
-| 工具桩 | `git` `python3` `node` `npm` `vim` `nano` `curl` `wget` `ssh` — 版本可查，执行/网络被阻断 |
-| 包管理 | `apt` `dnf` `yum` `pacman` `apk` `brew` — 拒绝并给出说明 |
-| 会话 | `help` `history` `clear` `reset` `exit` `session` |
-| 特效 | `cmatrix` `sl` `starwars` `hollywood` `invaders` — 派发渲染器事件 |
-
----
-
-## Profile 与 Command Pack
-
-### defineProfile — 声明式终端配置
-
-将环境变量、别名、命令包打包成一个可复用的配置单元：
-
-```js
-import { defineProfile, defineCommandPack, formatRecords, ok } from 'termlet';
-
-const labCommands = defineCommandPack('lab-commands', terminal => {
-  terminal.register('items', () => ok('', {
-    data: [
-      { Name: 'decoder', Kind: 'tool', Score: 8 },
-      { Name: 'trace-viewer', Kind: 'tool', Score: 13 },
-    ],
-  }));
-});
-
-const labProfile = defineProfile({
-  name: 'lab',
-  core: {
-    basicCommands: false,
-    systemCommands: false,
-    formatPipelineData: data => formatRecords(data, ['Name', 'Kind', 'Score']),
-  },
-  env: { TERMLET_PROFILE: 'lab' },
-  aliases: { i: 'items' },
-  commandPacks: [labCommands],
-});
-```
-
-然后传给 `createTerminal`：
-
-```js
-const terminal = createTerminal({ profile: labProfile });
-```
-
-Profile 的 `core` 会合并进终端选项，`commandPacks` 和 `plugins` 会依次加载。
-
-### defineCommandPack — 命令分组
-
-```js
-const myPack = defineCommandPack('network-tools', (terminal) => {
-  terminal.register('traceroute', ctx => { /* ... */ });
-  terminal.register('whois', ctx => { /* ... */ });
-});
-```
-
-Command Pack 可以直接作为 plugin 使用，也可以放进 Profile 的 `commandPacks` 数组。
-
----
-
-## Windows 模式
-
-`createWindowsTerminal()` 切换为大小写不敏感、反斜杠路径，并加载 PowerShell 或 CMD 命令集：
-
-```js
-import { createWindowsTerminal, DomTerminalRenderer, toWindowsPath } from 'termlet';
-
-const terminal = createWindowsTerminal({ shell: 'powershell' });
-
-new DomTerminalRenderer(terminal, {
-  mount: '#terminal',
-  prompt: () => `PS ${toWindowsPath(terminal.cwd)}>`,
-}).attach();
-```
-
-PowerShell 命令：`Get-Location` `Set-Location` `Get-ChildItem` `Get-Item` `Get-Content` `Set-Content` `Add-Content` `Test-Path` `New-Item` `Copy-Item` `Move-Item` `Remove-Item` `Rename-Item` `Get-Help` `Get-Command` `Clear-Host` `Where-Object` `Select-Object` `Sort-Object` `Format-Table`。
-
-CMD 命令：`cd` `dir` `type` `copy` `move` `del` `rd` `md` `mkdir` `ren` `ver` `cls`。
-
-Windows 模式默认开启 `formatRecords` 作为管道数据格式化器，使管道末端的结构化数据自动以表格形式呈现。
-
-## 博客 Feed 集成
-
-将 RSS/Atom 订阅映射为虚拟文件：
-
-```js
-import { mountFeedTerminal } from 'termlet';
-
-await mountFeedTerminal({
-  mount: '#terminal',
-  feedUrl: '/feed.xml',
-});
-```
-
-支持 `<head>` 中 `alternate` 链接的自动发现。兼容 Hugo、Hexo、Jekyll、Astro、Docusaurus、VuePress、VitePress。
-
-Hugo 专属快捷方式：
-
-```js
-import { mountHugoTerminal } from 'termlet';
-await mountHugoTerminal({ mount: '#terminal', feedUrl: '/index.xml' });
-```
-
-## 刷新不丢、关页重置
-
-博客终端通常需要抗刷新，但不需要长期保存。使用当前标签页会话：
-
-```js
-import { createSessionStorageAdapter, createTerminal, DomTerminalRenderer } from 'termlet';
-
-const terminal = createTerminal({
-  persistence: createSessionStorageAdapter({
-    key: 'my-blog-terminal',
-  }),
-  persistVfs: true,
-});
-
-new DomTerminalRenderer(terminal, {
-  mount: '#terminal',
-  persistTranscript: true,
-}).attach();
-```
-
-这样 `mkdir`、`touch`、`echo > file`、`cd` 等操作和屏幕上的输入输出都会在刷新后保留；关闭当前标签页后，浏览器会清理 `sessionStorage`，下次打开就是新会话。用户也可以运行 `session reset` 手动清理。
-
-## 编写插件
-
-插件是一个接收 `TerminalCore` 的函数，可以返回 disposer：
-
-```js
-import { ok } from 'termlet';
-
-export function myPlugin(terminal) {
-  terminal.register('greet', ({ args, user }) => ok(`Hello, ${args[0] || user}!\n`));
-  terminal.setAlias('hi', 'greet');
-
-  return () => {
-    terminal.unregister('greet');
-    terminal.removeAlias('hi');
-  };
-}
-```
-
-命令上下文 (`CommandContext`) 包含：
-
-| 字段 | 说明 |
-|---|---|
-| `name` | 当前命令名 |
-| `args` | 参数数组 |
-| `stdin` | 管道上游的文本输出 |
-| `input` | 管道上游的结构化数据（`data` 字段），无则为 `null` |
-| `signal` | `AbortSignal`，用于 `Ctrl+C` 中断 |
-| `terminal` | `TerminalCore` 实例 |
-| `fs` | `MemoryFileSystem` 实例 |
-| `user` / `groups` / `hostname` / `cwd` / `home` / `env` | 当前会话信息 |
-
-命令返回 `{ status, stdout, stderr, events, data }`。
-
-## DOM 渲染器
-
-默认的 `DomTerminalRenderer` 提供：
-
-- `textContent` 输出（无 `innerHTML`，杜绝 XSS）
-- `[user@host path]$` 提示符
-- Tab 补全候选展示
-- 方向键历史导航
-- `Ctrl+C` 中断 / `Ctrl+L` 清屏 / `Ctrl+D` 退出
-- 输出行数上限（`maxLines`，默认 1000）
-- `vim` / `vi` / `nano` 的只读编辑器预览兜底（可用 `editorPreview: false` 关闭）
-- 生命周期回调：`onCommand`、`onResult`、`onError`、`onEvent`
-
-可以替换为任何消费 `TerminalCore` 的渲染器实现。
-
-## 安全模型
-
-Termlet 是**沙箱模拟**，不是 Shell 桥接。
-
-- 零 `eval`，零 `new Function`
-- 网络命令（`curl`、`wget`、`ssh`、`scp`）返回错误，不发真实请求
-- 运行时桩（`python3`、`node`）只输出版本号，拒绝执行代码
-- 包管理器（`apt`、`npm install` 等）全部阻断
-- 根目录删除在命令层 + VFS 层双重拦截
-- 输出上限（`maxOutputBytes`）防止标签页崩溃
-- 异步命令支持 `AbortSignal` 中断和 `commandTimeoutMs` 超时
-- DOM 渲染器用 `textContent`——命令输出不会被解析为 HTML
-
-详见 [SECURITY.md](SECURITY.md) 和 [docs/security-model.md](docs/security-model.md)。
-
-## 项目结构
-
-```
+```text
 src/
-├── shell.mjs                  Shell 解析器 + TerminalCore
-├── vfs.mjs                    内存 POSIX 文件系统
-├── result.mjs                 ok() / fail() / normalizeResult()
-├── extension.mjs              Profile · CommandPack · 记录操作工具
-├── factory.mjs                createTerminal / createWindowsTerminal
-├── index.mjs                  公共导出
-├── index.d.ts                 TypeScript 声明
-├── plugins/
-│   ├── basic-commands.mjs     文件与文本命令
-│   ├── system-commands.mjs    系统模拟命令
-│   ├── windows-commands.mjs   PowerShell / CMD + 管道 Cmdlet
-│   ├── effect-events.mjs      视觉效果事件桥
-│   ├── feed-posts.mjs         RSS/Atom → VFS 映射
-│   └── hugo-adapter.mjs       Hugo Feed 封装
-├── presets/
-│   └── blog-sandbox.mjs       博客沙箱起始预设
-├── adapters/
-│   ├── starter.mjs            mountStarterTerminal()
-│   ├── static-site.mjs        mountStaticTerminal()
-│   ├── feed.mjs               mountFeedTerminal()
-│   ├── hugo.mjs               mountHugoTerminal()
-│   └── persistence.mjs        localStorage / sessionStorage / 内存持久化
-└── renderers/
-    ├── dom-renderer.mjs       默认 DOM 渲染器
-    └── renderer-kit.mjs       Renderer Kit 与官方动效基座
+  shell.mjs / vfs.mjs / factory.mjs     Kernel 语义
+  protocol/                             action/event/session
+  state/                                transcript 与 snapshot
+  toolbox/                              输入、补全、流、格式化、视觉积木、能力代理
+  adapters/                             DOM、starter、static-site、feed、hugo
+  presets/                              开箱组合
+  testkit/                              session / adapter / extension 合约测试
 ```
 
-## 示例
+常用子路径：
 
-| 目录 | 说明 |
-|---|---|
-| `drop-in/` | 小白开箱示例，复制文件后改几行配置即可 |
-| `plain-html/` | 最小化 HTML 接入 |
-| `hugo/` | Hugo Pipes 集成 |
-| `plugin-template/` | 插件开发起始模板 |
-| `blog-easter-egg/` | 三击横幅呼出终端 |
-| `custom-plugin/` | 自定义命令注册 |
-| `custom-profile/` | Profile + CommandPack 声明式配置 |
-| `windows-style/` | PowerShell / CMD profile |
-
-## 文档
-
-- [快速上手](docs/getting-started.md) · [使用配方](docs/recipes.md) · [API 参考](docs/api.md) · [插件开发](docs/plugins.md) · [扩展指南](docs/extend.md)
-- [博客集成](docs/integrations.md) · [主题](docs/theming.md) · [渲染器契约](docs/renderer-contract.md)
-- [架构](docs/architecture.md) · [部署](docs/deployment.md) · [GitHub Pages](docs/github-pages.md)
-- [安全模型](docs/security-model.md) · [加固清单](docs/hardening-checklist.md) · [质量门禁](docs/quality-gates.md)
-- [旧终端迁移](docs/migration-from-legacy-terminal.md)
-
-## 开发
-
-```bash
-npm run verify        # check + test + security + build + doc-links
-npm test              # 单元测试 (Node --test, 零依赖)
-npm run check         # 语法与项目约束检查
-npm run security:scan
+```js
+import { createTerminal } from 'termlet/factory';
+import { createTerminalSession } from 'termlet/session';
+import { createDomTerminalAdapter } from 'termlet/adapters/dom';
+import { createVisualHost } from 'termlet/toolbox/visual';
+import { createAdapterContractTests } from 'termlet/testkit';
 ```
 
-## License
+## 文档入口
 
-[MIT](LICENSE)
+文档尽量集中，优先看这几个入口：
+
+- [使用指南](docs/guide.md)：安装、部署、扩展、安全边界和常用 API。
+- [终端生态基座](docs/terminal-ecosystem.md)：如何组合命令、文件系统、Profile、Protocol 和视觉工具。
+- [1.0 架构蓝图](docs/architecture-1.0.md)：Kernel / Protocol / Toolbox / Adapter / Preset 的完整设计。
+- [示例目录](examples/README.md)：可直接运行和复制的页面示例。

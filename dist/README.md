@@ -10,4 +10,8 @@ Use `index.mjs` for ES module imports:
 </script>
 ```
 
-Use `browser-global.mjs` when you want a module script that exposes `globalThis.Termlet`.
+Use `termlet.bundle.mjs` when you want a single-file ESM bundle for CDN or static hosting.
+
+Use `browser-global.bundle.mjs` when you want the single-file bundle to expose `globalThis.Termlet`.
+
+`index.mjs` and `browser-global.mjs` remain source-structured entries for development and debugging.

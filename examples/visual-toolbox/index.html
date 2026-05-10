@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Termlet Visual Toolbox</title>
+  <link rel="icon" href="data:,">
+  <style>
+    :root {
+      color-scheme: dark;
+      background: #06110d;
+      color: #e8fff0;
+      font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      background: radial-gradient(circle at 70% 20%, rgba(46,160,67,.24), transparent 34%), linear-gradient(135deg, #050807, #07150f 60%, #02110c);
+    }
+
+    main {
+      width: min(1240px, 100%);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 20px;
+    }
+
+    h1,
+    p {
+      grid-column: 1 / -1;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(28px, 4vw, 52px);
+      line-height: 1;
+    }
+
+    p {
+      max-width: 760px;
+      color: #acc8b8;
+      line-height: 1.7;
+    }
+
+    .terminal {
+      min-height: 360px;
+      border-radius: 12px;
+      box-shadow: 0 24px 80px rgba(0,0,0,.34);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .terminal .blog-terminal__output {
+      min-height: 330px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .orbit-layer,
+    .rain-layer,
+    .pulse-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .orbit-token {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      font: 900 14px/1 ui-monospace, Consolas, monospace;
+      color: #8dffd5;
+      text-shadow: 0 0 18px rgba(141,255,213,.72);
+      animation: orbit-spin 4.8s linear forwards;
+      transform: translate3d(var(--termlet-path-x), var(--termlet-path-y), 0) rotate(var(--termlet-path-angle));
+    }
+
+    .rain-token {
+      position: absolute;
+      left: var(--x);
+      top: -42px;
+      border: 1px solid rgba(141,255,213,.25);
+      border-radius: 999px;
+      padding: 6px 10px;
+      color: #8dffd5;
+      background: rgba(0,0,0,.52);
+      font: 900 13px/1.25 ui-monospace, Consolas, monospace;
+      animation: rain-drop 3600ms cubic-bezier(.16,.82,.24,1) forwards;
+      animation-delay: var(--delay);
+    }
+
+    .pulse-node {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      max-width: 80%;
+      transform: translate(-50%, -50%);
+      color: #ffb5ee;
+      font: 900 18px/1.35 ui-monospace, Consolas, monospace;
+      text-align: center;
+      text-shadow: 0 0 24px rgba(255,181,238,.56);
+    }
+
+    @keyframes orbit-spin {
+      0% { opacity: 0; transform: translate3d(var(--termlet-path-x), var(--termlet-path-y), 0) rotate(var(--termlet-path-angle)) scale(.82); }
+      12% { opacity: 1; }
+      85% { opacity: .95; }
+      100% { opacity: 0; transform: translate3d(var(--termlet-path-x), var(--termlet-path-y), 0) rotate(calc(var(--termlet-path-angle) + 1080deg)) scale(1.08); }
+    }
+
+    @keyframes rain-drop {
+      0% { opacity: 0; transform: translateY(-40px) rotate(-5deg); filter: blur(1px); }
+      12% { opacity: 1; filter: blur(0); }
+      76% { opacity: .86; }
+      100% { opacity: 0; transform: translateY(380px) translateX(var(--drift)) rotate(8deg); filter: blur(2px); }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Visual Toolbox</h1>
+    <p>同一个 session 可以交给普通 DOM 终端，也可以额外驱动字符轨道、命令雨或 HUD 动效。命令、权限和文件系统仍由 Termlet 统一处理。</p>
+    <div id="orbit" class="terminal"></div>
+    <div id="rain" class="terminal"></div>
+    <div id="pulse" class="terminal"></div>
+  </main>
+
+  <script type="module">
+    import {
+      createDomTerminalAdapter,
+      createPath,
+      createTerminal,
+      createTerminalSession,
+      createTimeline,
+      createVisualHost,
+      injectDefaultStyles,
+      ok,
+    } from '../../dist/index.mjs';
+
+    injectDefaultStyles();
+
+    mountOrbit();
+    mountRain();
+    mountPulse();
+
+    function makeSession(mount, hostname, commandName, stdout) {
+      const terminal = createTerminal({ hostname, cwd: '/home/guest/lab' });
+      terminal.fs.ensureDir('/home/guest/lab', { owner: 'guest', group: 'guest' });
+      terminal.fs.addFile('/home/guest/lab/readme.txt', 'Try: ls, cat readme.txt, ' + commandName + '\n', { owner: 'guest', group: 'guest' });
+      terminal.register(commandName, () => ok(stdout));
+      const session = createTerminalSession(terminal, { prompt: () => `${hostname}$` });
+      createDomTerminalAdapter({ mount, welcome: '', theme: 'crt' }).mount(session);
+      return session;
+    }
+
+    function mountOrbit() {
+      const mount = document.querySelector('#orbit');
+      const session = makeSession(mount, 'orbit', 'spark', 'characters orbit safely\n');
+      const host = createVisualHost(mount);
+      const path = createPath({ type: 'orbit', rx: 150, ry: 86, step: .07 });
+      session.subscribe(event => {
+        if (event.type === 'input.changed') emitOrbit(host, path, event.value);
+        if (event.type === 'output.chunk') emitOrbit(host, path, event.text);
+      });
+    }
+
+    function emitOrbit(host, path, text) {
+      host.emitPathText('orbit', text, path, {
+        maxTokens: 48,
+        advance: 9,
+        spaceAdvance: 22,
+        className: 'orbit-token',
+      });
+    }
+
+    function mountRain() {
+      const mount = document.querySelector('#rain');
+      const session = makeSession(mount, 'rain', 'drop', 'tokens fall inside the terminal\n');
+      const host = createVisualHost(mount);
+      session.subscribe(event => {
+        if (event.type === 'command.submitted') emitRain(host, event.command);
+        if (event.type === 'output.chunk') emitRain(host, event.text);
+      });
+    }
+
+    function emitRain(host, text) {
+      String(text).split(/\s+/).filter(Boolean).slice(0, 18).forEach((token, index) => {
+        const [node] = host.emitText('rain', token, { className: 'rain-token', layer: { className: 'rain-layer' } });
+        node.style.setProperty('--x', `${14 + ((index * 17) % 68)}%`);
+        node.style.setProperty('--delay', `${index * 75}ms`);
+        node.style.setProperty('--drift', `${(index % 2 ? 1 : -1) * (16 + index)}px`);
+      });
+    }
+
+    function mountPulse() {
+      const mount = document.querySelector('#pulse');
+      const session = makeSession(mount, 'pulse', 'pulse', 'visual helpers are plain tools\n');
+      const host = createVisualHost(mount);
+      const layer = host.layer('pulse', { className: 'pulse-layer', maxNodes: 6 });
+      const timeline = createTimeline({ duration: 420 });
+      session.subscribe(event => {
+        if (event.type !== 'output.chunk') return;
+        const node = layer.text(event.text.trim(), { className: 'pulse-node' });
+        timeline.animate(node, [
+          { opacity: 0, transform: 'translate(-50%, -42%) scale(.86)' },
+          { opacity: 1, transform: 'translate(-50%, -50%) scale(1)' },
+        ]);
+      });
+    }
+  </script>
+</body>
+</html>

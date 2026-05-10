@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { blogSandboxPreset, createTerminal, ok } from '../src/index.mjs';
+import { blogSandboxPreset, createTerminal, ok, onDiagnostic } from '../src/index.mjs';
 
 function subject(extra = {}) {
   return createTerminal({
@@ -24,6 +24,34 @@ test('shell combines redirection, pipelines, command substitution, and status op
   assert.equal(result.status, 0);
   assert.equal(result.stderr, '');
   assert.equal(result.stdout.trim().replace(/\s+/g, ' '), '1 1 5 cwd=/home/guest recovered done');
+});
+
+test('shell evaluates command substitution in aliases at invocation time', async () => {
+  const terminal = subject();
+
+  await terminal.execute("alias here='echo $(pwd)'");
+
+  assert.equal((await terminal.execute('here')).stdout, '/home/guest\n');
+  assert.equal((await terminal.execute('cd /tmp && here')).stdout, '/tmp\n');
+});
+
+test('diagnostics expose recoverable persistence failures', async () => {
+  const events = [];
+  const off = onDiagnostic(event => events.push(event));
+  try {
+    const terminal = subject({
+      persistence: {
+        load() { throw new Error('load failed'); },
+        save() { throw new Error('save failed'); },
+      },
+    });
+    assert.equal((await terminal.execute('pwd')).stdout, '/home/guest\n');
+  } finally {
+    off();
+  }
+
+  assert.ok(events.some(event => event.source === 'factory.restore.load' || event.source === 'shell.restore.load'));
+  assert.ok(events.some(event => event.source === 'shell.persist'));
 });
 
 test('shell stops && chains on failure and preserves || recovery behavior', async () => {

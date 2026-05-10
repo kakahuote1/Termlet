@@ -1,4 +1,5 @@
 import { fail, ok, textByteLength } from '../result.mjs';
+import { reportDiagnostic } from '../diagnostics.mjs';
 
 const DEFAULT_SERVICES = [
   ['nginx.service', 'loaded active running', 'Static blog frontend'],
@@ -28,7 +29,7 @@ export function systemCommandsPlugin(terminal, options = {}) {
     .register('df', () => ok('Filesystem      Size  Used Avail Use% Mounted on\nbrowserfs        64M   12M   52M  19% /\ntmpfs            32M     0   32M   0% /tmp\nblog-content     16M  4.2M   12M  27% /home/guest/blog\n'))
     .register('free', () => ok('               total        used        free      shared  buff/cache   available\nMem:         8192000     1673220     4219000       52240     2299780     6124000\nSwap:              0           0           0\n'))
     .register('ps', () => ok('    PID TTY          TIME CMD\n      1 ?        00:00:01 init\n    327 pts/0    00:00:00 bash\n    404 pts/0    00:00:00 blog-terminal\n'))
-    .register('top', () => ok('top - browser sandbox: use htop plugin/renderer for an interactive view\nTasks:   3 total,   1 running,   2 sleeping,   0 stopped,   0 zombie\n%Cpu(s):  7.0 us,  2.0 sy, 91.0 id\n'))
+    .register('top', () => ok('top - browser sandbox: use an adapter effect for an interactive view\nTasks:   3 total,   1 running,   2 sleeping,   0 stopped,   0 zombie\n%Cpu(s):  7.0 us,  2.0 sy, 91.0 id\n'))
     .register('lscpu', () => ok('Architecture:            x86_64\nCPU op-mode(s):        32-bit, 64-bit\nModel name:             Browser Virtual CPU\nCPU(s):                 4\nVirtualization:         frontend-sandbox\n'))
     .register('lsblk', () => ok('NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS\nvda    252:0    0   64M  0 disk /\nvda1   252:1    0   64M  0 part /\n'))
     .register('mount', () => ok('browserfs on / type browserfs (rw,nosuid,nodev,noexec,relatime)\ntmpfs on /tmp type tmpfs (rw,nosuid,nodev)\n'))
@@ -154,7 +155,9 @@ function renderJournal(args, fs, terminal, home, user, groups) {
   try {
     const syslog = fs.readFile('/var/log/syslog', { cwd: terminal.cwd, home, user, groups }).trim();
     if (syslog) lines.push(...syslog.split('\n'));
-  } catch (_) {}
+  } catch (error) {
+    reportDiagnostic(error, { source: 'plugins.system.journalctl' });
+  }
   const countIndex = args.findIndex(arg => arg === '-n');
   const count = countIndex >= 0 ? parseInt(args[countIndex + 1], 10) || 10 : lines.length;
   return lines.slice(-count).join('\n') + '\n';
@@ -418,8 +421,10 @@ function simpleHash(text, length) {
   return (h1.toString(16).padStart(8, '0') + h2.toString(16).padStart(8, '0')).repeat(4).slice(0, length);
 }
 
+const textEncoder = new TextEncoder();
+
 function textToBytes(text) {
-  return new TextEncoder().encode(String(text ?? ''));
+  return textEncoder.encode(String(text ?? ''));
 }
 
 function bytesToText(bytes) {

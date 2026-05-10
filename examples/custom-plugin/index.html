@@ -41,7 +41,8 @@
   <script type="module">
     import {
       createTerminal,
-      DomTerminalRenderer,
+      createDomTerminalAdapter,
+      createTerminalSession,
       blogSandboxPreset,
       injectDefaultStyles,
       ok,
@@ -69,10 +70,11 @@
       ],
     });
 
-    new DomTerminalRenderer(terminal, {
+    const session = createTerminalSession(terminal);
+    createDomTerminalAdapter({
       mount: '#terminal',
       welcome: 'Try: about, ls ~/projects, cat ~/projects/readme.md\n',
-    }).attach();
+    }).mount(session);
   </script>
 </body>
 </html>

@@ -1,7 +1,9 @@
-import { createWebTerminal } from '../factory.mjs';
-import { DomTerminalRenderer, injectDefaultStyles } from '../renderers/dom-renderer.mjs';
+import { createTerminal } from '../factory.mjs';
+import { createTerminalSession } from '../protocol/session.mjs';
+import { createDomTerminalAdapter, injectDefaultStyles } from './dom.mjs';
 import { feedPostsPlugin, fetchDiscoveredFeedPosts, fetchFeedPosts } from '../plugins/feed-posts.mjs';
 import { blogSandboxPreset } from '../presets/blog-sandbox.mjs';
+import { reportDiagnostic } from '../diagnostics.mjs';
 
 export async function createFeedTerminal(options = {}) {
   const {
@@ -18,9 +20,12 @@ export async function createFeedTerminal(options = {}) {
     fetchImpl,
     document: options.document,
     baseUrl: options.baseUrl,
-  }).catch(() => []);
+  }).catch(error => {
+    reportDiagnostic(error, { source: 'adapter.feed.loadPosts' });
+    return [];
+  });
 
-  return createWebTerminal({
+  return createTerminal({
     hostname: 'blog-server',
     ...terminalOptions,
     plugins: [
@@ -35,21 +40,24 @@ export async function createFeedTerminal(options = {}) {
 export async function mountFeedTerminal(options = {}) {
   const {
     mount,
-    renderer = DomTerminalRenderer,
+    adapterFactory = createDomTerminalAdapter,
     injectStyles = true,
-    rendererOptions = {},
+    sessionOptions = {},
+    adapterOptions = {},
   } = options;
 
   if (!mount) throw new Error('mountFeedTerminal requires a mount element or selector');
   if (injectStyles) injectDefaultStyles(options.document || globalThis.document);
 
   const terminal = await createFeedTerminal(options);
-  const instance = new renderer(terminal, {
+  const session = createTerminalSession(terminal, sessionOptions);
+  const adapter = adapterFactory({
     mount,
-    ...rendererOptions,
-  }).attach();
+    document: options.document,
+    ...adapterOptions,
+  }).mount(session);
 
-  return { terminal, renderer: instance };
+  return { terminal, session, adapter };
 }
 
 function loadPosts(options) {

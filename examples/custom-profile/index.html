@@ -47,7 +47,8 @@
   <script type="module">
     import {
       createTerminal,
-      DomTerminalRenderer,
+      createDomTerminalAdapter,
+      createTerminalSession,
       injectDefaultStyles,
     } from '../../dist/index.mjs';
     import { labProfile } from './profile.mjs';
@@ -59,10 +60,11 @@
       profile: labProfile,
     });
 
-    new DomTerminalRenderer(terminal, {
+    const session = createTerminalSession(terminal);
+    createDomTerminalAdapter({
       mount: '#terminal',
       welcome: 'Try: items, i, items | only Kind tool, items | only Kind tool | names\n',
-    }).attach();
+    }).mount(session);
   </script>
 </body>
 </html>

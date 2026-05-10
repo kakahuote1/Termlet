@@ -36,15 +36,17 @@ const required = [
   'src/plugins/feed-posts.mjs',
   'dist/index.mjs',
   'dist/termlet.css',
-  'docs/api.md',
-  'docs/integrations.md',
-  'docs/theming.md',
+  'docs/guide.md',
+  'docs/architecture-1.0.md',
+  'docs/terminal-ecosystem.md',
+  'docs/quality-gates.md',
   'examples/README.md',
   'examples/plain-html/index.html',
   'examples/drop-in/index.html',
   'scripts/api-smoke.mjs',
   'scripts/examples-smoke.mjs',
   'scripts/run-tests.mjs',
+  'scripts/types-smoke.mjs',
   'test/core.test.mjs',
   'test/shell.test.mjs',
   'test/vfs.test.mjs',
@@ -53,6 +55,7 @@ const forbidden = [
   /^AGENTS\.md$/,
   /^tmp\//,
   /night-optimization-log/i,
+  /night-1\.0-development-log/i,
   /^site\//,
   /^node_modules\//,
   /\.tgz$/,
@@ -68,8 +71,8 @@ for (const file of files) {
   if (forbidden.some(pattern => pattern.test(file))) failures.push(`forbidden packaged file: ${file}`);
 }
 
-if (pack.size > 300_000) failures.push(`package size too large for starter kit: ${pack.size} bytes`);
-if (pack.unpackedSize > 1_000_000) failures.push(`unpacked size too large for starter kit: ${pack.unpackedSize} bytes`);
+if (pack.size > 450_000) failures.push(`package size too large for starter kit: ${pack.size} bytes`);
+if (pack.unpackedSize > 1_600_000) failures.push(`unpacked size too large for starter kit: ${pack.unpackedSize} bytes`);
 
 if (failures.length) {
   console.error('package smoke failed:');

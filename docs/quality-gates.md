@@ -12,6 +12,9 @@ npm run verify
 |---|---|
 | `npm run check` | 检查 `src/`、`scripts/`、`site-src/`、`test/`、`examples/` 中的 JS/ESM 语法。 |
 | `npm test` | 核心 shell、VFS、插件、适配器、持久化、输出上限、超时、中断和 Windows profile 单测。 |
+| `npm run api:smoke` | 检查 package exports、根导出和子路径导出。 |
+| `npm run types:smoke` | 检查 TypeScript 声明和实际导出是否一致。 |
+| `npm run package:smoke` | 检查 `npm pack --dry-run` 的必备文件、禁止文件和包体上限。 |
 | `npm run bench` | 跑固定命令基线，防止核心执行路径明显退化。 |
 | `npm run docs:smoke` | 检查 README、docs、examples 中的本地 Markdown 链接。 |
 | `npm run examples:smoke` | 检查 examples 是否引用构建产物、是否说明 HTTP 运行方式。 |
@@ -21,22 +24,17 @@ npm run verify
 
 ## 可选发布检查
 
-发布 npm 包或调整 public API 时再运行：
+发布 npm 包前可以额外查看打包清单：
 
 ```powershell
-npm run api:smoke
-npm run package:smoke
 npm pack --dry-run
 ```
-
-- `api:smoke` 检查 package exports、根导出、子路径导出和类型声明目标。
-- `package:smoke` 检查 `npm pack --dry-run` 的必备文件、禁止文件和包体上限。
 
 ## 什么时候加测试
 
 - 改 shell 解析：优先加 `test/shell.test.mjs`。
 - 改 VFS 权限或文件操作：优先加 `test/vfs.test.mjs`，覆盖权限失败和破坏性操作。
-- 改 renderer 行为：至少加核心事件测试，必要时加 browser smoke。
+- 改 adapter 或视觉工具箱行为：至少加核心事件测试，必要时加 browser smoke。
 - 改包导出：更新 `scripts/api-smoke.mjs`，发布前运行即可。
 - 改发布内容：更新 `scripts/package-smoke.mjs`，发布前运行即可。
 - 改 demo：更新 `scripts/site-smoke.mjs`。

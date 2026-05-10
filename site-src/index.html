@@ -8,14 +8,14 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>Termlet - 可插拔网页伪终端基座</title>
-  <meta name="description" content="Termlet 是一个纯前端、零依赖、可插拔、可扩展的网页伪终端基座，适合静态博客和前端项目快速接入。">
+  <meta name="description" content="Termlet 是纯前端、零依赖、可插拔、可扩展的网页伪终端基座，适合静态站、博客、文档和产品演示快速接入。">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./termlet/termlet.css">
-  <link rel="stylesheet" href="./styles.css?v=20260509-title-scale">
+  <link rel="stylesheet" href="./styles.css?v=20260510-word-trails2">
 </head>
 <body>
   <div class="runtime-warning" data-runtime-warning role="status">
-    交互正在加载。如果这条提示一直显示，请通过 HTTP 服务访问构建后的 site/ 目录；直接打开 site-src/index.html 不会加载 Termlet 产物。
+    交互脚本正在加载。如果这条提示一直显示，请通过 HTTP 服务访问构建后的 site/ 目录；直接打开 site-src/index.html 不会加载 Termlet 产物。
   </div>
   <header class="site-chrome">
     <a class="brand" href="./" aria-label="Termlet 首页">
@@ -36,15 +36,18 @@
     <section class="scene scene-linux is-active" id="scene-linux" data-scene="linux" aria-labelledby="linux-title">
       <div class="scene-copy">
         <p class="eyebrow">Linux blog terminal</p>
-        <h1 id="linux-title">把博客变成一台安全服务器</h1>
+        <h1 id="linux-title">安全终端进博客</h1>
         <p class="lead">Shell 解析、虚拟文件系统、权限模型和命令生态都在浏览器里完成，不需要后端 shell。</p>
-        <div class="quick-actions" aria-label="Linux 快速命令">
+        <div class="quick-actions" aria-label="Linux 快捷命令">
           <button type="button" data-run-profile="linux" data-run="about">zero backend</button>
           <button type="button" data-run-profile="linux" data-run="help">help</button>
           <button type="button" data-run-profile="linux" data-run="tree ~/blog">tree</button>
           <button type="button" data-run-profile="linux" data-run="sudo rm -rf /">safe rm</button>
           <button type="button" data-run-profile="linux" data-run="ls -al ~/blog">VFS</button>
           <button type="button" data-run-profile="linux" data-run="grep browser ~/blog/deploy-notes.txt">grep</button>
+          <button type="button" data-run-profile="linux" data-run="seed-demo-files && cat ~/workspace/demo/items.txt | sort | uniq">pipe</button>
+          <button type="button" data-run-profile="linux" data-run="mkdir -p sandbox && echo hello-termlet > sandbox/note.txt && cat sandbox/note.txt">write</button>
+          <button type="button" data-run-profile="linux" data-run="install-demo-command && hello-dynamic reader && remove-demo-command">commands</button>
           <button type="button" data-run-profile="linux" data-run="df -h">df</button>
           <button type="button" data-run-profile="linux" data-run="npm install">npm</button>
           <button type="button" data-run-profile="linux" data-run="cat ~/lab/plugin.js">plugins</button>
@@ -75,9 +78,9 @@
     <section class="scene scene-powershell" id="scene-powershell" data-scene="powershell" aria-labelledby="powershell-title" hidden>
       <div class="scene-copy">
         <p class="eyebrow">PowerShell-style profile</p>
-        <h2 id="powershell-title">不只是换皮肤，命令也像</h2>
-        <p class="lead">Profile 可以定义路径、prompt、命令集和对象管道，PowerShell / CMD / Linux 都能做出不同内核体验。</p>
-        <div class="quick-actions" aria-label="PowerShell 快速命令">
+        <h2 id="powershell-title">命令也能换内核</h2>
+        <p class="lead">Profile 可以定义路径、prompt、命令集和对象管道，让 PowerShell / CMD / Linux 呈现不同操作体验。</p>
+        <div class="quick-actions" aria-label="PowerShell 快捷命令">
           <button type="button" data-run-profile="powershell" data-run="Get-Location">Get-Location</button>
           <button type="button" data-run-profile="powershell" data-run="Get-Item readme.txt">Get-Item</button>
           <button type="button" data-run-profile="powershell" data-run="Test-Path release-note.md">Test-Path</button>
@@ -113,9 +116,9 @@
     <section class="scene scene-cmd" id="scene-cmd" data-scene="cmd" aria-labelledby="cmd-title" hidden>
       <div class="scene-copy">
         <p class="eyebrow">CMD retro mode</p>
-        <h2 id="cmd-title">复古命令行也能插进页面</h2>
+        <h2 id="cmd-title">复古命令行进页面</h2>
         <p class="lead">同一个基座可以切成 Windows CMD 风格，适合工具站、教程页、游戏彩蛋和产品演示。</p>
-        <div class="quick-actions" aria-label="CMD 快速命令">
+        <div class="quick-actions" aria-label="CMD 快捷命令">
           <button type="button" data-run-profile="cmd" data-run="dir">dir</button>
           <button type="button" data-run-profile="cmd" data-run="type readme.txt">type</button>
           <button type="button" data-run-profile="cmd" data-run="copy readme.txt copy.txt">copy</button>
@@ -123,7 +126,7 @@
           <button type="button" data-run-profile="cmd" data-run="del copy.txt">del</button>
           <button type="button" data-run-profile="cmd" data-run="ver">ver</button>
           <button type="button" data-run-profile="cmd" data-run="cls">cls</button>
-          <button type="button" data-run-profile="cmd" data-run="ls">compat</button>
+          <button type="button" data-run-profile="cmd" data-run="ls">ls</button>
         </div>
       </div>
       <div class="terminal-card terminal-card--cmd" data-tilt-card>
@@ -151,9 +154,9 @@
     <section class="scene scene-docs" id="scene-docs" data-scene="docs" aria-labelledby="docs-title" hidden>
       <div class="scene-copy">
         <p class="eyebrow">Docs playground</p>
-        <h2 id="docs-title">把交互教程做成终端</h2>
+        <h2 id="docs-title">教程可以交互</h2>
         <p class="lead">轻主题适合文档、课程、产品帮助中心。命令、文件和输出都可以按教程章节定制。</p>
-        <div class="quick-actions" aria-label="Docs 快速命令">
+        <div class="quick-actions" aria-label="Docs 快捷命令">
           <button type="button" data-run-profile="docs" data-run="cat steps.md">tutorials</button>
           <button type="button" data-run-profile="docs" data-run="guide">guide</button>
           <button type="button" data-run-profile="docs" data-run="tree ~/lesson">docs</button>
@@ -188,23 +191,24 @@
     <section class="scene scene-lab" id="scene-lab" data-scene="lab" aria-labelledby="lab-title" hidden>
       <div class="scene-copy">
         <p class="eyebrow">Extension lab</p>
-        <h2 id="lab-title">终端不一定长得像终端</h2>
-        <p class="lead">同一个 core 可以换 renderer、换容器、接事件效果。圆形、悬浮、命令雨、游戏 HUD 都只是前端表现层。</p>
-        <div class="quick-actions" aria-label="Lab 快速命令">
-          <button type="button" data-run-profile="orb" data-run="orbit">input dragon</button>
-          <button type="button" data-run-profile="orb" data-run="gravity ls">orbit output</button>
-          <button type="button" data-run-profile="rain" data-run="rain">falling stdout</button>
-          <button type="button" data-run-profile="rain" data-run="fall help">drop input</button>
-          <button type="button" data-run-profile="orb" data-run="skin sphere">skin event</button>
-          <button type="button" data-run-profile="rain" data-run="effect pulse">pulse event</button>
+        <h2 id="lab-title">终端可以天马行空</h2>
+        <p class="lead">同一套 session 事件可以驱动 DOM、Canvas、SVG 或 WebGL。这里的圆轨、雨幕、龙形路径和行星环都只消费协议事件。</p>
+        <div class="quick-actions" aria-label="Lab 快捷命令">
+          <button type="button" data-run-profile="orb" data-run="orbit">orbit</button>
+          <button type="button" data-run-profile="orb" data-run="gravity ls">gravity</button>
+          <button type="button" data-run-profile="rain" data-run="rain">rain</button>
+          <button type="button" data-run-profile="rain" data-run="fall help">fall</button>
+          <button type="button" data-run-profile="dragon" data-run="dragon help">dragon</button>
+          <button type="button" data-run-profile="dragon" data-run="coil adapter event">coil</button>
+          <button type="button" data-run-profile="planet" data-run="planet status">planet</button>
+          <button type="button" data-run-profile="planet" data-run="rings protocol toolbox adapter">rings</button>
         </div>
       </div>
       <div class="lab-stage" aria-label="扩展终端实验室">
-        <div class="lab-effect-layer" data-lab-effect-layer aria-hidden="true"></div>
         <div class="lab-unit lab-unit--orb">
           <div class="lab-unit-copy">
-            <span>01 / orbit renderer</span>
-            <strong>输入会按字符绕轨道运动</strong>
+            <span>01 / orbit effect</span>
+            <strong>字符围绕轨道旋转</strong>
           </div>
           <div class="orb-terminal" data-tilt-card>
             <div class="orb-glow" aria-hidden="true"></div>
@@ -213,8 +217,8 @@
         </div>
         <div class="lab-unit lab-unit--rain">
           <div class="lab-unit-copy">
-            <span>02 / gravity renderer</span>
-            <strong>输入和输出从终端内部下坠</strong>
+            <span>02 / gravity effect</span>
+            <strong>输入输出从内部下坠</strong>
           </div>
           <div class="rain-terminal" data-tilt-card>
             <div class="command-rain" aria-hidden="true">
@@ -227,8 +231,28 @@
               <span>event</span>
               <span>mount</span>
             </div>
-            <div class="rain-titlebar">command rain renderer</div>
+            <div class="rain-titlebar">command rain effect</div>
             <div class="terminal-mount terminal-mount--rain" id="terminal-rain"></div>
+          </div>
+        </div>
+        <div class="lab-unit lab-unit--dragon">
+          <div class="lab-unit-copy">
+            <span>03 / dragon path</span>
+            <strong>命令沿游龙路径前进</strong>
+          </div>
+          <div class="dragon-terminal" data-tilt-card>
+            <div class="dragon-field" aria-hidden="true"></div>
+            <div class="terminal-mount terminal-mount--dragon" id="terminal-dragon"></div>
+          </div>
+        </div>
+        <div class="lab-unit lab-unit--planet">
+          <div class="lab-unit-copy">
+            <span>04 / planet ring</span>
+            <strong>输出绕行星环运行</strong>
+          </div>
+          <div class="planet-terminal" data-tilt-card>
+            <div class="planet-core" aria-hidden="true"></div>
+            <div class="terminal-mount terminal-mount--planet" id="terminal-planet"></div>
           </div>
         </div>
       </div>
@@ -236,7 +260,7 @@
         <details class="scene-source scene-source--lab">
           <summary>Orbit 控制台源码</summary>
           <div class="source-toolbar">
-            <span>字符环绕 renderer</span>
+            <span>字符环绕效果</span>
             <button type="button" data-copy-target="source-lab-orb">copy</button>
           </div>
           <pre><code id="source-lab-orb" data-source-snippet="lab-orb"></code></pre>
@@ -244,20 +268,36 @@
         <details class="scene-source scene-source--lab">
           <summary>Rain 控制台源码</summary>
           <div class="source-toolbar">
-            <span>输入输出下坠 renderer</span>
+            <span>输入输出下坠效果</span>
             <button type="button" data-copy-target="source-lab-rain">copy</button>
           </div>
           <pre><code id="source-lab-rain" data-source-snippet="lab-rain"></code></pre>
         </details>
+        <details class="scene-source scene-source--lab">
+          <summary>Dragon 控制台源码</summary>
+          <div class="source-toolbar">
+            <span>游龙路径效果</span>
+            <button type="button" data-copy-target="source-lab-dragon">copy</button>
+          </div>
+          <pre><code id="source-lab-dragon" data-source-snippet="lab-dragon"></code></pre>
+        </details>
+        <details class="scene-source scene-source--lab">
+          <summary>Planet 控制台源码</summary>
+          <div class="source-toolbar">
+            <span>行星环绕效果</span>
+            <button type="button" data-copy-target="source-lab-planet">copy</button>
+          </div>
+          <pre><code id="source-lab-planet" data-source-snippet="lab-planet"></code></pre>
+        </details>
       </div>
-      <p class="scene-foot scene-foot-left">Termlet · renderer and effect playground</p>
+      <p class="scene-foot scene-foot-left">Termlet · protocol and effect playground</p>
       <a class="scene-foot scene-foot-right" href="https://github.com/" data-repo-link>github.com/kakahuote1/Termlet</a>
     </section>
 
     <section class="scene scene-deploy" id="scene-deploy" data-scene="deploy" aria-labelledby="deploy-title" hidden>
       <div class="scene-copy">
         <p class="eyebrow">Quick deployment</p>
-        <h2 id="deploy-title">三步插进静态博客</h2>
+        <h2 id="deploy-title">三步接入静态站</h2>
         <p class="lead">下载构建产物，放进站点静态目录，复制一段 HTML。Hugo、Hexo、Jekyll、Astro 和普通静态页都可以用同一套方式。</p>
         <div class="quick-actions" aria-label="部署方式">
           <a href="./downloads/termlet-drop-in.zip" download>download zip</a>
@@ -314,6 +354,6 @@ await mountStarterTerminal({ mount: '#terminal' });</code></pre>
   </main>
 
   <textarea class="copy-buffer" aria-hidden="true" tabindex="-1"></textarea>
-  <script type="module" src="./app.mjs?v=20260509-title-scale"></script>
+  <script type="module" src="./app.mjs?v=20260510-word-trails2"></script>
 </body>
 </html>

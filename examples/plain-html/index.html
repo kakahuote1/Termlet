@@ -40,15 +40,16 @@
 
   <script type="module">
     import {
-      createBlogTerminal,
+      createTerminal,
+      createDomTerminalAdapter,
+      createTerminalSession,
       blogSandboxPreset,
-      DomTerminalRenderer,
       injectDefaultStyles,
     } from '../../dist/index.mjs';
 
     injectDefaultStyles();
 
-    const terminal = createBlogTerminal({
+    const terminal = createTerminal({
       hostname: 'blog-server',
       plugins: [
         blogSandboxPreset({
@@ -57,10 +58,11 @@
       ],
     });
 
-    new DomTerminalRenderer(terminal, {
+    const session = createTerminalSession(terminal);
+    createDomTerminalAdapter({
       mount: '#terminal',
       welcome: 'Try: help, ls -al, tree /home/guest, sudo -l, journalctl -n 3\n',
-    }).attach();
+    }).mount(session);
   </script>
 </body>
 </html>

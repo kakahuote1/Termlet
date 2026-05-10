@@ -287,7 +287,6 @@ export class MemoryFileSystem {
 
   snapshot() {
     return {
-      version: 1,
       nodes: [...this.nodes.entries()]
         .filter(([, node]) => typeof node.handler !== 'function')
         .map(([path, node]) => [path, serializeNode(node)]),
@@ -295,7 +294,7 @@ export class MemoryFileSystem {
   }
 
   restoreSnapshot(state = {}) {
-    if (!state || state.version !== 1 || !Array.isArray(state.nodes)) return this;
+    if (!state || !Array.isArray(state.nodes)) return this;
     const restored = new Map();
     for (const item of state.nodes) {
       if (!Array.isArray(item) || item.length !== 2) continue;

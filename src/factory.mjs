@@ -4,6 +4,7 @@ import { formatRecords, mergeProfileOptions } from './extension.mjs';
 import { basicCommandsPlugin } from './plugins/basic-commands.mjs';
 import { systemCommandsPlugin } from './plugins/system-commands.mjs';
 import { windowsCommandsPlugin } from './plugins/windows-commands.mjs';
+import { reportDiagnostic } from './diagnostics.mjs';
 
 export function createTerminal(options = {}) {
   const prepared = mergeProfileOptions(options);
@@ -27,17 +28,13 @@ export function createTerminal(options = {}) {
   });
   terminal.captureInitialVfsSnapshot();
   if (shouldRestore && terminal.persistence?.load) {
-    terminal.restore(terminal.persistence.load());
+    try {
+      terminal.restore(terminal.persistence.load());
+    } catch (error) {
+      reportDiagnostic(error, { source: 'factory.restore.load' });
+    }
   }
   return terminal;
-}
-
-export function createWebTerminal(options = {}) {
-  return createTerminal(options);
-}
-
-export function createBlogTerminal(options = {}) {
-  return createTerminal(options);
 }
 
 export function createWindowsTerminal(options = {}) {

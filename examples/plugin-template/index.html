@@ -40,7 +40,8 @@
   <script type="module">
     import {
       createTerminal,
-      DomTerminalRenderer,
+      createDomTerminalAdapter,
+      createTerminalSession,
       injectDefaultStyles,
     } from '../../dist/index.mjs';
     import { myPlugin } from './my-plugin.mjs';
@@ -52,10 +53,11 @@
       plugins: [myPlugin],
     });
 
-    new DomTerminalRenderer(terminal, {
+    const session = createTerminalSession(terminal);
+    createDomTerminalAdapter({
       mount: '#terminal',
       welcome: 'Try: hello, ls ~/workspace, cat ~/workspace/readme.txt\n',
-    }).attach();
+    }).mount(session);
   </script>
 </body>
 </html>

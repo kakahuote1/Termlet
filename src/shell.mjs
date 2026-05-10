@@ -1,5 +1,6 @@
 import { fail, normalizeResult, ok, textByteLength } from './result.mjs';
 import { MemoryFileSystem, createLinuxLikeFs, VfsError } from './vfs.mjs';
+import { reportDiagnostic } from './diagnostics.mjs';
 
 export class TerminalCore {
   constructor(options = {}) {
@@ -48,7 +49,11 @@ export class TerminalCore {
     (options.plugins || []).forEach(plugin => this.use(plugin));
     this.captureInitialVfsSnapshot();
     if (options.restore !== false && this.persistence?.load) {
-      this.restore(this.persistence.load());
+      try {
+        this.restore(this.persistence.load());
+      } catch (error) {
+        reportDiagnostic(error, { source: 'shell.restore.load' });
+      }
     }
   }
 
@@ -121,7 +126,9 @@ export class TerminalCore {
     this.pluginDisposers.splice(0).reverse().forEach(dispose => {
       try {
         dispose(this);
-      } catch (_) {}
+      } catch (error) {
+        reportDiagnostic(error, { source: 'shell.disposePlugins' });
+      }
     });
     return this;
   }
@@ -170,7 +177,8 @@ export class TerminalCore {
         const node = this.fs.stat(path);
         return dirToken + name + (node?.type === 'dir' ? '/' : '');
       });
-    } catch (_) {
+    } catch (error) {
+      reportDiagnostic(error, { source: 'shell.completePath' });
       return [];
     }
     return names.filter(name => {
@@ -234,7 +242,6 @@ export class TerminalCore {
 
   snapshot() {
     return {
-      version: 1,
       cwd: this.cwd,
       history: this.history.slice(-this.maxHistory),
       aliases: { ...this.aliases },
@@ -290,14 +297,18 @@ export class TerminalCore {
     if (!this.persistence?.save) return;
     try {
       this.persistence.save(this.snapshot());
-    } catch (_) {}
+    } catch (error) {
+      reportDiagnostic(error, { source: 'shell.persist' });
+    }
   }
 
   resetSessionState() {
     if (this.persistence?.reset) {
       try {
         this.persistence.reset();
-      } catch (_) {}
+      } catch (error) {
+        reportDiagnostic(error, { source: 'shell.resetSessionState' });
+      }
     }
     this.cwd = this.home;
     this.env.PWD = this.cwd;
@@ -404,7 +415,7 @@ export class TerminalCore {
     let name = mutable.shift();
     const alias = this.alias(name);
     if (alias) {
-      const aliasWords = this.parseWords(alias);
+      const aliasWords = await this.parseWordsAsync(alias);
       name = aliasWords.shift() || name;
       mutable.unshift(...aliasWords);
     }
@@ -426,7 +437,7 @@ export class TerminalCore {
         signal: options.signal || null,
         ...this.context(),
       }));
-      operation.catch(() => {});
+      operation.catch(error => reportDiagnostic(error, { source: 'shell.command.operation', code: 'COMMAND_REJECTED' }));
       const result = await this.raceCommandTimeout(name, operation, options.signal);
       return this.limitResult(normalizeResult(result));
     } catch (error) {
@@ -621,7 +632,7 @@ export class TerminalCore {
   }
 
   expandCommandSubstitutions(text) {
-    return String(text).replace(/\$\([^)]*\)/g, '');
+    return String(text);
   }
 
   async expandCommandSubstitutionsAsync(text) {

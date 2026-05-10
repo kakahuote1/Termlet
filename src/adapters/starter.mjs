@@ -1,6 +1,7 @@
 import { createTerminal } from '../factory.mjs';
 import { blogSandboxPreset } from '../presets/blog-sandbox.mjs';
-import { DomTerminalRenderer, injectDefaultStyles } from '../renderers/dom-renderer.mjs';
+import { createTerminalSession } from '../protocol/session.mjs';
+import { createDomTerminalAdapter, injectDefaultStyles } from './dom.mjs';
 import { createSessionStorageAdapter } from './persistence.mjs';
 
 export async function mountStarterTerminal(options = {}) {
@@ -20,7 +21,7 @@ export async function mountStarterTerminal(options = {}) {
     files = {},
     commands = {},
     terminalOptions = {},
-    rendererOptions = {},
+    adapterOptions = {},
     plugins = [],
   } = options;
 
@@ -50,10 +51,13 @@ export async function mountStarterTerminal(options = {}) {
     });
   };
 
+  const terminalPersistence = persist ? createSessionStorageAdapter({ key: `${storageKey}.core` }) : null;
+  const sessionPersistence = persist ? createSessionStorageAdapter({ key: `${storageKey}.session` }) : null;
+
   const terminal = createTerminal({
     hostname,
     user,
-    persistence: persist ? createSessionStorageAdapter({ key: storageKey }) : null,
+    persistence: terminalPersistence,
     persistVfs: persist,
     ...terminalOptions,
     plugins: [
@@ -67,15 +71,20 @@ export async function mountStarterTerminal(options = {}) {
     ],
   });
 
-  const renderer = new DomTerminalRenderer(terminal, {
+  const session = createTerminalSession(terminal, {
+    persistence: sessionPersistence,
+    adapterCapabilities: {
+      inputModes: ['line', 'password', 'raw'],
+    },
+  });
+  const adapter = createDomTerminalAdapter({
     mount,
     document,
     welcome,
     theme,
     themeClass,
-    persistTranscript: persist,
-    ...rendererOptions,
-  }).attach();
+    ...adapterOptions,
+  }).mount(session);
 
-  return { terminal, renderer };
+  return { terminal, session, adapter };
 }

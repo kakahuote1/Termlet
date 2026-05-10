@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await mountHugoTerminal({
     mount,
     feedUrl: '/index.xml',
-    rendererOptions: {
+    adapterOptions: {
       welcome: 'Try: help, ls /home/guest/blog, cat /etc/os-release\n',
     },
   });

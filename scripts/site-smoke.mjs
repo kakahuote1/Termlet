@@ -30,45 +30,46 @@ assert(index.includes('Termlet - 可插拔网页伪终端基座'), 'demo should 
 assert(index.includes('<meta name="description"'), 'demo should include a meta description');
 assert(index.includes('./termlet/termlet.css'), 'demo should use external termlet.css');
 assert(index.includes('./app.mjs'), 'demo should load app.mjs as module');
-assert(index.includes('data-scene-button="linux"'), 'demo should expose Linux scene switch');
-assert(index.includes('data-scene-button="powershell"'), 'demo should expose PowerShell scene switch');
-assert(index.includes('data-scene-button="cmd"'), 'demo should expose CMD scene switch');
-assert(index.includes('data-scene-button="docs"'), 'demo should expose docs scene switch');
-assert(index.includes('data-scene-button="lab"'), 'demo should expose extension lab scene switch');
-assert(index.includes('data-scene-button="deploy"'), 'demo should expose deploy scene switch');
+['linux', 'powershell', 'cmd', 'docs', 'lab', 'deploy'].forEach(scene => {
+  assert(index.includes(`data-scene-button="${scene}"`), `demo should expose ${scene} scene switch`);
+});
 assert(index.includes('data-runtime-warning'), 'demo should explain runtime loading failures');
-assert(index.includes('id="terminal-linux"'), 'demo should include Linux terminal mount');
-assert(index.includes('id="terminal-powershell"'), 'demo should include PowerShell terminal mount');
-assert(index.includes('id="terminal-cmd"'), 'demo should include CMD terminal mount');
-assert(index.includes('id="terminal-docs"'), 'demo should include docs terminal mount');
-assert(index.includes('id="terminal-orb"'), 'demo should include orb terminal mount');
-assert(index.includes('id="terminal-rain"'), 'demo should include command rain terminal mount');
-assert(index.includes('data-lab-effect-layer'), 'lab scene should include a dynamic effect layer');
-assert(index.includes('把博客变成一台安全服务器'), 'Linux scene should match promo copy');
-assert(index.includes('不只是换皮肤，命令也像'), 'PowerShell scene should match promo copy');
-assert(index.includes('复古命令行也能插进页面'), 'CMD scene should match promo copy');
-assert(index.includes('把交互教程做成终端'), 'docs scene should match promo copy');
-assert(index.includes('三步插进静态博客'), 'deploy scene should include quick deployment page');
+[
+  'terminal-linux',
+  'terminal-powershell',
+  'terminal-cmd',
+  'terminal-docs',
+  'terminal-orb',
+  'terminal-rain',
+  'terminal-dragon',
+  'terminal-planet',
+].forEach(id => assert(index.includes(`id="${id}"`), `demo should include ${id} mount`));
+[
+  '安全终端进博客',
+  '命令也能换内核',
+  '复古命令行进页面',
+  '教程可以交互',
+  '终端可以天马行空',
+  '三步接入静态站',
+].forEach(copy => assert(index.includes(copy), `demo should include copy: ${copy}`));
 assert(index.includes('downloads/termlet-drop-in.zip'), 'demo should expose a drop-in zip download');
 assert(index.includes('mountStarterTerminal'), 'deploy page should show starter mounting code');
 assert(index.includes("import { mountStarterTerminal } from 'termlet';"), 'deploy page should show package import');
 assert(index.includes('static/'), 'deploy page should show static asset path');
 assert(index.includes('data-tilt-card'), 'terminal cards should opt into hover tilt interaction');
 assert(index.includes('data-scene="lab"'), 'demo should include an extension lab scene');
-assert(index.includes('data-run-profile="orb"'), 'lab scene should expose orb quick commands');
-assert(index.includes('data-run-profile="rain"'), 'lab scene should expose rain quick commands');
-assert(index.includes('data-source-snippet="linux"'), 'Linux scene should expose reusable source');
-assert(index.includes('data-source-snippet="powershell"'), 'PowerShell scene should expose reusable source');
-assert(index.includes('data-source-snippet="cmd"'), 'CMD scene should expose reusable source');
-assert(index.includes('data-source-snippet="docs"'), 'docs scene should expose reusable source');
-assert(index.includes('data-source-snippet="lab-orb"'), 'lab scene should expose orb console source');
-assert(index.includes('data-source-snippet="lab-rain"'), 'lab scene should expose rain console source');
+['orb', 'rain', 'dragon', 'planet'].forEach(profile => {
+  assert(index.includes(`data-run-profile="${profile}"`), `lab scene should expose ${profile} quick commands`);
+});
+['linux', 'powershell', 'cmd', 'docs', 'lab-orb', 'lab-rain', 'lab-dragon', 'lab-planet'].forEach(snippet => {
+  assert(index.includes(`data-source-snippet="${snippet}"`), `demo should expose ${snippet} reusable source`);
+});
 assert(!index.includes('data-source-snippet="deploy"'), 'deploy page should not expose a console source panel');
 assert(index.includes('aria-label="场景切换"'), 'scene navigation should have an aria label');
-assert(index.includes('aria-label="Linux 快速命令"'), 'Linux command group should have an aria label');
-assert(index.includes('aria-label="PowerShell 快速命令"'), 'PowerShell command group should have an aria label');
-assert(index.includes('aria-label="CMD 快速命令"'), 'CMD command group should have an aria label');
-assert(index.includes('aria-label="Docs 快速命令"'), 'docs command group should have an aria label');
+assert(index.includes('aria-label="Linux 快捷命令"'), 'Linux command group should have an aria label');
+assert(index.includes('aria-label="PowerShell 快捷命令"'), 'PowerShell command group should have an aria label');
+assert(index.includes('aria-label="CMD 快捷命令"'), 'CMD command group should have an aria label');
+assert(index.includes('aria-label="Docs 快捷命令"'), 'docs command group should have an aria label');
 assert(!/GitHub Actions|workflow|Settings/.test(index), 'demo should not explain maintainer-specific GitHub Actions flow');
 assert(!/胚子|玩具|小白|开发者/.test(index), 'demo copy should use neutral product language');
 assert(!/\sstyle\s*=/.test(index), 'demo HTML should avoid inline style attributes');
@@ -78,53 +79,75 @@ assert(!/<button(?![^>]*\btype=)/.test(index), 'all buttons should declare type'
 assert(app.includes('./termlet/index.mjs'), 'demo app should import built Termlet entry');
 assert(app.includes('../dist/index.mjs'), 'demo app should support source preview from repository root');
 assert(app.includes('createTerminal'), 'demo app should create Linux and docs terminals');
+assert(app.includes('createTerminalSession'), 'demo app should route terminals through session protocol');
+assert(app.includes('createDomTerminalAdapter'), 'demo app should mount terminals through adapter API');
+assert(app.includes('createVisualHost'), 'demo app should use visual host toolbox for unusual terminals');
+assert(app.includes('emitPathText'), 'demo app should project text on arbitrary paths');
 assert(app.includes('createWindowsTerminal'), 'demo app should create Windows-style terminals');
 assert(app.includes('createSessionStorageAdapter'), 'demo should use current-tab session persistence');
-assert(app.includes('termlet.showcase.v2.linux'), 'demo should bump session keys when bundled scene data changes');
+assert(app.includes('termlet.showcase.linux'), 'demo should use readable session storage keys without protocol version fields');
+assert(app.includes('termlet.showcase.linux.session'), 'demo should persist visible terminal transcript through session storage');
 assert(app.includes('persistVfs: true'), 'demo should persist VFS changes across refreshes in the current tab');
-assert(app.includes('persistTranscript: true'), 'demo should persist visible terminal transcript across refreshes in the current tab');
 assert(!app.includes('welcome: ['), 'demo terminals should not ship pre-printed command transcripts');
-assert((app.match(/welcome: ''/g) || []).length >= 6, 'demo terminal welcomes should start empty');
+assert((app.match(/welcome: ''/g) || []).length >= 8, 'demo terminal welcomes should start empty');
 assert(app.includes('wireTiltCards'), 'demo app should wire hover tilt cards');
 assert(app.includes('rect.width <= 0 || rect.height <= 0'), 'tilt logic should ignore hidden or unmeasured cards');
 assert(app.includes('activateScene'), 'demo app should support scene switching');
 assert(app.includes('copyFromButton'), 'demo app should support copying deployment snippets');
 assert(app.includes('renderSourceSnippets'), 'demo app should render copyable per-scene source snippets');
 assert(app.includes("shell: 'powershell'") && app.includes("shell: 'cmd'"), 'Windows scenes should use separate command ecosystems');
-assert(app.includes("terminal.register('run-demo'"), 'docs scene should include tutorial command');
-assert(app.includes("terminal.register('orbit'"), 'lab scene should include orb-specific commands');
-assert(app.includes("terminal.register('rain'"), 'lab scene should include command-rain commands');
-assert(app.includes('createOrbitRenderer'), 'orb lab terminal should use the official orbit renderer extension');
-assert(app.includes('createRainRenderer'), 'rain lab terminal should use the official rain renderer extension');
-assert(app.includes('renderer: createOrbitRenderer'), 'orb lab terminal should mount through renderer extension API');
-assert(app.includes('renderer: createRainRenderer'), 'rain lab terminal should mount through renderer extension API');
-assert(!/renderInput:\s*renderOrb|renderLine:\s*renderOrb|renderResult:\s*renderOrb|attachOrbLiveInput|createOrbOrbit|tokenizeOrbCharacters/.test(app), 'demo should not keep old hand-written orb renderer hooks');
-assert(!/renderInput:\s*renderRain|renderLine:\s*renderRain|renderResult:\s*renderRain|createRainDropLine|tokenizeEffectText/.test(app), 'demo should not keep old hand-written rain renderer hooks');
-assert(!app.includes('playLabEffect'), 'lab effects should stay inside each terminal renderer instead of external overlays');
+['run-demo', 'orbit', 'rain', 'dragon', 'planet'].forEach(command => {
+  assert(app.includes(`terminal.register('${command}'`), `demo should include ${command} command`);
+});
+['attachOrbitShowcase', 'attachRainShowcase', 'attachDragonShowcase', 'attachPlanetShowcase'].forEach(name => {
+  assert(app.includes(name), `demo should include ${name}`);
+});
+['createWanderRoute', 'sampleDragonRoute', 'createGravityOrbit', 'sampleGravityOrbit'].forEach(name => {
+  assert(app.includes(name), `visual lab should include ${name}`);
+});
+['layoutTextPath', 'wordGroupsForText', 'appendWordChars', 'wordCenterDistance', 'wordCharIndex'].forEach(name => {
+  assert(app.includes(name), `visual lab should preserve readable word groups with ${name}`);
+});
+['install-demo-command', 'remove-demo-command', 'seed-demo-files', 'hello-dynamic'].forEach(name => {
+  assert(app.includes(name) || html.includes(name), `demo should showcase command ecosystem with ${name}`);
+});
+const removedDomClass = ['Dom', 'Terminal', 'Renderer'].join('');
+assert(!app.includes(removedDomClass), 'demo should not use removed DOM class');
+assert(!/renderInput:\s*renderOrb|renderLine:\s*renderOrb|renderResult:\s*renderOrb|attachOrbLiveInput|createOrbOrbit|tokenizeOrbCharacters/.test(app), 'demo should not keep old hand-written orb hooks');
+assert(!/renderInput:\s*renderRain|renderLine:\s*renderRain|renderResult:\s*renderRain|createRainDropLine|tokenizeEffectText/.test(app), 'demo should not keep old hand-written rain hooks');
+assert(!app.includes('playLabEffect'), 'lab effects should stay inside each terminal mount instead of external overlays');
 assert(!app.includes('injectDefaultStyles'), 'strict demo should not inject inline styles');
 
-assert(css.includes('.scene-linux'), 'site CSS should style Linux promo scene');
-assert(css.includes('.scene-powershell'), 'site CSS should style PowerShell promo scene');
-assert(css.includes('.scene-cmd'), 'site CSS should style CMD promo scene');
-assert(css.includes('.scene-docs'), 'site CSS should style docs promo scene');
-assert(css.includes('.scene-lab'), 'site CSS should style extension lab scene');
-assert(css.includes('.lab-unit--rain'), 'lab terminals should be visually separated');
-assert(css.includes('.orb-terminal'), 'site CSS should style spherical terminal');
-assert(css.includes('.command-rain'), 'site CSS should style falling command layer');
-assert(css.includes('.termlet-orbit-live-layer'), 'orb active input prompt should orbit before submission');
-assert(css.includes('.termlet-orbit-line'), 'orb renderer should place submitted input and output on circular tracks');
-assert(css.includes('.termlet-orbit-token'), 'orb renderer should split input and output into orbiting tokens');
-assert(css.includes('.termlet-rain-line'), 'site CSS should animate rewritten rain input and output rows');
-assert(css.includes('.termlet-rain-token'), 'site CSS should animate real stdout/stderr tokens as rain');
-assert(css.includes('@keyframes termlet-rain-drop'), 'site CSS should drop rain renderer rows from top to bottom');
-assert(css.includes('.scene-deploy'), 'site CSS should style deploy scene');
-assert(css.includes('.scene-source'), 'site CSS should style per-scene source panels');
-assert(css.includes('.scene-source-grid'), 'site CSS should place multiple lab source panels cleanly');
+[
+  '.scene-linux',
+  '.scene-powershell',
+  '.scene-cmd',
+  '.scene-docs',
+  '.scene-lab',
+  '.scene-deploy',
+  '.orb-terminal',
+  '.rain-terminal',
+  '.dragon-terminal',
+  '.planet-terminal',
+  '.command-rain',
+  '.termlet-orbit-live-layer',
+  '.termlet-orbit-token',
+  '.termlet-rain-token',
+  '.termlet-dragon-token',
+  '.termlet-planet-token',
+  '.scene-source',
+  '.scene-source-grid',
+].forEach(selector => assert(css.includes(selector), `site CSS should include ${selector}`));
+assert(css.includes('@keyframes termlet-rain-drop'), 'site CSS should drop rain effect rows from top to bottom');
+assert(css.includes('@keyframes dragon-path-flight'), 'site CSS should animate dragon path characters');
+assert(css.includes('@keyframes planet-gravity-orbit'), 'site CSS should animate planet characters with depth-aware gravity orbit');
 assert(css.includes('perspective(1400px)'), 'site CSS should include tilt transform');
 assert(css.includes('@media (max-width: 720px)'), 'site CSS should include mobile layout');
-assert(css.includes('font-size: clamp(46px, 4vw, 68px)'), 'hero titles should stay compact enough for two-line Chinese copy');
-assert(css.includes('.site-chrome') && css.includes('position: absolute'), 'site chrome should stay anchored to the page header instead of following scroll');
-assert(!/site-chrome[^}]*position:\s*fixed/.test(css), 'site chrome should not be fixed to the viewport');
+assert(css.includes('font-size: clamp(38px, 3.4vw, 58px)'), 'hero titles should stay compact enough for two-line Chinese copy');
+assert(/\.site-chrome\s*{[^}]*position:\s*absolute/.test(css), 'site chrome should stay fixed on the page, not pinned to the viewport');
+assert(css.includes('z-index: 1000'), 'site chrome should stay above first-screen scene content');
+assert(css.includes('.blog-terminal__input-row:not(:last-child)'), 'lab terminals should hide normal transcript rows and keep only the active input plus visual effects');
+assert(index.includes('word-trails2'), 'site should bust browser cache for latest readable word-trail visual fixes');
 assert(css.includes(':focus-visible'), 'site CSS should preserve visible focus states');
 
 if (failures.length) {
@@ -133,7 +156,7 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log('site smoke passed (promo scenes, terminal interaction, deploy page, CSP)');
+console.log('site smoke passed (promo scenes, terminal interaction, visual lab, deploy page, CSP)');
 
 function assert(condition, message) {
   if (!condition) failures.push(message);

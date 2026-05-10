@@ -1,7 +1,9 @@
-import { createWebTerminal } from '../factory.mjs';
-import { DomTerminalRenderer, injectDefaultStyles } from '../renderers/dom-renderer.mjs';
+import { createTerminal } from '../factory.mjs';
+import { createTerminalSession } from '../protocol/session.mjs';
+import { createDomTerminalAdapter, injectDefaultStyles } from './dom.mjs';
 import { fetchHugoPosts, hugoPostsPlugin } from '../plugins/hugo-adapter.mjs';
 import { blogSandboxPreset } from '../presets/blog-sandbox.mjs';
+import { reportDiagnostic } from '../diagnostics.mjs';
 
 export async function createHugoTerminal(options = {}) {
   const {
@@ -13,8 +15,11 @@ export async function createHugoTerminal(options = {}) {
     terminalOptions = {},
   } = options;
 
-  const loadedPosts = posts || await fetchHugoPosts(feedUrl, fetchImpl).catch(() => []);
-  return createWebTerminal({
+  const loadedPosts = posts || await fetchHugoPosts(feedUrl, fetchImpl).catch(error => {
+    reportDiagnostic(error, { source: 'adapter.hugo.fetchPosts' });
+    return [];
+  });
+  return createTerminal({
     hostname: 'blog-server',
     ...terminalOptions,
     plugins: [
@@ -29,19 +34,22 @@ export async function createHugoTerminal(options = {}) {
 export async function mountHugoTerminal(options = {}) {
   const {
     mount,
-    renderer = DomTerminalRenderer,
+    adapterFactory = createDomTerminalAdapter,
     injectStyles = true,
-    rendererOptions = {},
+    sessionOptions = {},
+    adapterOptions = {},
   } = options;
 
   if (!mount) throw new Error('mountHugoTerminal requires a mount element or selector');
   if (injectStyles) injectDefaultStyles(options.document || globalThis.document);
 
   const terminal = await createHugoTerminal(options);
-  const instance = new renderer(terminal, {
+  const session = createTerminalSession(terminal, sessionOptions);
+  const adapter = adapterFactory({
     mount,
-    ...rendererOptions,
-  }).attach();
+    document: options.document,
+    ...adapterOptions,
+  }).mount(session);
 
-  return { terminal, renderer: instance };
+  return { terminal, session, adapter };
 }

@@ -6,6 +6,7 @@ AGENTS.md
 .DS_Store
 *.log
 *.tmp
+docs/night-1.0-development-log.md
 *.code-workspace
 playwright-report/
 test-results/

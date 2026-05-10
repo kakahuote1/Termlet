@@ -1,3 +1,5 @@
+import { reportDiagnostic } from '../diagnostics.mjs';
+
 export function memoryPersistenceAdapter(initialState = {}) {
   let state = structuredCloneSafe(initialState);
   return {
@@ -17,7 +19,6 @@ export function createStorageAdapter(options = {}) {
   const {
     storage = globalThis.localStorage,
     key = 'termlet.state',
-    version = 1,
   } = options;
 
   if (!storage) return memoryPersistenceAdapter();
@@ -28,20 +29,25 @@ export function createStorageAdapter(options = {}) {
         const raw = storage.getItem(key);
         if (!raw) return {};
         const parsed = JSON.parse(raw);
-        return parsed.version === version ? parsed.state || {} : {};
-      } catch (_) {
+        return parsed && typeof parsed === 'object' ? parsed : {};
+      } catch (error) {
+        reportDiagnostic(error, { source: 'adapter.persistence.load' });
         return {};
       }
     },
     save(state) {
       try {
-        storage.setItem(key, JSON.stringify({ version, state: state || {} }));
-      } catch (_) {}
+        storage.setItem(key, JSON.stringify(state || {}));
+      } catch (error) {
+        reportDiagnostic(error, { source: 'adapter.persistence.save' });
+      }
     },
     reset() {
       try {
         storage.removeItem(key);
-      } catch (_) {}
+      } catch (error) {
+        reportDiagnostic(error, { source: 'adapter.persistence.reset' });
+      }
     },
   };
 }

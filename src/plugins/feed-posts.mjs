@@ -1,3 +1,5 @@
+import { reportDiagnostic } from '../diagnostics.mjs';
+
 export function feedPostsPlugin(posts = [], options = {}) {
   const root = options.root || '/home/guest/blog';
   const source = options.source || 'feed';
@@ -39,7 +41,9 @@ export function parseFeedPosts(text) {
     try {
       const parsed = parseFeedPostsDom(xmlText);
       if (parsed.length) return parsed;
-    } catch (_) {}
+    } catch (error) {
+      reportDiagnostic(error, { source: 'plugins.feed.parseDom' });
+    }
   }
   return parseFeedPostsText(xmlText);
 }
@@ -53,7 +57,8 @@ export function discoverFeedUrl(doc = globalThis.document, baseUrl = globalThis.
   if (!baseUrl) return href;
   try {
     return new URL(href, baseUrl).toString();
-  } catch (_) {
+  } catch (error) {
+    reportDiagnostic(error, { source: 'plugins.feed.discoverUrl' });
     return href;
   }
 }

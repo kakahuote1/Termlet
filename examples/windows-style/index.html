@@ -40,7 +40,8 @@
   <script type="module">
     import {
       createWindowsTerminal,
-      DomTerminalRenderer,
+      createDomTerminalAdapter,
+      createTerminalSession,
       injectDefaultStyles,
       toWindowsPath,
     } from '../../dist/index.mjs';
@@ -51,11 +52,14 @@
       hostname: 'DESKTOP',
     });
 
-    new DomTerminalRenderer(terminal, {
-      mount: '#terminal',
+    const session = createTerminalSession(terminal, {
       prompt: () => `PS ${toWindowsPath(terminal.cwd)}>`,
+    });
+    createDomTerminalAdapter({
+      mount: '#terminal',
+      theme: 'powershell',
       welcome: 'Try: Get-Location, dir, New-Item -Path note.txt, Get-Command, cls\n',
-    }).attach();
+    }).mount(session);
   </script>
 </body>
 </html>

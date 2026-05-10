@@ -118,7 +118,8 @@
       createSessionStorageAdapter,
       createTerminal,
       blogSandboxPreset,
-      DomTerminalRenderer,
+      createDomTerminalAdapter,
+      createTerminalSession,
       injectDefaultStyles,
     } from '../../dist/index.mjs';
 
@@ -126,12 +127,14 @@
 
     const terminal = createTerminal({
       hostname: 'blog',
-      persistence: createSessionStorageAdapter({ key: 'blog-easter-egg-terminal' }),
+      persistence: createSessionStorageAdapter({ key: 'blog-easter-egg-terminal.core' }),
       persistVfs: true,
       plugins: [blogSandboxPreset()],
     });
 
-    let renderer = null;
+    const sessionPersistence = createSessionStorageAdapter({ key: 'blog-easter-egg-terminal.session' });
+    let session = null;
+    let adapter = null;
     let clicks = 0;
     const welcome = document.querySelector('.welcome');
     const modal = document.querySelector('#modal');
@@ -140,14 +143,17 @@
     function openTerminal() {
       modal.classList.add('open');
       modal.setAttribute('aria-hidden', 'false');
-      if (!renderer) {
-        renderer = new DomTerminalRenderer(terminal, {
+      if (!adapter) {
+        session = createTerminalSession(terminal, {
+          persistence: sessionPersistence,
+        });
+        adapter = createDomTerminalAdapter({
           mount: '#terminal',
           welcome: 'Try: help, ls -al, cat /etc/os-release, session reset\n',
-          persistTranscript: true,
-        }).attach();
+          theme: 'crt',
+        }).mount(session);
       }
-      renderer.focus();
+      adapter.focus();
     }
 
     function closeTerminal() {

@@ -17,6 +17,8 @@ export function normalizeResult(result = {}) {
   };
 }
 
+const textEncoder = new TextEncoder();
+
 export function textByteLength(value) {
-  return new TextEncoder().encode(String(value ?? '')).length;
+  return textEncoder.encode(String(value ?? '')).length;
 }
